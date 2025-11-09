@@ -58,7 +58,7 @@ struct ListRowItem: View {
                         .fill(product.ratingColor)
                         .frame(width: 12, height: 12)
 
-                    Text(product.overallRatingText)
+                    Text("\(product.nutriScore ?? 0)")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                 }
@@ -82,31 +82,31 @@ struct ListRowItem: View {
     }
 }
 
-#Preview {
-    NavigationStack {
-        Spacer()
-        List {
-            NavigationLink(destination: Text("Hello")) {
-                ListRowItem(product: Product.sampleProduct)
-            }
-            .listRowInsets(
-                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-            )
-            NavigationLink(destination: Text("Hello")) {
-                ListRowItem(product: Product.sampleProducts[1])
-            }
-            .listRowInsets(
-                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-            )
-            NavigationLink(destination: Text("Hello")) {
-                ListRowItem(product: Product.sampleProducts[2])
-            }
-            .listRowInsets(
-                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-            )
-        }
-        .listStyle(.plain)
-        .frame(maxHeight: 400)
-        Spacer()
-    }
-}
+//#Preview {
+//    NavigationStack {
+//        Spacer()
+//        List {
+//            NavigationLink(destination: Text("Hello")) {
+////                ListRowItem(product: Product.sampleProduct)
+//            }
+//            .listRowInsets(
+//                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+//            )
+//            NavigationLink(destination: Text("Hello")) {
+//                ListRowItem(product: Product.sampleProducts[1])
+//            }
+//            .listRowInsets(
+//                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+//            )
+//            NavigationLink(destination: Text("Hello")) {
+//                ListRowItem(product: Product.sampleProducts[2])
+//            }
+//            .listRowInsets(
+//                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+//            )
+//        }
+//        .listStyle(.plain)
+//        .frame(maxHeight: 400)
+//        Spacer()
+//    }
+//}

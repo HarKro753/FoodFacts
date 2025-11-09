@@ -38,6 +38,7 @@ struct ProductNode: Decodable {
     let productName: String?
     let productBrand: String?
     let imageUrl: String?
+    let nutriScore: Int?
     let positiveNutrientRatings: [NutrientRating]
     let negativeNutrientRatings: [NutrientRating]
 }
@@ -63,6 +64,7 @@ class GraphQLClient {
                 productName
                 productBrand
                 imageUrl
+                nutriScore
                 positiveNutrientRatings {
                     nutrientType
                     name
@@ -133,6 +135,7 @@ class GraphQLClient {
                 name: node.productName,
                 brand: node.productBrand,
                 imageUrl: node.imageUrl,
+                nutriScore: node.nutriScore,
                 positiveNutrientRatings: node.positiveNutrientRatings,
                 negativeNutrientRatings: node.negativeNutrientRatings
             )

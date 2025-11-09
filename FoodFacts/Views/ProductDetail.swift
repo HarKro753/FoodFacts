@@ -64,20 +64,25 @@ struct ProductDetail: View {
                                 .padding(.bottom, 12)
 
                             HStack(alignment: .center, spacing: 8) {
-                                Circle()
-                                    .fill(product.ratingColor)
-                                    .frame(width: 12, height: 12)
+                                
 
-                                VStack(spacing: 2) {
-                                    Text("\(product.overallRating)/100")
-                                        .font(.system(size: 15))
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
-                                    Text(product.overallRatingText)
-                                        .font(.system(size: 15))
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+                                if product.nutriScore != nil {
+                                    Circle()
+                                        .fill(product.ratingColor)
+                                        .frame(width: 12, height: 12)
+
+                                    VStack(spacing: 2) {
+                                        Text("\(product.nutriScore!)/100")
+                                            .font(.system(size: 15))
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                        Text(product.overallRatingText)
+                                            .font(.system(size: 15))
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
                                 }
+                                
                             }
                         }
                         .frame(height: 110, alignment: .top)
@@ -120,7 +125,7 @@ struct ProductDetail: View {
                                 amount: rating.formattedValue,
                                 color: rating.ratingColor,
                                 ratingSections: rating.ratingSections,
-                                currentValue: rating.actualValue
+                                currentValue: rating.value
                             )
                         }
                     }
@@ -151,7 +156,7 @@ struct ProductDetail: View {
                                 amount: rating.formattedValue,
                                 color: rating.ratingColor,
                                 ratingSections: rating.ratingSections,
-                                currentValue: rating.actualValue
+                                currentValue: rating.value
                             )
                         }
                     }
@@ -413,8 +418,8 @@ struct RatingCriteriaRow: View {
     }
 }
 
-#Preview {
-    NavigationStack {
-        ProductDetail(product: Product.sampleProduct)
-    }
-}
+//#Preview {
+//    NavigationStack {
+//        ProductDetail(product: Product.sampleProduct)
+//    }
+//}
