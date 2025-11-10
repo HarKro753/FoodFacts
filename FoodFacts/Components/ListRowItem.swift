@@ -25,10 +25,9 @@ struct ListRowItem: View {
                     }
 
                 } else {
-                    // Placeholder when no image URL
                     ZStack {
                         RoundedRectangle(cornerRadius: 0)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(Color.gray.opacity(0.1))
                         Image(systemName: "photo")
                             .font(.system(size: 24))
                             .foregroundColor(.white)

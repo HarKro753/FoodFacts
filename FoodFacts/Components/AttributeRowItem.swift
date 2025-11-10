@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct KategorieRowItem: View {
+struct AttributeRowItem: View {
     let icon: String
     let trait: String
     let traitDescription: String
@@ -163,7 +163,7 @@ struct KategorieRowItem: View {
                                         var pos: CGFloat = 0
                                         var found = false
 
-                                        for (index, section) in sortedSections.enumerated() {
+                                        for (_, section) in sortedSections.enumerated() {
                                             let sectionMin = section.minValue
                                             let sectionMax = min(section.maxValue, maxDisplayValue)
                                             let sectionRange = max(sectionMax - sectionMin, 0)
@@ -298,7 +298,7 @@ struct Triangle: Shape {
 #Preview {
     VStack(spacing: 0) {
         // With rating sections
-        KategorieRowItem(
+        AttributeRowItem(
             icon: "cube.fill",
             trait: "Salt",
             traitDescription: "Low salt",
@@ -334,7 +334,7 @@ struct Triangle: Shape {
         )
 
         // Without rating sections
-        KategorieRowItem(
+        AttributeRowItem(
             icon: "bolt.fill",
             trait: "Energy",
             traitDescription: "Moderate calorie",
@@ -343,7 +343,7 @@ struct Triangle: Shape {
         )
 
         // Bad rating
-        KategorieRowItem(
+        AttributeRowItem(
             icon: "sparkle",
             trait: "Sugars",
             traitDescription: "High sugar",

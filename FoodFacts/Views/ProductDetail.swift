@@ -113,7 +113,7 @@ struct ProductDetail: View {
                         .background(Color(.white))
 
                         ForEach(product.positiveNutrientRatings) { rating in
-                            KategorieRowItem(
+                            AttributeRowItem(
                                 icon: rating.icon,
                                 trait: rating.name,
                                 traitDescription: rating.text,
@@ -144,7 +144,7 @@ struct ProductDetail: View {
                         .background(Color(.white))
 
                         ForEach(product.negativeNutrientRatings) { rating in
-                            KategorieRowItem(
+                            AttributeRowItem(
                                 icon: rating.icon,
                                 trait: rating.name,
                                 traitDescription: rating.text,

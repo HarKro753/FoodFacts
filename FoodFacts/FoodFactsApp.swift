@@ -18,10 +18,12 @@ struct FoodFactsApp: App {
 
 struct ContentView: View {
     @StateObject private var historyViewModel = HistoryViewModel()
+    @StateObject private var rankingViewModel = RankingViewModel()
 
     var body: some View {
         TabView {
             RankingView()
+                .environmentObject(rankingViewModel)
                 .tabItem {
                     Label("Ranking", systemImage: "list.number")
                 }

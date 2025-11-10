@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import NetworkImage
 
 // MARK: - Main Ranking View
 struct RankingView: View {
+    @EnvironmentObject private var viewModel: RankingViewModel
     @State private var selectedCategory: ProductCategory = .lebensmittel
 
     enum ProductCategory: String, CaseIterable {
@@ -21,8 +23,7 @@ struct RankingView: View {
             List {
                 Section {
                     Picker("Kategorie", selection: $selectedCategory) {
-                        ForEach(ProductCategory.allCases, id: \.self) {
-                            category in
+                        ForEach(ProductCategory.allCases, id: \.self) { category in
                             Text(category.rawValue).tag(category)
                         }
                     }
@@ -36,230 +37,161 @@ struct RankingView: View {
                 // Category List
                 Section {
                     if selectedCategory == .lebensmittel {
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Ice Cream",
-                                icon: "frozen.dessert",
-                                color: .blue
-                            )
-                        } label: {
+                        if viewModel.isLoading {
                             HStack {
-                                Image(systemName: "frozen.dessert")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                    .foregroundStyle(.blue)
-                                Text("Ice Cream")
+                                Spacer()
+                                ProgressView()
+                                Spacer()
                             }
-                        }
-
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Cereal",
-                                icon: "bowl.fill",
-                                color: .orange
-                            )
-                        } label: {
-                            HStack {
-                                Image(systemName: "bowl.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
+                        } else if let errorMessage = viewModel.errorMessage,
+                            viewModel.categories.isEmpty
+                        {
+                            VStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
                                     .foregroundStyle(.orange)
-                                Text("Cereal")
+                                Text(errorMessage)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
-                        }
-
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Cookies",
-                                icon: "birthday.cake",
-                                color: .brown
-                            )
-                        } label: {
-                            HStack {
-                                Image(systemName: "birthday.cake")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                    .foregroundStyle(.brown)
-                                Text("Cookies")
+                        } else if viewModel.categories.isEmpty {
+                            Text("No categories found")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(viewModel.categories) { category in
+                                NavigationLink {
+                                    ProductRankingList(
+                                        categoryId: category.id,
+                                        categoryName: category.name
+                                    )
+                                } label: {
+                                    CategoryRowItem(category: category)
+                                }
                             }
                         }
                     } else {
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Shampoo",
-                                icon: "sink",
-                                color: .blue
-                            )
-                        } label: {
-                            HStack {
-                                Image(systemName: "sink")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                    .foregroundStyle(.blue)
-                                Text("Shampoo")
-                            }
-                        }
-
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Face Cream",
-                                icon: "sparkles",
-                                color: .pink
-                            )
-                        } label: {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                    .foregroundStyle(.pink)
-                                Text("Face Cream")
-                            }
-                        }
-
-                        NavigationLink {
-                            ProductRankingList(
-                                category: "Makeup",
-                                icon: "paintbrush",
-                                color: .purple
-                            )
-                        } label: {
-                            HStack {
-                                Image(systemName: "paintbrush")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                    .foregroundStyle(.purple)
-                                Text("Makeup")
-                            }
-                        }
+                        // Kosmetik placeholder
+                        Text("Coming soon...")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
             .navigationTitle("Ranking")
+            .task {
+                await viewModel.fetchCategories()
+            }
         }
     }
 }
 
-// MARK: - Product Ranking List View
+//MARK: Liste
+
+/**
+Die Liste welche geoefnfet wird wenn man clickt
+**/
 struct ProductRankingList: View {
-    let category: String
-    let icon: String
-    let color: Color
+    let categoryId: Int
+    let categoryName: String
+
+    @StateObject private var viewModel: ProductRankingViewModel
+
+    init(categoryId: Int, categoryName: String) {
+        self.categoryId = categoryId
+        self.categoryName = categoryName
+        self._viewModel = StateObject(wrappedValue: ProductRankingViewModel(categoryId: categoryId))
+    }
 
     var body: some View {
-        List {
-            ForEach(1...10, id: \.self) { index in
-                NavigationLink {
-//                    ProductDetail()
-                } label: {
-                    ListRankItem(
-                        rank: index,
-                        productName: "\(category) Product \(index)",
-                        brandName: "Brand \(index)",
-                        score: 85 - (index * 2),
-                        rating: getRating(for: 85 - (index * 2))
-                    )
+        Group {
+            if viewModel.isInitialLoading {
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Loading products...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .listRowInsets(
-                    EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-                )
-            }
-        }
-        .listStyle(.plain)
-        .navigationTitle(category)
-        .navigationBarTitleDisplayMode(.inline)
-    }
+            } else if let errorMessage = viewModel.errorMessage,
+                viewModel.products.isEmpty
+            {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
 
-    private func getRating(for score: Int) -> String {
-        switch score {
-        case 80...100: return "Gut"
-        case 60..<80: return "Mittel"
-        default: return "Schlecht"
-        }
-    }
-}
+                    Text("Error loading products")
+                        .font(.headline)
 
-// MARK: - List Rank Item Component
-struct ListRankItem: View {
-    let rank: Int
-    let productName: String
-    let brandName: String
-    let score: Int
-    let rating: String
+                    Text(errorMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
 
-    var ratingColor: Color {
-        switch score {
-        case 80...100: return .green
-        case 60..<80: return .orange
-        default: return .red
-        }
-    }
+                    Button("Try Again") {
+                        Task {
+                            await viewModel.fetchProducts()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else if viewModel.products.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
 
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Product Image Placeholder
-            ZStack {
-                RoundedRectangle(cornerRadius: 0)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 100, height: 100)
+                    Text("No products found")
+                        .font(.headline)
+                }
+            } else {
+                List {
+                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                        NavigationLink {
+                            ProductDetail(product: product)
+                        } label: {
+                            ListRankItem(
+                                rank: index + 1,
+                                product: product
+                            )
+                        }
+                        .listRowInsets(
+                            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+                        )
+                        .onAppear {
+                            // Load more when reaching the 5th item from the end
+                            if index == viewModel.products.count - 5 {
+                                Task {
+                                    await viewModel.loadMore()
+                                }
+                            }
+                        }
+                    }
 
-                Image(systemName: "photo")
-                    .font(.system(size: 24))
-                    .foregroundColor(.white)
-            }
-
-            // Rank Number
-            Text("\(rank)")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-
-            // Product Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(productName)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                Text(brandName)
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                // Rating
-                HStack(alignment: .center, spacing: 8) {
-                    Circle()
-                        .fill(ratingColor)
-                        .frame(width: 12, height: 12)
-
-                    VStack(spacing: 2) {
-                        Text("\(score)/100")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        Text(rating)
-                            .font(.system(size: 15))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                    if viewModel.isLoadingMore {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .padding()
+                            Spacer()
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
                     }
                 }
+                .listStyle(.plain)
+                .refreshable {
+                    await viewModel.refresh()
+                }
             }
-            .frame(height: 100, alignment: .top)
         }
-        .padding(.vertical, 8)
-        .alignmentGuide(.listRowSeparatorLeading) { _ in
-            0
+        .navigationTitle(categoryName)
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await viewModel.fetchProducts()
         }
     }
 }
 
 #Preview {
     RankingView()
+        .environmentObject(RankingViewModel())
 }
