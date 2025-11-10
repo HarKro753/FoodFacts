@@ -15,6 +15,7 @@ struct ProductDetail: View {
     @StateObject private var viewModel: ProductDetailViewModel
     @State private var selectedTab: DetailTab = .nutrition
     @State private var showRatingDetails = false
+    @State private var showFullscreenImage = false
 
     enum DetailTab: String, CaseIterable {
         case nutrition = "Nutrition"
@@ -51,6 +52,9 @@ struct ProductDetail: View {
                         }
                         .frame(width: 100, height: 120)
                         .clipped()
+                        .onTapGesture {
+                            showFullscreenImage = true
+                        }
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(product.name ?? "Unknown Product")
@@ -252,6 +256,12 @@ struct ProductDetail: View {
         .sheet(isPresented: $showRatingDetails) {
             RatingDetailsSheet()
         }
+        .fullScreenCover(isPresented: $showFullscreenImage) {
+            FullscreenImageView(
+                imageUrl: product.imageUrl,
+                isPresented: $showFullscreenImage
+            )
+        }
         .task {
             await viewModel.fetchAlternatives()
         }
@@ -442,8 +452,89 @@ struct RatingCriteriaRow: View {
     }
 }
 
-//#Preview {
-//    NavigationStack {
-//        ProductDetail(product: Product.sampleProduct)
-//    }
-//}
+// MARK: - Fullscreen Image View
+struct FullscreenImageView: View {
+    let imageUrl: String?
+    @Binding var isPresented: Bool
+
+    @State private var dragOffset: CGSize = .zero
+    @State private var backgroundOpacity: Double = 1.0
+
+    var body: some View {
+        ZStack {
+            Color.white
+                .opacity(backgroundOpacity)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    dismissView()
+                }
+
+            if let imageUrl = imageUrl, let url = URL(string: imageUrl) {
+                NetworkImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+                .offset(dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            dragOffset = value.translation
+                            // Adjust background opacity based on drag distance
+                            let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+                            backgroundOpacity = max(0.0, 1.0 - dragDistance / 500)
+                        }
+                        .onEnded { value in
+                            let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+                            if dragDistance > 150 {
+                                dismissView()
+                            } else {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    dragOffset = .zero
+                                    backgroundOpacity = 1.0
+                                }
+                            }
+                        }
+                )
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 48))
+                        .foregroundColor(.white)
+                    Text("No image available")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white)
+                }
+            }
+
+            VStack {
+                HStack {
+                    Button(action: {
+                        dismissView()
+                    }) {
+                        ZStack {
+                            // Glassmorphism background
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(20)
+
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
+    }
+
+    private func dismissView() {
+        dragOffset = .zero
+        backgroundOpacity = 1.0
+        isPresented = false
+    }
+}

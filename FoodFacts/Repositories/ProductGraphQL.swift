@@ -51,7 +51,7 @@ extension GraphQLClient {
 
         var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
         if let categoryId = categoryId {
-            filterParams += ", categoryId: \(categoryId), fetchAllChildCategories: true"
+            filterParams += ", categoryId: \(categoryId)"
         }
 
         var orderParam = ""
@@ -204,7 +204,6 @@ extension GraphQLClient {
     }
 
     func fetchAlternatives(productCode: Int, first: Int = 5) async throws -> [Product] {
-        print("🔍 Fetching alternatives for product code: \(productCode)")
 
         let queryString = """
             query Products {
