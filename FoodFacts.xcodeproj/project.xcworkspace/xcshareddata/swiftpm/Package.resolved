@@ -1,0 +1,15 @@
+{
+  "originHash" : "1b736183565f858bfd44643d72ceebb879bd69d5508ac8119a78612e22320a2d",
+  "pins" : [
+    {
+      "identity" : "networkimage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gonzalezreal/NetworkImage.git",
+      "state" : {
+        "revision" : "2849f5323265386e200484b0d0f896e73c3411b9",
+        "version" : "6.0.1"
+      }
+    }
+  ],
+  "version" : 3
+}

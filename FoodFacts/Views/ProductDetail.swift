@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NetworkImage
 
 // MARK: - Product Detail View
 struct ProductDetail: View {
@@ -27,16 +28,10 @@ struct ProductDetail: View {
                     HStack(alignment: .top, spacing: 20) {
                         Group {
                             if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
-                                CachedAsyncImage(url: url) { image in
+                                NetworkImage(url: url) { image in
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 0)
-                                            .fill(Color.gray.opacity(0.2))
-                                        ProgressView()
-                                    }
                                 }
                             } else {
                                 ZStack {

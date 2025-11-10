@@ -38,7 +38,7 @@ struct ProductNode: Decodable {
     let productName: String?
     let productBrand: String?
     let imageUrl: String?
-    let nutriScore: Int?
+    let normalizedNutriScore: Int?
     let positiveNutrientRatings: [NutrientRating]
     let negativeNutrientRatings: [NutrientRating]
 }
@@ -58,13 +58,13 @@ class GraphQLClient {
         // Read the GraphQL query from the file
         let queryString = """
             query Products {
-            products {
+            products(filter: { completeness: 0.9, lastImageDatetime: "2025-01-01" }) {
                 nodes {
                 code
                 productName
                 productBrand
                 imageUrl
-                nutriScore
+                normalizedNutriScore
                 positiveNutrientRatings {
                     nutrientType
                     name
@@ -135,7 +135,7 @@ class GraphQLClient {
                 name: node.productName,
                 brand: node.productBrand,
                 imageUrl: node.imageUrl,
-                nutriScore: node.nutriScore,
+                nutriScore: node.normalizedNutriScore,
                 positiveNutrientRatings: node.positiveNutrientRatings,
                 negativeNutrientRatings: node.negativeNutrientRatings
             )

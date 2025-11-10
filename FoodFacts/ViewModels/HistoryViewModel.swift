@@ -13,31 +13,25 @@ import Combine
 class HistoryViewModel: ObservableObject {
     @Published var products: [Product] = []
     @Published var isInitialLoading = false
-    @Published var isRefreshing = false
     @Published var errorMessage: String?
+    private var hasLoadedInitially = false
 
-    func fetchProducts(isInitialLoad: Bool) async {
-        if isInitialLoad {
-            isInitialLoading = true
-        } else {
-            isRefreshing = true
-        }
+    func fetchProducts() async {
+        guard !hasLoadedInitially else { return }
 
+        isInitialLoading = true
         errorMessage = nil
 
         do {
             products = try await GraphQLClient.shared.fetchProducts()
             errorMessage = nil
+            hasLoadedInitially = true
         } catch {
             errorMessage = error.localizedDescription
-            // Fallback to sample data for development/testing
-            products = Product.sampleProducts
+            products = []
+            hasLoadedInitially = true
         }
 
-        if isInitialLoad {
-            isInitialLoading = false
-        } else {
-            isRefreshing = false
-        }
+        isInitialLoading = false
     }
 }

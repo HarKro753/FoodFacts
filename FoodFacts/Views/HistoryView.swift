@@ -39,9 +39,7 @@ struct HistoryView: View {
 
                         Button("Try Again") {
                             Task {
-                                await viewModel.fetchProducts(
-                                    isInitialLoad: true
-                                )
+                                await viewModel.fetchProducts()
                             }
                         }
                         .buttonStyle(.bordered)
@@ -75,14 +73,14 @@ struct HistoryView: View {
                     }
                     .listStyle(.plain)
                     .refreshable {
-                        await viewModel.fetchProducts(isInitialLoad: false)
+                        await viewModel.fetchProducts()
                     }
                 }
             }
             .navigationTitle("Verlauf")
             .toolbar {}
             .task {
-                await viewModel.fetchProducts(isInitialLoad: true)
+                await viewModel.fetchProducts()
             }
         }
     }

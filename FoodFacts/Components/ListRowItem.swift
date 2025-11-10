@@ -1,3 +1,4 @@
+import NetworkImage
 //
 //  ListRowItem.swift
 //  YukaMock
@@ -14,18 +15,15 @@ struct ListRowItem: View {
         HStack(alignment: .top, spacing: 16) {
             // Product Image
             Group {
-                if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
-                    CachedAsyncImage(url: url) { image in
+                if let imageUrl = product.imageUrl,
+                    let url = URL(string: imageUrl)
+                {
+                    NetworkImage(url: url) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 0)
-                                .fill(Color.gray.opacity(0.2))
-                            ProgressView()
-                        }
                     }
+
                 } else {
                     // Placeholder when no image URL
                     ZStack {
