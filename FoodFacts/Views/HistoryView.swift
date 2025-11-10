@@ -55,7 +55,7 @@ struct HistoryView: View {
                     }
                 } else {
                     List {
-                        ForEach(viewModel.products) { product in
+                        ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
                             NavigationLink {
                                 ProductDetail(product: product)
                             } label: {
@@ -69,11 +69,30 @@ struct HistoryView: View {
                                     trailing: 16
                                 )
                             )
+                            .onAppear {
+                                // Load more when reaching the 5th item from the end
+                                if index == viewModel.products.count - 5 {
+                                    Task {
+                                        await viewModel.loadMore()
+                                    }
+                                }
+                            }
+                        }
+
+                        if viewModel.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
                         }
                     }
                     .listStyle(.plain)
                     .refreshable {
-                        await viewModel.fetchProducts()
+                        await viewModel.refresh()
                     }
                 }
             }

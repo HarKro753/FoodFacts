@@ -31,6 +31,19 @@ struct ProductsQueryResponse: Decodable {
 
 struct ProductsData: Decodable {
     let nodes: [ProductNode]
+    let pageInfo: PageInfo
+}
+
+struct PageInfo: Decodable {
+    let hasNextPage: Bool
+    let hasPreviousPage: Bool
+    let startCursor: String?
+    let endCursor: String?
+}
+
+struct ProductsResult {
+    let products: [Product]
+    let pageInfo: PageInfo
 }
 
 struct ProductNode: Decodable {
@@ -54,11 +67,16 @@ class GraphQLClient {
         self.apiURL = URL(string: "http://localhost:3004/graphql")!
     }
 
-    func fetchProducts() async throws -> [Product] {
-        // Read the GraphQL query from the file
+    func fetchProducts(first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+        // Build the GraphQL query with pagination parameters
+        var paginationParams = "first: \(first)"
+        if let after = after {
+            paginationParams += ", after: \"\(after)\""
+        }
+
         let queryString = """
             query Products {
-            products(filter: { completeness: 0.9, lastImageDatetime: "2025-01-01" }) {
+            products(filter: { completeness: 0.7, lastImageDatetime: "2025-01-01" }, \(paginationParams)) {
                 nodes {
                 code
                 productName
@@ -93,6 +111,12 @@ class GraphQLClient {
                     description
                     }
                 }
+                }
+                pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
                 }
             }
             }
@@ -129,7 +153,7 @@ class GraphQLClient {
         }
 
         // Convert ProductNode to Product
-        return productsData.products.nodes.map { node in
+        let products = productsData.products.nodes.map { node in
             Product(
                 code: node.code,
                 name: node.productName,
@@ -140,6 +164,11 @@ class GraphQLClient {
                 negativeNutrientRatings: node.negativeNutrientRatings
             )
         }
+
+        return ProductsResult(
+            products: products,
+            pageInfo: productsData.products.pageInfo
+        )
     }
 }
 
