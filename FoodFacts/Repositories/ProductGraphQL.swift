@@ -43,20 +43,25 @@ struct ProductNode: Decodable {
 // MARK: - GraphQL Client Extension
 
 extension GraphQLClient {
-    func fetchProducts(first: Int = 20, after: String? = nil, categoryId: Int? = nil) async throws -> ProductsResult {
+    func fetchProducts(first: Int = 20, after: String? = nil, categoryId: Int? = nil, sortAscending: Bool? = nil) async throws -> ProductsResult {
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
         }
 
-        var filterParams = "completeness: 0.7, lastImageDatetime: \"2025-01-01\""
+        var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
         }
 
+        var orderParam = ""
+        if sortAscending == true {
+            orderParam = ", order: [{ nutriScore: ASC }]"
+        }
+
         let queryString = """
             query Products {
-            products(filter: { \(filterParams) }, \(paginationParams)) {
+            products(filter: { \(filterParams) }, \(paginationParams)\(orderParam)) {
                 nodes {
                 code
                 productName

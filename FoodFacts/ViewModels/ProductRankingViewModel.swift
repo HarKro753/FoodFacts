@@ -32,7 +32,7 @@ class ProductRankingViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProducts(categoryId: categoryId)
+            let result = try await GraphQLClient.shared.fetchProducts(categoryId: categoryId, sortAscending: true)
             products = result.products
             hasNextPage = result.pageInfo.hasNextPage
             endCursor = result.pageInfo.endCursor
@@ -56,7 +56,7 @@ class ProductRankingViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProducts(after: cursor, categoryId: categoryId)
+            let result = try await GraphQLClient.shared.fetchProducts(after: cursor, categoryId: categoryId, sortAscending: true)
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage
             endCursor = result.pageInfo.endCursor

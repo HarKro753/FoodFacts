@@ -29,7 +29,7 @@ extension GraphQLClient {
     func fetchCategories() async throws -> [CategoryNode] {
         let queryString = """
             query Categories {
-                categories {
+                categories(first: 500) {
                     nodes {
                         name
                         id
