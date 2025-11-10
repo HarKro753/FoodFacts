@@ -12,12 +12,18 @@ import NetworkImage
 struct ProductDetail: View {
     let product: Product
 
+    @StateObject private var viewModel: ProductDetailViewModel
     @State private var selectedTab: DetailTab = .nutrition
     @State private var showRatingDetails = false
 
     enum DetailTab: String, CaseIterable {
         case nutrition = "Nutrition"
         case ingredients = "Ingredients"
+    }
+
+    init(product: Product) {
+        self.product = product
+        _viewModel = StateObject(wrappedValue: ProductDetailViewModel(productCode: product.id))
     }
 
     var body: some View {
@@ -159,27 +165,32 @@ struct ProductDetail: View {
                 }
 
                 //MARK: Alternatives
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("Alternatives")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(.white))
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(0..<5, id: \.self) { _ in
-                                AlternativeProductCard()
-                            }
+                if !viewModel.alternatives.isEmpty {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Text("Alternatives")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Spacer()
                         }
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(.white))
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(viewModel.alternatives) { alternativeProduct in
+                                    NavigationLink(destination: ProductDetail(product: alternativeProduct)) {
+                                        AlternativeProductCard(product: alternativeProduct)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 8)
+                        }
                     }
-                }
                     .padding(.top, 8)
+                }
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("We rate products based on nutritional value, ingredient quality, and processing level.")
@@ -241,49 +252,67 @@ struct ProductDetail: View {
         .sheet(isPresented: $showRatingDetails) {
             RatingDetailsSheet()
         }
+        .task {
+            await viewModel.fetchAlternatives()
+        }
     }
 }
 
 // MARK: - Alternative Product Card
 struct AlternativeProductCard: View {
+    let product: Product
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 0)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 80, height: 100)
+            Group {
+                if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
+                    NetworkImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(Color.gray.opacity(0.2))
 
-                Image(systemName: "photo")
-                    .font(.system(size: 16))
-                    .foregroundColor(.white)
+                        Image(systemName: "photo")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                    }
+                }
             }
+            .frame(width: 80, height: 100)
+            .clipped()
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Alternative Product")
+                Text(product.name ?? "Unknown Product")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
-                Text("Brand Name")
+                Text(product.brand ?? "Unknown Brand")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .padding(.bottom, 8)
 
                 HStack(alignment: .center, spacing: 8) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 10, height: 10)
+                    if product.nutriScore != nil {
+                        Circle()
+                            .fill(product.ratingColor)
+                            .frame(width: 10, height: 10)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("85/100")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        Text("Excellent")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(product.nutriScore!)/100")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            Text(product.overallRatingText)
+                                .font(.system(size: 14))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
                     }
                 }
             }

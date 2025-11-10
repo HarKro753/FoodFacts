@@ -202,4 +202,72 @@ extension GraphQLClient {
             pageInfo: response.products.pageInfo
         )
     }
+
+    func fetchAlternatives(productCode: Int, first: Int = 5) async throws -> [Product] {
+        print("🔍 Fetching alternatives for product code: \(productCode)")
+
+        let queryString = """
+            query Products {
+            products(filter: { productIdForAlternatives: \(productCode) }) {
+                nodes {
+                code
+                productName
+                productBrand
+                imageUrl
+                normalizedNutriScore
+                positiveNutrientRatings {
+                    nutrientType
+                    name
+                    value
+                    unit
+                    rating
+                    text
+                    ratingSections {
+                    rating
+                    minValue
+                    maxValue
+                    description
+                    }
+                }
+                negativeNutrientRatings {
+                    nutrientType
+                    name
+                    value
+                    unit
+                    rating
+                    text
+                    ratingSections {
+                    rating
+                    minValue
+                    maxValue
+                    description
+                    }
+                }
+                }
+                pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+                }
+            }
+            }
+            """
+
+        let response: ProductsQueryResponse = try await execute(query: queryString)
+
+        let products = response.products.nodes.map { node in
+            Product(
+                code: node.code,
+                name: node.productName,
+                brand: node.productBrand,
+                imageUrl: node.imageUrl,
+                nutriScore: node.normalizedNutriScore,
+                positiveNutrientRatings: node.positiveNutrientRatings,
+                negativeNutrientRatings: node.negativeNutrientRatings
+            )
+        }
+
+        return products
+    }
 }

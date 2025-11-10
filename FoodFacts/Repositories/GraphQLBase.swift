@@ -49,10 +49,36 @@ class GraphQLClient {
             throw GraphQLClientError.invalidResponse
         }
 
-        let graphQLResponse = try JSONDecoder().decode(
-            GraphQLResponse<T>.self,
-            from: data
-        )
+        // Debug: Print raw response
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📡 GraphQL Response: \(jsonString)")
+        }
+
+        let decoder = JSONDecoder()
+        let graphQLResponse: GraphQLResponse<T>
+        do {
+            graphQLResponse = try decoder.decode(
+                GraphQLResponse<T>.self,
+                from: data
+            )
+        } catch {
+            print("❌ Decoding error: \(error)")
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let context):
+                    print("   Missing key '\(key.stringValue)' - \(context.debugDescription)")
+                case .typeMismatch(let type, let context):
+                    print("   Type mismatch for type '\(type)' - \(context.debugDescription)")
+                case .valueNotFound(let type, let context):
+                    print("   Value not found for type '\(type)' - \(context.debugDescription)")
+                case .dataCorrupted(let context):
+                    print("   Data corrupted - \(context.debugDescription)")
+                @unknown default:
+                    print("   Unknown decoding error")
+                }
+            }
+            throw error
+        }
 
         if let errors = graphQLResponse.errors {
             throw GraphQLClientError.graphQLErrors(errors.map { $0.message })
