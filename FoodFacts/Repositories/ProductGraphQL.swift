@@ -126,4 +126,80 @@ extension GraphQLClient {
             pageInfo: response.products.pageInfo
         )
     }
+
+    func searchProducts(query: String, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+        var paginationParams = "first: \(first)"
+        if let after = after {
+            paginationParams += ", after: \"\(after)\""
+        }
+
+        let filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
+
+        let queryString = """
+            query SearchProducts {
+            products(filter: { \(filterParams) }, where: { productName: { startsWith: "\(query)" } }, \(paginationParams)) {
+                nodes {
+                code
+                productName
+                productBrand
+                imageUrl
+                normalizedNutriScore
+                positiveNutrientRatings {
+                    nutrientType
+                    name
+                    value
+                    unit
+                    rating
+                    text
+                    ratingSections {
+                    rating
+                    minValue
+                    maxValue
+                    description
+                    }
+                }
+                negativeNutrientRatings {
+                    nutrientType
+                    name
+                    value
+                    unit
+                    rating
+                    text
+                    ratingSections {
+                    rating
+                    minValue
+                    maxValue
+                    description
+                    }
+                }
+                }
+                pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+                }
+            }
+            }
+            """
+
+        let response: ProductsQueryResponse = try await execute(query: queryString)
+
+        let products = response.products.nodes.map { node in
+            Product(
+                code: node.code,
+                name: node.productName,
+                brand: node.productBrand,
+                imageUrl: node.imageUrl,
+                nutriScore: node.normalizedNutriScore,
+                positiveNutrientRatings: node.positiveNutrientRatings,
+                negativeNutrientRatings: node.negativeNutrientRatings
+            )
+        }
+
+        return ProductsResult(
+            products: products,
+            pageInfo: response.products.pageInfo
+        )
+    }
 }

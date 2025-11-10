@@ -33,6 +33,11 @@ struct ContentView: View {
                     Label("Scanner", systemImage: "barcode.viewfinder")
                 }
 
+            SearchView()
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+
             HistoryView()
                 .environmentObject(historyViewModel)
                 .tabItem {
