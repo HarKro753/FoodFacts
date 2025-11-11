@@ -26,8 +26,8 @@ class ProductDetailViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let fetchedAlternatives = try await GraphQLClient.shared.fetchAlternatives(productCode: productCode)
-            alternatives = fetchedAlternatives
+            let result = try await GraphQLClient.shared.fetchProducts(productCodeForAlternatives: productCode)
+            alternatives = result.products
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription

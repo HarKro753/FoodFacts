@@ -156,25 +156,6 @@ struct ProductRankingList: View {
                         .listRowInsets(
                             EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
                         )
-                        .onAppear {
-                            // Load more when reaching the 5th item from the end
-                            if index == viewModel.products.count - 5 {
-                                Task {
-                                    await viewModel.loadMore()
-                                }
-                            }
-                        }
-                    }
-
-                    if viewModel.isLoadingMore {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .padding()
-                            Spacer()
-                        }
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
                     }
                 }
                 .listStyle(.plain)

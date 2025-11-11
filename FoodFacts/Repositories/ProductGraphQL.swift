@@ -43,17 +43,36 @@ struct ProductNode: Decodable {
 // MARK: - GraphQL Client Extension
 
 extension GraphQLClient {
-    func fetchProducts(first: Int = 20, after: String? = nil, categoryId: Int? = nil, sortAscending: Bool? = nil) async throws -> ProductsResult {
+    func fetchProducts(
+        first: Int = 20,
+        after: String? = nil,
+        categoryId: Int? = nil,
+        sortAscending: Bool? = nil,
+        searchQuery: String? = nil,
+        productCodeForAlternatives: Int? = nil
+    ) async throws -> ProductsResult {
+        // Build pagination parameters
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
         }
 
+        // Build filter parameters
         var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
         }
+        if let productCode = productCodeForAlternatives {
+            filterParams += ", productIdForAlternatives: \(productCode)"
+        }
 
+        // Build where clause for search
+        var whereClause = ""
+        if let searchQuery = searchQuery {
+            whereClause = ", where: { productName: { startsWith: \"\(searchQuery)\" } }"
+        }
+
+        // Build order parameter
         var orderParam = ""
         if sortAscending == true {
             orderParam = ", order: [{ nutriScore: ASC }]"
@@ -61,7 +80,7 @@ extension GraphQLClient {
 
         let queryString = """
             query Products {
-            products(filter: { \(filterParams) }, \(paginationParams)\(orderParam)) {
+            products(filter: { \(filterParams) }\(whereClause), \(paginationParams)\(orderParam)) {
                 nodes {
                 code
                 productName
@@ -125,148 +144,5 @@ extension GraphQLClient {
             products: products,
             pageInfo: response.products.pageInfo
         )
-    }
-
-    func searchProducts(query: String, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
-        var paginationParams = "first: \(first)"
-        if let after = after {
-            paginationParams += ", after: \"\(after)\""
-        }
-
-        let filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
-
-        let queryString = """
-            query SearchProducts {
-            products(filter: { \(filterParams) }, where: { productName: { startsWith: "\(query)" } }, \(paginationParams)) {
-                nodes {
-                code
-                productName
-                productBrand
-                imageUrl
-                normalizedNutriScore
-                positiveNutrientRatings {
-                    nutrientType
-                    name
-                    value
-                    unit
-                    rating
-                    text
-                    ratingSections {
-                    rating
-                    minValue
-                    maxValue
-                    description
-                    }
-                }
-                negativeNutrientRatings {
-                    nutrientType
-                    name
-                    value
-                    unit
-                    rating
-                    text
-                    ratingSections {
-                    rating
-                    minValue
-                    maxValue
-                    description
-                    }
-                }
-                }
-                pageInfo {
-                hasNextPage
-                hasPreviousPage
-                startCursor
-                endCursor
-                }
-            }
-            }
-            """
-
-        let response: ProductsQueryResponse = try await execute(query: queryString)
-
-        let products = response.products.nodes.map { node in
-            Product(
-                code: node.code,
-                name: node.productName,
-                brand: node.productBrand,
-                imageUrl: node.imageUrl,
-                nutriScore: node.normalizedNutriScore,
-                positiveNutrientRatings: node.positiveNutrientRatings,
-                negativeNutrientRatings: node.negativeNutrientRatings
-            )
-        }
-
-        return ProductsResult(
-            products: products,
-            pageInfo: response.products.pageInfo
-        )
-    }
-
-    func fetchAlternatives(productCode: Int, first: Int = 5) async throws -> [Product] {
-
-        let queryString = """
-            query Products {
-            products(filter: { productIdForAlternatives: \(productCode) }) {
-                nodes {
-                code
-                productName
-                productBrand
-                imageUrl
-                normalizedNutriScore
-                positiveNutrientRatings {
-                    nutrientType
-                    name
-                    value
-                    unit
-                    rating
-                    text
-                    ratingSections {
-                    rating
-                    minValue
-                    maxValue
-                    description
-                    }
-                }
-                negativeNutrientRatings {
-                    nutrientType
-                    name
-                    value
-                    unit
-                    rating
-                    text
-                    ratingSections {
-                    rating
-                    minValue
-                    maxValue
-                    description
-                    }
-                }
-                }
-                pageInfo {
-                hasNextPage
-                hasPreviousPage
-                startCursor
-                endCursor
-                }
-            }
-            }
-            """
-
-        let response: ProductsQueryResponse = try await execute(query: queryString)
-
-        let products = response.products.nodes.map { node in
-            Product(
-                code: node.code,
-                name: node.productName,
-                brand: node.productBrand,
-                imageUrl: node.imageUrl,
-                nutriScore: node.normalizedNutriScore,
-                positiveNutrientRatings: node.positiveNutrientRatings,
-                negativeNutrientRatings: node.negativeNutrientRatings
-            )
-        }
-
-        return products
     }
 }

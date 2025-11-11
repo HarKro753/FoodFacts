@@ -57,7 +57,7 @@ class SearchViewModel: ObservableObject {
             errorMessage = nil
 
             do {
-                let result = try await GraphQLClient.shared.searchProducts(query: query)
+                let result = try await GraphQLClient.shared.fetchProducts(after: nil, searchQuery: query)
 
                 // Check if task was cancelled
                 guard !Task.isCancelled else { return }
@@ -91,9 +91,9 @@ class SearchViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.searchProducts(
-                query: searchText,
-                after: cursor
+            let result = try await GraphQLClient.shared.fetchProducts(
+                after: cursor,
+                searchQuery: searchText
             )
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage
