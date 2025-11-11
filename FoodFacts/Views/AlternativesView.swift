@@ -1,14 +1,14 @@
 //
-//  HistoryView.swift
-//  YukaMock
+//  AlternativesView.swift
+//  FoodFacts
 //
-//  Created by Harro Krog on 08.11.25.
+//  Created by Harro Krog on 11.11.25.
 //
 
 import SwiftUI
 
-struct HistoryView: View {
-    @EnvironmentObject private var viewModel: HistoryViewModel
+struct AlternativesView: View {
+    @EnvironmentObject private var viewModel: AlternativesViewModel
 
     var body: some View {
         NavigationStack {
@@ -16,19 +16,19 @@ struct HistoryView: View {
                 if viewModel.isInitialLoading {
                     VStack(spacing: 16) {
                         ProgressView()
-                        Text("Loading history...")
+                        Text("Loading alternatives...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 } else if let errorMessage = viewModel.errorMessage,
-                    viewModel.historyItems.isEmpty
+                    viewModel.comparisons.isEmpty
                 {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 48))
                             .foregroundStyle(.orange)
 
-                        Text("Error loading history")
+                        Text("Error loading alternatives")
                             .font(.headline)
 
                         Text(errorMessage)
@@ -39,68 +39,76 @@ struct HistoryView: View {
 
                         Button("Try Again") {
                             Task {
-                                await viewModel.fetchHistory()
+                                await viewModel.fetchAlternatives()
                             }
                         }
                         .buttonStyle(.bordered)
                     }
-                } else if viewModel.historyItems.isEmpty {
+                } else if viewModel.comparisons.isEmpty {
                     VStack(spacing: 16) {
-                        Image(systemName: "clock")
+                        Image(systemName: "arrow.left.arrow.right")
                             .font(.system(size: 48))
                             .foregroundStyle(.secondary)
 
-                        Text("No history yet")
+                        Text("No alternatives yet")
                             .font(.headline)
 
-                        Text("Your scanned products will appear here")
+                        Text("Scan some products to see healthier alternatives")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
                 } else {
                     List {
                         ForEach(
-                            Array(viewModel.historyItems.enumerated()),
+                            Array(viewModel.comparisons.enumerated()),
                             id: \.element.id
-                        ) { index, historyItem in
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text(
-                                        "Product Code: \(historyItem.productCode)"
-                                    )
-                                    .font(.headline)
-                                    Spacer()
+                        ) { index, comparison in
+                            VStack(spacing: 8) {
+                                // Comparison Item
+                                if let alternative = comparison
+                                    .alternativeProduct
+                                {
+                                    NavigationLink {
+                                        ProductDetail(product: alternative)
+                                    } label: {
+                                        ProductComparisonItem(
+                                            originalProduct: comparison
+                                                .originalProduct,
+                                            alternativeProduct: alternative
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+
+                                    // Scanned date
+                                    HStack {
+                                        Spacer()
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "clock")
+                                                .font(.system(size: 11))
+                                                .foregroundStyle(.secondary)
+
+                                            Text(
+                                                "Scanned: \(formatDate(comparison.scannedAt))"
+                                            )
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.secondary)
+                                        }
+                                    }
                                 }
-                                Text(formatDate(historyItem.scannedAt))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 8)
                             .listRowInsets(
                                 EdgeInsets(
-                                    top: 0,
+                                    top: 8,
                                     leading: 16,
-                                    bottom: 0,
+                                    bottom: 8,
                                     trailing: 16
                                 )
                             )
-                            .swipeActions(
-                                edge: .trailing,
-                                allowsFullSwipe: true
-                            ) {
-                                Button(role: .destructive) {
-                                    Task {
-                                        await viewModel.removeHistoryItem(
-                                            historyItem.id
-                                        )
-                                    }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
                             .onAppear {
                                 // Load more when reaching the 5th item from the end
-                                if index == viewModel.historyItems.count - 5 {
+                                if index == viewModel.comparisons.count - 5 {
                                     Task {
                                         await viewModel.loadMore()
                                     }
@@ -125,10 +133,9 @@ struct HistoryView: View {
                     }
                 }
             }
-            .navigationTitle("Verlauf")
-            .toolbar {}
+            .navigationTitle("Alternativen")
             .task {
-                await viewModel.fetchHistory()
+                await viewModel.fetchAlternatives()
             }
         }
     }
@@ -137,7 +144,7 @@ struct HistoryView: View {
         let formatter = ISO8601DateFormatter()
         if let date = formatter.date(from: dateString) {
             let displayFormatter = DateFormatter()
-            displayFormatter.dateStyle = .medium
+            displayFormatter.dateStyle = .short
             displayFormatter.timeStyle = .short
             return displayFormatter.string(from: date)
         }
@@ -146,6 +153,6 @@ struct HistoryView: View {
 }
 
 #Preview {
-    HistoryView()
-        .environmentObject(HistoryViewModel())
+    AlternativesView()
+        .environmentObject(AlternativesViewModel())
 }

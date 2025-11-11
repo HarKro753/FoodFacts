@@ -19,30 +19,43 @@ struct FoodFactsApp: App {
 struct ContentView: View {
     @StateObject private var historyViewModel = HistoryViewModel()
     @StateObject private var rankingViewModel = RankingViewModel()
+    @StateObject private var alternativesViewModel = AlternativesViewModel()
+
+    private var isSimulator: Bool {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        return false
+        #endif
+    }
 
     var body: some View {
         TabView {
-            RankingView()
-                .environmentObject(rankingViewModel)
-                .tabItem {
-                    Label("Ranking", systemImage: "list.number")
-                }
+            Tab("Ranking", systemImage: "list.number") {
+                RankingView()
+                    .environmentObject(rankingViewModel)
+            }
 
-            ScannerView()
-                .tabItem {
-                    Label("Scanner", systemImage: "barcode.viewfinder")
-                }
+            Tab("Verlauf", systemImage: "clock") {
+                HistoryView()
+                    .environmentObject(historyViewModel)
+            }
 
-            SearchView()
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
+            if !isSimulator {
+                Tab("Scanner", systemImage: "barcode.viewfinder") {
+                    ScannerView()
                 }
+            }
 
-            HistoryView()
-                .environmentObject(historyViewModel)
-                .tabItem {
-                    Label("History", systemImage: "clock")
-                }
+            Tab("Alternativen", systemImage: "arrow.left.arrow.right") {
+                AlternativesView()
+                    .environmentObject(alternativesViewModel)
+            }
+
+            Tab(role: .search) {
+                SearchView()
+            }
+            .customizationID("search")
         }
     }
 }

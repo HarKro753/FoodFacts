@@ -23,6 +23,10 @@ struct GraphQLError: Decodable {
     let message: String
 }
 
+struct ErrorCheckResponse: Decodable {
+    let errors: [GraphQLError]?
+}
+
 // MARK: - GraphQL Client
 
 class GraphQLClient {
@@ -33,10 +37,17 @@ class GraphQLClient {
         self.apiURL = URL(string: "http://localhost:3004/graphql")!
     }
 
-    func execute<T: Decodable>(query: String, variables: [String: String]? = nil) async throws -> T {
+    func execute<T: Decodable>(query: String, variables: [String: String]? = nil, headers: [String: String]? = nil) async throws -> T {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // Add custom headers if provided
+        if let headers = headers {
+            for (key, value) in headers {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
 
         let body = GraphQLRequest(query: query, variables: variables)
         request.httpBody = try JSONEncoder().encode(body)
@@ -55,6 +66,16 @@ class GraphQLClient {
         }
 
         let decoder = JSONDecoder()
+
+        // First, check for GraphQL errors before attempting to decode the data
+        // This prevents decoding errors when the server returns errors with null data
+        let errorCheck = try decoder.decode(ErrorCheckResponse.self, from: data)
+        if let errors = errorCheck.errors {
+            print("❌ GraphQL Errors: \(errors.map { $0.message }.joined(separator: ", "))")
+            throw GraphQLClientError.graphQLErrors(errors.map { $0.message })
+        }
+
+        // Now decode the full response (we know there are no errors)
         let graphQLResponse: GraphQLResponse<T>
         do {
             graphQLResponse = try decoder.decode(
@@ -78,10 +99,6 @@ class GraphQLClient {
                 }
             }
             throw error
-        }
-
-        if let errors = graphQLResponse.errors {
-            throw GraphQLClientError.graphQLErrors(errors.map { $0.message })
         }
 
         guard let data = graphQLResponse.data else {

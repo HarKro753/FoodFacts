@@ -1,8 +1,8 @@
 //
-//  HistoryViewModel.swift
-//  YukaMock
+//  FavoritesViewModel.swift
+//  FoodFacts
 //
-//  Created by Harro Krog on 09.11.25.
+//  Created by Harro Krog on 11.11.25.
 //
 
 import Foundation
@@ -10,8 +10,8 @@ import SwiftUI
 import Combine
 
 @MainActor
-class HistoryViewModel: ObservableObject {
-    @Published var historyItems: [ProductHistory] = []
+class FavoritesViewModel: ObservableObject {
+    @Published var products: [Product] = []
     @Published var isInitialLoading = false
     @Published var isLoadingMore = false
     @Published var errorMessage: String?
@@ -20,24 +20,23 @@ class HistoryViewModel: ObservableObject {
     private var endCursor: String?
     private var hasLoadedInitially = false
 
-    func fetchHistory() async {
+    func fetchFavorites() async {
         guard !hasLoadedInitially else { return }
 
         isInitialLoading = true
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProductHistory()
-            historyItems = result.historyItems
+            let result = try await GraphQLClient.shared.fetchFavoriteProducts()
+            products = result.products
             hasNextPage = result.pageInfo.hasNextPage
             endCursor = result.pageInfo.endCursor
             hasLoadedInitially = true
             // Clear error on successful fetch, even if empty
             errorMessage = nil
         } catch {
-            // Only set error if fetch actually failed
             errorMessage = error.localizedDescription
-            historyItems = []
+            products = []
             hasNextPage = false
             endCursor = nil
             hasLoadedInitially = true
@@ -52,8 +51,8 @@ class HistoryViewModel: ObservableObject {
         isLoadingMore = true
 
         do {
-            let result = try await GraphQLClient.shared.fetchProductHistory(after: cursor)
-            historyItems.append(contentsOf: result.historyItems)
+            let result = try await GraphQLClient.shared.fetchFavoriteProducts(after: cursor)
+            products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage
             endCursor = result.pageInfo.endCursor
             // Clear error on successful fetch
@@ -69,21 +68,43 @@ class HistoryViewModel: ObservableObject {
         hasLoadedInitially = false
         endCursor = nil
         hasNextPage = false
-        historyItems = []
+        products = []
         errorMessage = nil
-        await fetchHistory()
+        await fetchFavorites()
     }
 
-    func removeHistoryItem(_ historyId: Int) async {
+    func addFavorite(productCode: Int) async {
         do {
-            let result = try await GraphQLClient.shared.removeProductHistoryItem(historyId: historyId)
+            let result = try await GraphQLClient.shared.addFavoriteProduct(productCode: productCode)
             if result.success {
-                historyItems.removeAll { $0.id == historyId }
+                await refresh()
             } else {
                 errorMessage = result.message
             }
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeFavorite(productCode: Int) async {
+        do {
+            let result = try await GraphQLClient.shared.removeFavoriteProduct(productCode: productCode)
+            if result.success {
+                products.removeAll { $0.id == productCode }
+            } else {
+                errorMessage = result.message
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func isProductFavorited(productCode: Int) async -> Bool {
+        do {
+            return try await GraphQLClient.shared.isProductFavoritedByMe(productCode: productCode)
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
         }
     }
 }

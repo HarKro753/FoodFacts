@@ -11,6 +11,8 @@ import Combine
 
 @MainActor
 class SearchViewModel: ObservableObject {
+    static let shared = SearchViewModel()
+
     @Published var products: [Product] = []
     @Published var searchText = ""
     @Published var isSearching = false
@@ -21,7 +23,7 @@ class SearchViewModel: ObservableObject {
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
 
-    init() {
+    private init() {
         // Debounce search text changes
         $searchText
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
@@ -49,12 +51,16 @@ class SearchViewModel: ObservableObject {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             products = []
             errorMessage = nil
+            isSearching = false
             return
         }
 
+        // Set loading state and clear products immediately before Task starts
+        isSearching = true
+        errorMessage = nil
+        products = []
+
         searchTask = Task {
-            isSearching = true
-            errorMessage = nil
 
             do {
                 let result = try await GraphQLClient.shared.fetchProducts(after: nil, searchQuery: query)
