@@ -26,7 +26,11 @@ struct ProductDetailNutritionRowItem: View {
                 return String(format: "%.0f", number)
             }
         }
-        return formatted.replacingOccurrences(of: #"\.?0+$"#, with: "", options: .regularExpression)
+        return formatted.replacingOccurrences(
+            of: #"\.?0+$"#,
+            with: "",
+            options: .regularExpression
+        )
     }
 
     var body: some View {
@@ -82,189 +86,11 @@ struct ProductDetailNutritionRowItem: View {
             .buttonStyle(.plain)
 
             if isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
-                    let sortedSections = ratingSections!.sorted {
-                        $0.minValue < $1.minValue
-                    }
-
-                    //MARK: Range visualization
-                    VStack(alignment: .leading, spacing: 0) {
-                        ZStack(alignment: .top) {
-                            GeometryReader { geometry in
-                                HStack(spacing: 2) {
-                                    ForEach(sortedSections.indices, id: \.self)
-                                    {
-                                        index in
-                                        let section = sortedSections[index]
-                                        let maxDisplayValue = min(
-                                            sortedSections.last!.maxValue,
-                                            currentValue * 3
-                                        )
-                                        let totalRange = max(
-                                            maxDisplayValue
-                                                - sortedSections.first!.minValue,
-                                            0.001
-                                        )
-                                        let sectionMin = section.minValue
-                                        let sectionMax = min(
-                                            section.maxValue,
-                                            maxDisplayValue
-                                        )
-                                        let sectionRange = max(
-                                            sectionMax - sectionMin,
-                                            0
-                                        )
-
-                                        let availableWidth =
-                                            geometry.size.width
-                                            - CGFloat(
-                                                (sortedSections.count - 1) * 2
-                                            )
-                                        let proportion =
-                                            sectionRange / totalRange
-                                        let width =
-                                            availableWidth
-                                            * CGFloat(proportion)
-
-                                        if width > 0 {
-                                            Rectangle()
-                                                .fill(section.color)
-                                                .frame(width: width)
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(height: 6)
-                            .cornerRadius(3)
-
-                            GeometryReader { geometry in
-                                let sortedSections =
-                                    ratingSections?.sorted {
-                                        $0.minValue < $1.minValue
-                                    } ?? []
-                                if !sortedSections.isEmpty {
-                                    let maxDisplayValue = min(
-                                        sortedSections.last!.maxValue,
-                                        currentValue * 3
-                                    )
-                                    let totalRange = max(
-                                        maxDisplayValue
-                                            - sortedSections.first!.minValue,
-                                        0.001
-                                    )
-
-                                    // Calculate available width accounting for gaps
-                                    let gapSize: CGFloat = 2
-                                    let totalGaps = CGFloat(sortedSections.count - 1) * gapSize
-                                    let availableWidth = geometry.size.width - totalGaps
-
-                                    // Calculate triangle position
-                                    let xPosition: CGFloat = {
-                                        var pos: CGFloat = 0
-                                        var found = false
-
-                                        for (_, section) in sortedSections.enumerated() {
-                                            let sectionMin = section.minValue
-                                            let sectionMax = min(section.maxValue, maxDisplayValue)
-                                            let sectionRange = max(sectionMax - sectionMin, 0)
-                                            let sectionWidth = availableWidth * CGFloat(sectionRange / totalRange)
-
-                                            if currentValue >= sectionMin && currentValue <= sectionMax && !found {
-                                                // Current value is in this section
-                                                let positionInSection = sectionRange > 0 ? (currentValue - sectionMin) / sectionRange : 0
-                                                pos += sectionWidth * CGFloat(positionInSection)
-                                                found = true
-                                                break
-                                            } else if currentValue > sectionMax {
-                                                // Current value is past this section
-                                                pos += sectionWidth + gapSize
-                                            }
-                                        }
-
-                                        // Clamp position to valid range
-                                        return min(max(pos, 0), geometry.size.width)
-                                    }()
-
-                                    Triangle()
-                                        .fill(color)
-                                        .frame(width: 10, height: 8)
-                                        .offset(
-                                            x: xPosition - 5,
-                                            y: -10
-                                        )
-                                }
-                            }
-                            .frame(height: 6)
-                        }
-                        .frame(height: 16)
-                        .padding(.top, 8)
-
-                        // Section boundary labels
-                        GeometryReader { geometry in
-                            let maxDisplayValue = min(
-                                sortedSections.last?.maxValue ?? 100,
-                                currentValue * 3
-                            )
-                            let totalRange = max(
-                                maxDisplayValue - sortedSections.first!.minValue,
-                                0.001
-                            )
-
-                            // Calculate available width accounting for gaps
-                            let gapSize: CGFloat = 2
-                            let totalGaps = CGFloat(sortedSections.count - 1) * gapSize
-                            let availableWidth = geometry.size.width - totalGaps
-
-                            // Pre-calculate boundary positions
-                            let boundaryPositions: [(value: Double, position: CGFloat)] = {
-                                var positions: [(Double, CGFloat)] = []
-                                var cumulativeX: CGFloat = 0
-
-                                for (index, section) in sortedSections.enumerated() {
-                                    let secMin = section.minValue
-                                    let secMax = min(section.maxValue, maxDisplayValue)
-                                    let secRange = max(secMax - secMin, 0)
-                                    let secWidth = availableWidth * CGFloat(secRange / totalRange)
-
-                                    if index < sortedSections.count - 1 {
-                                        let nextMin = sortedSections[index + 1].minValue
-                                        if nextMin <= maxDisplayValue {
-                                            positions.append((nextMin, cumulativeX + secWidth))
-                                        }
-                                    }
-
-                                    cumulativeX += secWidth + gapSize
-                                }
-
-                                return positions
-                            }()
-
-                            ZStack(alignment: .topLeading) {
-                                // First label (minimum)
-                                Text(formatValue(sortedSections.first?.minValue ?? 0))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .offset(x: 0, y: 0)
-
-                                // Section boundary labels
-                                ForEach(Array(boundaryPositions.enumerated()), id: \.offset) { _, boundary in
-                                    Text(formatValue(boundary.value))
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                        .offset(x: boundary.position - 10, y: 0)
-                                }
-
-                                // Last label (maximum)
-                                Text(formatValue(maxDisplayValue))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .offset(x: geometry.size.width - 20, y: 0)
-                            }
-                        }
-                        .frame(height: 12)
-
-                    }
-                }
+                RatingRangeView(
+                    ratingSections: ratingSections!,
+                    currentValue: currentValue,
+                    indicatorColor: color
+                )
                 .padding(.leading, 48)
                 .padding(.trailing, 16)
                 .padding(.top, 4)
@@ -326,7 +152,7 @@ struct Triangle: Shape {
                 RatingSection(
                     rating: "BAD",
                     minValue: 1.5,
-                    maxValue: 100,
+                    maxValue: 6,
                     description: "High salt"
                 ),
             ],
@@ -339,7 +165,33 @@ struct Triangle: Shape {
             trait: "Energy",
             traitDescription: "Moderate calorie",
             amount: "490kcal",
-            color: .orange
+            color: .orange,
+            ratingSections: [
+                RatingSection(
+                    rating: "VERY_GOOD",
+                    minValue: 0,
+                    maxValue: 0.3,
+                    description: "Very low salt"
+                ),
+                RatingSection(
+                    rating: "GOOD",
+                    minValue: 0.3,
+                    maxValue: 0.9,
+                    description: "Low salt"
+                ),
+                RatingSection(
+                    rating: "MEDIUM",
+                    minValue: 0.9,
+                    maxValue: 1.5,
+                    description: "Moderate salt"
+                ),
+                RatingSection(
+                    rating: "BAD",
+                    minValue: 1.5,
+                    maxValue: 100,
+                    description: "High salt"
+                ),
+            ]
         )
 
         // Bad rating
