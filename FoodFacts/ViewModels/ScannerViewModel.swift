@@ -10,29 +10,48 @@ import Combine
 
 @MainActor
 class ScannerViewModel: ObservableObject {
+    @Published var scannedProduct: Product?
+    @Published var isFetchingProduct = false
     @Published var isAddingToHistory = false
     @Published var errorMessage: String?
 
-    /// Adds a scanned product to the user's history
-    func addScannedProductToHistory(productCode: String) async {
-        // Convert barcode string to Int
+    /// Fetches product details and adds it to history when a barcode is scanned
+    func handleScannedBarcode(productCode: String) async {
         guard let code = Int(productCode) else {
             errorMessage = "Invalid product code"
             return
         }
 
-        isAddingToHistory = true
+        isFetchingProduct = true
         errorMessage = nil
 
         do {
-            _ = try await GraphQLClient.shared.addProductHistoryItem(productCode: code)
-            // Successfully added to history
-            print("Product \(code) added to history")
+            // Fetch product details
+            let product = try await GraphQLClient.shared.fetchProductByCode(code: productCode)
+
+            if let product = product {
+                scannedProduct = product
+
+                // Add to history
+                isAddingToHistory = true
+                _ = try await GraphQLClient.shared.addProductHistoryItem(productCode: code)
+                isAddingToHistory = false
+
+                print("Product \(code) fetched and added to history")
+            } else {
+                errorMessage = "Product not found"
+            }
         } catch {
             errorMessage = error.localizedDescription
-            print("Error adding product to history: \(error)")
+            print("Error handling scanned barcode: \(error)")
         }
 
-        isAddingToHistory = false
+        isFetchingProduct = false
+    }
+
+    /// Clears the scanned product state
+    func clearScannedProduct() {
+        scannedProduct = nil
+        errorMessage = nil
     }
 }

@@ -13,6 +13,10 @@ struct ProductsQueryResponse: Decodable {
     let products: ProductsData
 }
 
+struct ProductByCodeResponse: Decodable {
+    let productByCode: ProductNode?
+}
+
 struct ProductsData: Decodable {
     let nodes: [ProductNode]
     let pageInfo: PageInfo
@@ -143,6 +147,64 @@ extension GraphQLClient {
         return ProductsResult(
             products: products,
             pageInfo: response.products.pageInfo
+        )
+    }
+
+    func fetchProductByCode(code: String) async throws -> Product? {
+        let queryString = """
+            query ProductByCode {
+                productByCode(code: "\(code)") {
+                    code
+                    productName
+                    productBrand
+                    imageUrl
+                    normalizedNutriScore
+                    positiveNutrientRatings {
+                        nutrientType
+                        name
+                        value
+                        unit
+                        rating
+                        text
+                        ratingSections {
+                            rating
+                            minValue
+                            maxValue
+                            description
+                        }
+                    }
+                    negativeNutrientRatings {
+                        nutrientType
+                        name
+                        value
+                        unit
+                        rating
+                        text
+                        ratingSections {
+                            rating
+                            minValue
+                            maxValue
+                            description
+                        }
+                    }
+                }
+            }
+            """
+
+        let response: ProductByCodeResponse = try await execute(query: queryString)
+
+        guard let node = response.productByCode else {
+            return nil
+        }
+
+        return Product(
+            code: node.code,
+            name: node.productName,
+            brand: node.productBrand,
+            imageUrl: node.imageUrl,
+            nutriScore: node.normalizedNutriScore,
+            positiveNutrientRatings: node.positiveNutrientRatings,
+            negativeNutrientRatings: node.negativeNutrientRatings
         )
     }
 }

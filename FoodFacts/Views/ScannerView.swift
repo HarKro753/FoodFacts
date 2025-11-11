@@ -29,10 +29,16 @@ struct ScannerView: View {
                 if let barcode = detectedBarcode {
                     VStack {
                         Spacer()
-                        BarcodeDetectedView(barcode: barcode, onDismiss: {
-                            detectedBarcode = nil
-                            cameraManager.startScanning()
-                        })
+                        BarcodeDetectedView(
+                            barcode: barcode,
+                            product: viewModel.scannedProduct,
+                            isLoading: viewModel.isFetchingProduct,
+                            onDismiss: {
+                                detectedBarcode = nil
+                                viewModel.clearScannedProduct()
+                                cameraManager.startScanning()
+                            }
+                        )
                         Spacer()
                             .frame(height: 80)
                     }
@@ -58,9 +64,9 @@ struct ScannerView: View {
                     withAnimation {
                         detectedBarcode = barcode
                     }
-                    // Add scanned product to history
+                    // Fetch product and add to history
                     Task {
-                        await viewModel.addScannedProductToHistory(productCode: barcode)
+                        await viewModel.handleScannedBarcode(productCode: barcode)
                     }
                 }
             }
@@ -197,25 +203,60 @@ struct CameraPreview: UIViewRepresentable {
 // MARK: - Barcode Detected View Component
 struct BarcodeDetectedView: View {
     let barcode: String
+    let product: Product?
+    let isLoading: Bool
     let onDismiss: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.green)
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.white)
 
-            Text("Barcode Detected")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
+                Text("Loading Product...")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+            } else if let product = product {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.green)
 
-            Text(barcode)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.8))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.2))
-                .cornerRadius(8)
+                Text(product.name ?? "Product Found")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                if let brand = product.brand {
+                    Text(brand)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+
+                Text(barcode)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(8)
+            } else {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+
+                Text("Product Not Found")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Text(barcode)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(8)
+            }
 
             HStack(spacing: 12) {
                 Button {
@@ -230,16 +271,18 @@ struct BarcodeDetectedView: View {
                         .cornerRadius(10)
                 }
 
-                NavigationLink {
-//                    ProductDetail()
-                } label: {
-                    Text("View Product")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .cornerRadius(10)
+                if let product = product {
+                    NavigationLink {
+                        ProductDetail(product: product)
+                    } label: {
+                        Text("View Product")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
                 }
             }
             .padding(.top, 8)
