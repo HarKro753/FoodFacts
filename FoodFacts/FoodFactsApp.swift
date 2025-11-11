@@ -21,14 +21,6 @@ struct ContentView: View {
     @StateObject private var rankingViewModel = RankingViewModel()
     @StateObject private var alternativesViewModel = AlternativesViewModel()
 
-    private var isSimulator: Bool {
-        #if targetEnvironment(simulator)
-        return true
-        #else
-        return false
-        #endif
-    }
-
     var body: some View {
         TabView {
             Tab("Ranking", systemImage: "list.number") {
@@ -41,10 +33,8 @@ struct ContentView: View {
                     .environmentObject(historyViewModel)
             }
 
-            if !isSimulator {
-                Tab("Scanner", systemImage: "barcode.viewfinder") {
-                    ScannerView()
-                }
+            Tab("Scanner", systemImage: "barcode.viewfinder") {
+                ScannerView()
             }
 
             Tab("Alternativen", systemImage: "arrow.left.arrow.right") {

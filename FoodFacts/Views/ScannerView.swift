@@ -5,9 +5,9 @@
 //  Created by Harro Krog on 08.11.25.
 //
 
-import SwiftUI
 import AVFoundation
 import Combine
+import SwiftUI
 
 // MARK: - Scanner View
 struct ScannerView: View {
@@ -15,6 +15,7 @@ struct ScannerView: View {
     @StateObject private var cameraManager = CameraManager()
     @State private var detectedBarcode: String?
     @State private var isFlashOn = false
+    @State private var showProductDetail = false
 
     var body: some View {
         NavigationStack {
@@ -25,25 +26,6 @@ struct ScannerView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray, lineWidth: 2)
                     .frame(width: 280, height: 200)
-
-                if let barcode = detectedBarcode {
-                    VStack {
-                        Spacer()
-                        BarcodeDetectedView(
-                            barcode: barcode,
-                            product: viewModel.scannedProduct,
-                            isLoading: viewModel.isFetchingProduct,
-                            onDismiss: {
-                                detectedBarcode = nil
-                                viewModel.clearScannedProduct()
-                                cameraManager.startScanning()
-                            }
-                        )
-                        Spacer()
-                            .frame(height: 80)
-                    }
-                    .transition(.scale.combined(with: .opacity))
-                }
             }
             .navigationTitle("Scanner")
             .navigationBarTitleDisplayMode(.inline)
@@ -53,27 +35,53 @@ struct ScannerView: View {
                         isFlashOn.toggle()
                         cameraManager.toggleFlash(isFlashOn)
                     } label: {
-                        Image(systemName: isFlashOn ? "bolt.fill" : "bolt.slash.fill")
-                            .foregroundColor(.white)
+                        Image(
+                            systemName: isFlashOn
+                                ? "bolt.fill" : "bolt.slash.fill"
+                        )
+                        .foregroundColor(.white)
                     }
                 }
             }
             .onAppear {
                 cameraManager.requestPermission()
                 cameraManager.onBarcodeDetected = { barcode in
-                    withAnimation {
+                    // Only fetch if it's a new barcode
+                    if detectedBarcode != barcode {
                         detectedBarcode = barcode
-                    }
-                    // Fetch product and add to history
-                    Task {
-                        await viewModel.handleScannedBarcode(productCode: barcode)
+                        // Fetch product and add to history
+                        Task {
+                            await viewModel.handleScannedBarcode(
+                                productCode: barcode
+                            )
+                            if viewModel.scannedProduct != nil {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showProductDetail = true
+                                }
+                            }
+                        }
                     }
                 }
             }
             .onDisappear {
                 cameraManager.stopSession()
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .sheet(
+                isPresented: $showProductDetail,
+                onDismiss: {
+                    // Clear the scanned product when sheet is dismissed
+                    viewModel.clearScannedProduct()
+                    detectedBarcode = nil
+                }
+            ) {
+                if let product = viewModel.scannedProduct {
+                    ProductDetailSheet(product: product)
+                }
+            }
+            .alert(
+                "Error",
+                isPresented: .constant(viewModel.errorMessage != nil)
+            ) {
                 Button("OK") {
                     viewModel.errorMessage = nil
                 }
@@ -86,213 +94,33 @@ struct ScannerView: View {
     }
 }
 
-// MARK: - Camera Manager
-class CameraManager: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsDelegate {
-    let session = AVCaptureSession()
-    private var captureDevice: AVCaptureDevice?
-    var onBarcodeDetected: ((String) -> Void)?
-
-    override init() {
-        super.init()
-        setupCamera()
-    }
-
-    func requestPermission() {
-        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-            if granted {
-                DispatchQueue.main.async {
-                    self?.startSession()
-                }
-            }
-        }
-    }
-
-    private func setupCamera() {
-        guard let device = AVCaptureDevice.default(for: .video) else { return }
-        captureDevice = device
-
-        do {
-            let input = try AVCaptureDeviceInput(device: device)
-
-            if session.canAddInput(input) {
-                session.addInput(input)
-            }
-
-            let output = AVCaptureMetadataOutput()
-
-            if session.canAddOutput(output) {
-                session.addOutput(output)
-                output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-                output.metadataObjectTypes = [.ean8, .ean13, .upce, .qr, .code128, .code39]
-            }
-        } catch {
-            print("Error setting up camera: \(error)")
-        }
-    }
-
-    func startSession() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.startRunning()
-        }
-    }
-
-    func stopSession() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.session.stopRunning()
-        }
-    }
-
-    func startScanning() {
-        startSession()
-    }
-
-    func toggleFlash(_ isOn: Bool) {
-        guard let device = captureDevice, device.hasTorch else { return }
-
-        do {
-            try device.lockForConfiguration()
-            device.torchMode = isOn ? .on : .off
-            device.unlockForConfiguration()
-        } catch {
-            print("Error toggling flash: \(error)")
-        }
-    }
-
-    nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        if let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-           let barcode = metadataObject.stringValue {
-            // Stop scanning temporarily after detection
-            Task { @MainActor in
-                stopSession()
-                onBarcodeDetected?(barcode)
-            }
-        }
-    }
-}
-
-// MARK: - Camera Preview
-struct CameraPreview: UIViewRepresentable {
-    let session: AVCaptureSession
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: .zero)
-        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-        previewLayer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer)
-
-        context.coordinator.previewLayer = previewLayer
-
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {
-        DispatchQueue.main.async {
-            context.coordinator.previewLayer?.frame = uiView.bounds
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    class Coordinator {
-        var previewLayer: AVCaptureVideoPreviewLayer?
-    }
-}
-
-// MARK: - Barcode Detected View Component
-struct BarcodeDetectedView: View {
-    let barcode: String
-    let product: Product?
-    let isLoading: Bool
-    let onDismiss: () -> Void
+// MARK: - Product Detail Sheet
+struct ProductDetailSheet: View {
+    let product: Product
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        VStack(spacing: 12) {
-            if isLoading {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .tint(.white)
+        NavigationStack {
+            ProductDetail(product: product)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
 
-                Text("Loading Product...")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-            } else if let product = product {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.green)
-
-                Text(product.name ?? "Product Found")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-
-                if let brand = product.brand {
-                    Text(brand)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-
-                Text(barcode)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-            } else {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 48))
-                    .foregroundColor(.orange)
-
-                Text("Product Not Found")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-
-                Text(barcode)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-            }
-
-            HStack(spacing: 12) {
-                Button {
-                    onDismiss()
-                } label: {
-                    Text("Scan Again")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.gray.opacity(0.6))
-                        .cornerRadius(10)
-                }
-
-                if let product = product {
-                    NavigationLink {
-                        ProductDetail(product: product)
-                    } label: {
-                        Text("View Product")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.blue)
-                            .cornerRadius(10)
+                        }
                     }
                 }
-            }
-            .padding(.top, 8)
         }
-        .padding(24)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(16)
+        .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 }
 
-#Preview {
+#Preview("Scanner") {
     ScannerView()
+}
+
+#Preview("Product Detail Sheet") {
+    ProductDetailSheet(product: Product.sampleProducts[0])
 }

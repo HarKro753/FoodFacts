@@ -26,6 +26,34 @@ struct ProductHistoryNode: Decodable {
     let id: Int
     let productCode: Int
     let scannedAt: String
+    let product: ProductNode?
+}
+
+struct ProductNode: Decodable {
+    let code: Int
+    let productName: String?
+    let productBrand: String?
+    let imageUrl: String?
+    let normalizedNutriScore: Int?
+    let positiveNutrientRatings: [NutrientRatingNode]
+    let negativeNutrientRatings: [NutrientRatingNode]
+}
+
+struct NutrientRatingNode: Decodable {
+    let nutrientType: String
+    let name: String
+    let value: Double
+    let unit: String
+    let rating: String
+    let text: String
+    let ratingSections: [RatingSectionNode]
+}
+
+struct RatingSectionNode: Decodable {
+    let rating: String
+    let minValue: Double
+    let maxValue: Double
+    let description: String
 }
 
 struct ProductHistoryData: Decodable {
@@ -85,6 +113,41 @@ extension GraphQLClient {
                         id
                         productCode
                         scannedAt
+                        product {
+                            code
+                            productName
+                            productBrand
+                            imageUrl
+                            normalizedNutriScore
+                            positiveNutrientRatings {
+                                nutrientType
+                                name
+                                value
+                                unit
+                                rating
+                                text
+                                ratingSections {
+                                    rating
+                                    minValue
+                                    maxValue
+                                    description
+                                }
+                            }
+                            negativeNutrientRatings {
+                                nutrientType
+                                name
+                                value
+                                unit
+                                rating
+                                text
+                                ratingSections {
+                                    rating
+                                    minValue
+                                    maxValue
+                                    description
+                                }
+                            }
+                        }
                     }
                     pageInfo {
                         hasNextPage
@@ -106,7 +169,51 @@ extension GraphQLClient {
                 id: node.id,
                 productCode: node.productCode,
                 scannedAt: node.scannedAt,
-                product: nil
+                product: node.product.map { productNode in
+                    Product(
+                        code: productNode.code,
+                        name: productNode.productName,
+                        brand: productNode.productBrand,
+                        imageUrl: productNode.imageUrl,
+                        nutriScore: productNode.normalizedNutriScore,
+                        positiveNutrientRatings: productNode.positiveNutrientRatings.map { rating in
+                            NutrientRating(
+                                nutrientType: rating.nutrientType,
+                                name: rating.name,
+                                value: rating.value,
+                                unit: rating.unit,
+                                rating: rating.rating,
+                                text: rating.text,
+                                ratingSections: rating.ratingSections.map { section in
+                                    RatingSection(
+                                        rating: section.rating,
+                                        minValue: section.minValue,
+                                        maxValue: section.maxValue,
+                                        description: section.description
+                                    )
+                                }
+                            )
+                        },
+                        negativeNutrientRatings: productNode.negativeNutrientRatings.map { rating in
+                            NutrientRating(
+                                nutrientType: rating.nutrientType,
+                                name: rating.name,
+                                value: rating.value,
+                                unit: rating.unit,
+                                rating: rating.rating,
+                                text: rating.text,
+                                ratingSections: rating.ratingSections.map { section in
+                                    RatingSection(
+                                        rating: section.rating,
+                                        minValue: section.minValue,
+                                        maxValue: section.maxValue,
+                                        description: section.description
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
             )
         }
 

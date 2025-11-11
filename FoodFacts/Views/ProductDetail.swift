@@ -29,82 +29,112 @@ struct ProductDetail: View {
 
     var body: some View {
         ScrollView {
+            ProductDetailSharedContent(
+                product: product,
+                alternatives: viewModel.alternatives,
+                showFullscreenImage: $showFullscreenImage,
+                showRatingDetails: $showRatingDetails
+            )
+        }
+        .background(Color(.systemBackground))
+        .navigationTitle("Product Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    // Share action
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
+        .sheet(isPresented: $showRatingDetails) {
+            RatingDetailsSheet()
+        }
+        .fullScreenCover(isPresented: $showFullscreenImage) {
+            FullscreenImageView(
+                imageUrl: product.imageUrl,
+                isPresented: $showFullscreenImage
+            )
+        }
+        .task {
+            await viewModel.fetchAlternatives()
+        }
+    }
+}
+
+// MARK: - Shared Product Detail Content (Reusable)
+struct ProductDetailSharedContent: View {
+    let product: Product
+    let alternatives: [Product]
+    @Binding var showFullscreenImage: Bool
+    @Binding var showRatingDetails: Bool
+
+    var body: some View {
+        VStack(spacing: 16) {
             VStack(spacing: 16) {
-                VStack(spacing: 16) {
-                    // Product Header
-                    HStack(alignment: .top, spacing: 20) {
-                        Group {
-                            if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
-                                NetworkImage(url: url) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                }
-                            } else {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 0)
-                                        .fill(Color.gray.opacity(0.2))
-                                    Image(systemName: "photo")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.white)
+                // Product Header
+                HStack(alignment: .top, spacing: 20) {
+                    Group {
+                        if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
+                            NetworkImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            }
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 0)
+                                    .fill(Color.gray.opacity(0.2))
+                                Image(systemName: "photo")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    .frame(width: 100, height: 120)
+                    .clipped()
+                    .onTapGesture {
+                        showFullscreenImage = true
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(product.name ?? "Unknown Product")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        Text(product.brand ?? "Unknown Brand")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .padding(.bottom, 12)
+
+                        HStack(alignment: .center, spacing: 8) {
+                            if product.nutriScore != nil {
+                                Circle()
+                                    .fill(product.ratingColor)
+                                    .frame(width: 12, height: 12)
+
+                                VStack(spacing: 2) {
+                                    Text("\(product.nutriScore!)/100")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                    Text(product.overallRatingText)
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
                             }
                         }
-                        .frame(width: 100, height: 120)
-                        .clipped()
-                        .onTapGesture {
-                            showFullscreenImage = true
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(product.name ?? "Unknown Product")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-
-                            Text(product.brand ?? "Unknown Brand")
-                                .font(.system(size: 15))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .padding(.bottom, 12)
-
-                            HStack(alignment: .center, spacing: 8) {
-                                
-
-                                if product.nutriScore != nil {
-                                    Circle()
-                                        .fill(product.ratingColor)
-                                        .frame(width: 12, height: 12)
-
-                                    VStack(spacing: 2) {
-                                        Text("\(product.nutriScore!)/100")
-                                            .font(.system(size: 15))
-                                            .foregroundStyle(.primary)
-                                            .lineLimit(1)
-                                        Text(product.overallRatingText)
-                                            .font(.system(size: 15))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                    }
-                                }
-                                
-                            }
-                        }
-                        .frame(height: 110, alignment: .top)
-
-                        Spacer()
                     }
-                    .padding(.horizontal, 16)
+                    .frame(height: 110, alignment: .top)
 
-                    // Tab Picker
-                    Picker("Kategorie", selection: $selectedTab) {
-                        ForEach(DetailTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
 
                 //MARK: Positive Traits
                 if !product.positiveNutrientRatings.isEmpty {
@@ -169,7 +199,7 @@ struct ProductDetail: View {
                 }
 
                 //MARK: Alternatives
-                if !viewModel.alternatives.isEmpty {
+                if !alternatives.isEmpty {
                     VStack(spacing: 0) {
                         HStack {
                             Text("Alternatives")
@@ -183,7 +213,7 @@ struct ProductDetail: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                ForEach(viewModel.alternatives) { alternativeProduct in
+                                ForEach(alternatives) { alternativeProduct in
                                     NavigationLink(destination: ProductDetail(product: alternativeProduct)) {
                                         AlternativeProductCard(product: alternativeProduct)
                                     }
@@ -196,74 +226,49 @@ struct ProductDetail: View {
                     .padding(.top, 8)
                 }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("We rate products based on nutritional value, ingredient quality, and processing level.")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("We rate products based on nutritional value, ingredient quality, and processing level.")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
 
-                        Button(action: {
-                            showRatingDetails = true
-                        }) {
-                            Text("See full details")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.blue)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(action: {
+                        showRatingDetails = true
+                    }) {
+                        Text("See full details")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.blue)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .background(Color(.white))
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+            }
+            .background(Color(.white))
 
-                //MARK: Options Section
+            //MARK: Options Section
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Options")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+
                 VStack(spacing: 0) {
-                    HStack {
-                        Text("Options")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemBackground))
+                    OptionButton(icon: "heart", title: "Add to favorites")
+                    Divider().padding(.leading, 52)
 
-                    VStack(spacing: 0) {
-                        OptionButton(icon: "heart", title: "Add to favorites")
-                        Divider().padding(.leading, 52)
+                    OptionButton(icon: "person.crop.circle", title: "Personal preferences")
+                    Divider().padding(.leading, 52)
 
-                        OptionButton(icon: "person.crop.circle", title: "Personal preferences")
-                        Divider().padding(.leading, 52)
-
-                        OptionButton(icon: "trash", title: "Remove from history")
-                    }
-                }
-                .padding(.top, 8)
-            }
-        }
-        .background(Color(.systemBackground))
-        .navigationTitle("Product Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    // Share action
-                }) {
-                    Image(systemName: "square.and.arrow.up")
+                    OptionButton(icon: "trash", title: "Remove from history")
                 }
             }
-        }
-        .sheet(isPresented: $showRatingDetails) {
-            RatingDetailsSheet()
-        }
-        .fullScreenCover(isPresented: $showFullscreenImage) {
-            FullscreenImageView(
-                imageUrl: product.imageUrl,
-                isPresented: $showFullscreenImage
-            )
-        }
-        .task {
-            await viewModel.fetchAlternatives()
+            .padding(.top, 8)
         }
     }
 }

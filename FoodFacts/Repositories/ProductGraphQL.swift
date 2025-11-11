@@ -14,11 +14,11 @@ struct ProductsQueryResponse: Decodable {
 }
 
 struct ProductByCodeResponse: Decodable {
-    let productByCode: ProductNode?
+    let productByCode: ProductQueryNode?
 }
 
 struct ProductsData: Decodable {
-    let nodes: [ProductNode]
+    let nodes: [ProductQueryNode]
     let pageInfo: PageInfo
 }
 
@@ -34,7 +34,7 @@ struct ProductsResult {
     let pageInfo: PageInfo
 }
 
-struct ProductNode: Decodable {
+struct ProductQueryNode: Decodable {
     let code: Int
     let productName: String?
     let productBrand: String?
