@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+
 struct NutrientRating: Codable, Identifiable {
     let id = UUID()
     let nutrientType: String

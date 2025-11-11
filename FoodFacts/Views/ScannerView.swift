@@ -11,6 +11,7 @@ import Combine
 
 // MARK: - Scanner View
 struct ScannerView: View {
+    @StateObject private var viewModel = ScannerViewModel()
     @StateObject private var cameraManager = CameraManager()
     @State private var detectedBarcode: String?
     @State private var isFlashOn = false
@@ -18,16 +19,13 @@ struct ScannerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Camera Preview - Full Screen
                 CameraPreview(session: cameraManager.session)
                     .ignoresSafeArea()
 
-                // Simple gray frame overlay
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray, lineWidth: 2)
                     .frame(width: 280, height: 200)
 
-                // Detected barcode overlay
                 if let barcode = detectedBarcode {
                     VStack {
                         Spacer()
@@ -60,10 +58,23 @@ struct ScannerView: View {
                     withAnimation {
                         detectedBarcode = barcode
                     }
+                    // Add scanned product to history
+                    Task {
+                        await viewModel.addScannedProductToHistory(productCode: barcode)
+                    }
                 }
             }
             .onDisappear {
                 cameraManager.stopSession()
+            }
+            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                Button("OK") {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                }
             }
         }
     }
