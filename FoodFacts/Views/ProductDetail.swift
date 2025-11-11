@@ -153,7 +153,7 @@ struct ProductDetailSharedContent: View {
                         .background(Color(.white))
 
                         ForEach(product.positiveNutrientRatings) { rating in
-                            AttributeRowItem(
+                            ProductDetailNutritionRowItem(
                                 icon: rating.icon,
                                 trait: rating.name,
                                 traitDescription: rating.text,
@@ -184,7 +184,7 @@ struct ProductDetailSharedContent: View {
                         .background(Color(.white))
 
                         ForEach(product.negativeNutrientRatings) { rating in
-                            AttributeRowItem(
+                            ProductDetailNutritionRowItem(
                                 icon: rating.icon,
                                 trait: rating.name,
                                 traitDescription: rating.text,
@@ -297,7 +297,7 @@ struct AlternativeProductCard: View {
                     }
                 }
             }
-            .frame(width: 80, height: 100)
+            .frame(width: 80, height: 120)
             .clipped()
 
             VStack(alignment: .leading, spacing: 4) {

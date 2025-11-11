@@ -62,7 +62,7 @@ private struct ProductCard: View {
                         }
                     } else {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 2)
                                 .fill(Color.gray.opacity(0.1))
                             Image(systemName: "photo")
                                 .font(.system(size: 20))
@@ -70,9 +70,9 @@ private struct ProductCard: View {
                         }
                     }
                 }
-                .frame(width: 80, height: 80)
+                .frame(width: 80, height: 120)
                 .padding(.bottom, 8)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 2))
 
                 // Badge
                 ZStack {
@@ -84,14 +84,14 @@ private struct ProductCard: View {
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
                 }
-                .offset(x: -32, y: 0)
+                .offset(x: -26, y: 0)
             }
 
             // Product Name
             Text(product.name ?? "Unknown")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 16))
                 .foregroundStyle(.primary)
-                .lineLimit(2)
+                .lineLimit(1)
                 .multilineTextAlignment(.center)
 
             // Product Brand
@@ -104,11 +104,11 @@ private struct ProductCard: View {
             HStack(spacing: 4) {
                 Circle()
                     .fill(product.ratingColor)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 9, height: 9)
 
-                Text("\(product.nutriScore ?? 0)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
+                Text("Mittelmaessig")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
             }
             .padding(.top, 4)
         }

@@ -7,7 +7,7 @@ import NetworkImage
 //
 import SwiftUI
 
-struct ListRowItem: View {
+struct ProductHistoryRowItem: View {
     let product: Product
     var timeAgo: String = "gestern"
 
@@ -34,7 +34,7 @@ struct ListRowItem: View {
                     }
                 }
             }
-            .frame(width: 100, height: 100)
+            .frame(width: 80, height: 120)
             .clipped()
 
             VStack(alignment: .leading, spacing: 4) {
@@ -92,13 +92,13 @@ struct ListRowItem: View {
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
             )
             NavigationLink(destination: Text("Hello")) {
-                ListRowItem(product: Product.sampleProducts[1])
+                ProductHistoryRowItem(product: Product.sampleProducts[1])
             }
             .listRowInsets(
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
             )
             NavigationLink(destination: Text("Hello")) {
-                ListRowItem(product: Product.sampleProducts[2])
+                ProductHistoryRowItem(product: Product.sampleProducts[2])
             }
             .listRowInsets(
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)

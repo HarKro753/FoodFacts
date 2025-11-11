@@ -65,7 +65,7 @@ struct HistoryView: View {
                         ) { index, historyItem in
                             if let product = historyItem.product {
                                 NavigationLink(destination: ProductDetail(product: product)) {
-                                    ListRowItem(
+                                    ProductHistoryRowItem(
                                         product: product,
                                         timeAgo: formatTimeAgo(historyItem.scannedAt)
                                     )

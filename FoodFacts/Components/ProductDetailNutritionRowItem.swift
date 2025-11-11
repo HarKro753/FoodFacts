@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct AttributeRowItem: View {
+struct ProductDetailNutritionRowItem: View {
     let icon: String
     let trait: String
     let traitDescription: String
@@ -298,7 +298,7 @@ struct Triangle: Shape {
 #Preview {
     VStack(spacing: 0) {
         // With rating sections
-        AttributeRowItem(
+        ProductDetailNutritionRowItem(
             icon: "cube.fill",
             trait: "Salt",
             traitDescription: "Low salt",
@@ -334,7 +334,7 @@ struct Triangle: Shape {
         )
 
         // Without rating sections
-        AttributeRowItem(
+        ProductDetailNutritionRowItem(
             icon: "bolt.fill",
             trait: "Energy",
             traitDescription: "Moderate calorie",
@@ -343,7 +343,7 @@ struct Triangle: Shape {
         )
 
         // Bad rating
-        AttributeRowItem(
+        ProductDetailNutritionRowItem(
             icon: "sparkle",
             trait: "Sugars",
             traitDescription: "High sugar",

@@ -80,22 +80,6 @@ struct AlternativesView: View {
                                         )
                                     }
                                     .buttonStyle(PlainButtonStyle())
-
-                                    // Scanned date
-                                    HStack {
-                                        Spacer()
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "clock")
-                                                .font(.system(size: 11))
-                                                .foregroundStyle(.secondary)
-
-                                            Text(
-                                                "Scanned: \(formatDate(comparison.scannedAt))"
-                                            )
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(.secondary)
-                                        }
-                                    }
                                 }
                             }
                             .listRowInsets(

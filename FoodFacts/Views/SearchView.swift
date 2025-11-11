@@ -17,7 +17,7 @@ struct SearchView: View {
                     // Empty state - show placeholder items
                     List {
                         ForEach(0..<8, id: \.self) { _ in
-                            ListRowItemPlaceholder()
+                            ProductItemPlaceholder()
                                 .listRowInsets(
                                     EdgeInsets(
                                         top: 0,
@@ -33,7 +33,7 @@ struct SearchView: View {
                     // Loading state - show placeholder items
                     List {
                         ForEach(0..<8, id: \.self) { _ in
-                            ListRowItemPlaceholder()
+                            ProductItemPlaceholder()
                                 .listRowInsets(
                                     EdgeInsets(
                                         top: 0,
@@ -90,7 +90,7 @@ struct SearchView: View {
                             NavigationLink {
                                 ProductDetail(product: product)
                             } label: {
-                                ListRowItem(product: product)
+                                ProductHistoryRowItem(product: product)
                             }
                             .listRowInsets(
                                 EdgeInsets(

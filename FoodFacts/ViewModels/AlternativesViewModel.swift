@@ -39,24 +39,15 @@ class AlternativesViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // Fetch history items
+            // Fetch history items (which already include product data)
             let historyResult = try await GraphQLClient.shared.fetchProductHistory(first: 20)
 
-            // For each history item, fetch the original product and its first alternative
+            // For each history item, use the embedded product and fetch its alternative
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
-                // Fetch original product
-                let originalResult = try await GraphQLClient.shared.fetchProducts(
-                    first: 1,
-                    searchQuery: nil,
-                    productCodeForAlternatives: nil
-                )
-
-                // Find the original product by code
-                let originalProduct = originalResult.products.first { $0.id == historyItem.productCode }
-
-                guard let original = originalProduct else { continue }
+                // Use the product already embedded in the history item
+                guard let original = historyItem.product else { continue }
 
                 // Fetch alternative product
                 let alternativeResult = try await GraphQLClient.shared.fetchProducts(
@@ -66,16 +57,14 @@ class AlternativesViewModel: ObservableObject {
 
                 let alternative = alternativeResult.products.first
 
-                // Only add if we have an alternative
-                if let alternative = alternative {
-                    let comparison = ProductComparison(
-                        historyId: historyItem.id,
-                        originalProduct: original,
-                        alternativeProduct: alternative,
-                        scannedAt: historyItem.scannedAt
-                    )
-                    newComparisons.append(comparison)
-                }
+                // Add comparison (with or without alternative)
+                let comparison = ProductComparison(
+                    historyId: historyItem.id,
+                    originalProduct: original,
+                    alternativeProduct: alternative,
+                    scannedAt: historyItem.scannedAt
+                )
+                newComparisons.append(comparison)
             }
 
             comparisons = newComparisons
@@ -101,27 +90,18 @@ class AlternativesViewModel: ObservableObject {
         isLoadingMore = true
 
         do {
-            // Fetch more history items
+            // Fetch more history items (which already include product data)
             let historyResult = try await GraphQLClient.shared.fetchProductHistory(
                 first: 20,
                 after: cursor
             )
 
-            // For each new history item, fetch the original product and its first alternative
+            // For each new history item, use the embedded product and fetch its alternative
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
-                // Fetch original product
-                let originalResult = try await GraphQLClient.shared.fetchProducts(
-                    first: 1,
-                    searchQuery: nil,
-                    productCodeForAlternatives: nil
-                )
-
-                // Find the original product by code
-                let originalProduct = originalResult.products.first { $0.id == historyItem.productCode }
-
-                guard let original = originalProduct else { continue }
+                // Use the product already embedded in the history item
+                guard let original = historyItem.product else { continue }
 
                 // Fetch alternative product
                 let alternativeResult = try await GraphQLClient.shared.fetchProducts(
@@ -131,16 +111,14 @@ class AlternativesViewModel: ObservableObject {
 
                 let alternative = alternativeResult.products.first
 
-                // Only add if we have an alternative
-                if let alternative = alternative {
-                    let comparison = ProductComparison(
-                        historyId: historyItem.id,
-                        originalProduct: original,
-                        alternativeProduct: alternative,
-                        scannedAt: historyItem.scannedAt
-                    )
-                    newComparisons.append(comparison)
-                }
+                // Add comparison (with or without alternative)
+                let comparison = ProductComparison(
+                    historyId: historyItem.id,
+                    originalProduct: original,
+                    alternativeProduct: alternative,
+                    scannedAt: historyItem.scannedAt
+                )
+                newComparisons.append(comparison)
             }
 
             comparisons.append(contentsOf: newComparisons)
