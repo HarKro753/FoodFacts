@@ -7,4 +7,5 @@ struct Category: Identifiable {
     let name: String
     let icon: String
     let color: Color
+    let imageName: String?
 }

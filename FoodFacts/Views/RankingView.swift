@@ -21,19 +21,6 @@ struct RankingView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    Picker("Kategorie", selection: $selectedCategory) {
-                        ForEach(ProductCategory.allCases, id: \.self) { category in
-                            Text(category.rawValue).tag(category)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowBackground(Color.clear)
-                }
-                .listRowInsets(
-                    EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0)
-                )
-
                 // Category List
                 Section {
                     if selectedCategory == .lebensmittel {
@@ -90,11 +77,18 @@ struct CategoryRowItem: View {
 
     var body: some View {
         HStack {
-            Image(systemName: category.icon)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
-                .foregroundStyle(category.color)
+            if let imageName = category.imageName {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+            } else {
+                Image(systemName: category.icon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                    .foregroundStyle(category.color)
+            }
             Text(category.name)
         }
     }
