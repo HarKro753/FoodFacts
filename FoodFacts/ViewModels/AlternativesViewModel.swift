@@ -5,18 +5,26 @@
 //  Created by Harro Krog on 11.11.25.
 //
 
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 // MARK: - Product Comparison Model
 
-struct ProductComparison: Identifiable {
+struct ProductComparison: Identifiable, Hashable {
     let id = UUID()
     let historyId: Int
     let originalProduct: Product
-    let alternativeProduct: Product?
+    let alternativeProducts: [Product]
     let scannedAt: String
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: ProductComparison, rhs: ProductComparison) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 // MARK: - Alternatives ViewModel
@@ -39,34 +47,32 @@ class AlternativesViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // Fetch history items (which already include product data)
-            let historyResult = try await GraphQLClient.shared.fetchProductHistory(first: 20)
+            let historyResult = try await GraphQLClient.shared
+                .fetchProductHistory(first: 20)
 
-            // For each history item, use the embedded product and fetch its alternative
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
-                // Use the product already embedded in the history item
                 guard let original = historyItem.product else { continue }
 
-                // Fetch alternative product - catch errors per-item
-                var alternative: Product? = nil
+                var alternatives: [Product] = []
                 do {
-                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
-                        first: 1,
-                        productCodeForAlternatives: historyItem.productCode
-                    )
-                    alternative = alternativeResult.products.first
+                    let alternativeResult = try await GraphQLClient.shared
+                        .fetchProducts(
+                            first: 10,
+                            productCodeForAlternatives: historyItem.productCode
+                        )
+                    alternatives = alternativeResult.products
                 } catch {
-                    // If alternative fetch fails, just continue without alternative
-                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                    print(
+                        "Failed to fetch alternative for \(historyItem.productCode): \(error)"
+                    )
                 }
 
-                // Add comparison (with or without alternative)
                 let comparison = ProductComparison(
                     historyId: historyItem.id,
                     originalProduct: original,
-                    alternativeProduct: alternative,
+                    alternativeProducts: alternatives,
                     scannedAt: historyItem.scannedAt
                 )
                 newComparisons.append(comparison)
@@ -76,10 +82,8 @@ class AlternativesViewModel: ObservableObject {
             hasNextPage = historyResult.pageInfo.hasNextPage
             endCursor = historyResult.pageInfo.endCursor
             hasLoadedInitially = true
-            // Clear error on successful fetch, even if no alternatives found
             errorMessage = nil
         } catch {
-            // Ignore cancellation errors (happens when user navigates away or refreshes again)
             if error is CancellationError {
                 return
             }
@@ -94,42 +98,43 @@ class AlternativesViewModel: ObservableObject {
     }
 
     func loadMore() async {
-        guard !isLoadingMore, hasNextPage, let cursor = endCursor else { return }
+        guard !isLoadingMore, hasNextPage, let cursor = endCursor else {
+            return
+        }
 
         isLoadingMore = true
 
         do {
-            // Fetch more history items (which already include product data)
-            let historyResult = try await GraphQLClient.shared.fetchProductHistory(
-                first: 20,
-                after: cursor
-            )
+            let historyResult = try await GraphQLClient.shared
+                .fetchProductHistory(
+                    first: 20,
+                    after: cursor
+                )
 
-            // For each new history item, use the embedded product and fetch its alternative
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
-                // Use the product already embedded in the history item
                 guard let original = historyItem.product else { continue }
 
-                // Fetch alternative product - catch errors per-item
-                var alternative: Product? = nil
+                var alternatives: [Product] = []
                 do {
-                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
-                        first: 1,
-                        productCodeForAlternatives: historyItem.productCode
-                    )
-                    alternative = alternativeResult.products.first
+                    let alternativeResult = try await GraphQLClient.shared
+                        .fetchProducts(
+                            first: 10,
+                            countryId: 9,
+                            productCodeForAlternatives: historyItem.productCode
+                        )
+                    alternatives = alternativeResult.products
                 } catch {
-                    // If alternative fetch fails, just continue without alternative
-                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                    print(
+                        "Failed to fetch alternative for \(historyItem.productCode): \(error)"
+                    )
                 }
 
-                // Add comparison (with or without alternative)
                 let comparison = ProductComparison(
                     historyId: historyItem.id,
                     originalProduct: original,
-                    alternativeProduct: alternative,
+                    alternativeProducts: alternatives,
                     scannedAt: historyItem.scannedAt
                 )
                 newComparisons.append(comparison)
@@ -138,7 +143,6 @@ class AlternativesViewModel: ObservableObject {
             comparisons.append(contentsOf: newComparisons)
             hasNextPage = historyResult.pageInfo.hasNextPage
             endCursor = historyResult.pageInfo.endCursor
-            // Clear error on successful fetch
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -151,34 +155,32 @@ class AlternativesViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // Fetch history items (which already include product data)
-            let historyResult = try await GraphQLClient.shared.fetchProductHistory(first: 20)
+            let historyResult = try await GraphQLClient.shared
+                .fetchProductHistory(first: 20)
 
-            // For each history item, use the embedded product and fetch its alternative
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
-                // Use the product already embedded in the history item
                 guard let original = historyItem.product else { continue }
 
-                // Fetch alternative product - catch errors per-item
-                var alternative: Product? = nil
+                var alternatives: [Product] = []
                 do {
-                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
-                        first: 1,
-                        productCodeForAlternatives: historyItem.productCode
-                    )
-                    alternative = alternativeResult.products.first
+                    let alternativeResult = try await GraphQLClient.shared
+                        .fetchProducts(
+                            first: 10,
+                            productCodeForAlternatives: historyItem.productCode
+                        )
+                    alternatives = alternativeResult.products
                 } catch {
-                    // If alternative fetch fails, just continue without alternative
-                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                    print(
+                        "Failed to fetch alternative for \(historyItem.productCode): \(error)"
+                    )
                 }
 
-                // Add comparison (with or without alternative)
                 let comparison = ProductComparison(
                     historyId: historyItem.id,
                     originalProduct: original,
-                    alternativeProduct: alternative,
+                    alternativeProducts: alternatives,
                     scannedAt: historyItem.scannedAt
                 )
                 newComparisons.append(comparison)

@@ -5,9 +5,9 @@
 //  Created by Harro Krog on 10.11.25.
 //
 
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 @MainActor
 class ProductRankingViewModel: ObservableObject {
@@ -29,7 +29,12 @@ class ProductRankingViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProducts(first: 20, categoryId: categoryId, sortAscending: true)
+            let result = try await GraphQLClient.shared.fetchProducts(
+                first: 20,
+                categoryId: categoryId,
+                countryId: 9,
+                sortAscending: true
+            )
             products = result.products
             errorMessage = nil
             hasLoadedInitially = true
@@ -46,7 +51,12 @@ class ProductRankingViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProducts(first: 20, categoryId: categoryId, sortAscending: true)
+            let result = try await GraphQLClient.shared.fetchProducts(
+                first: 20,
+                categoryId: categoryId,
+                countryId: 9,
+                sortAscending: true
+            )
             products = result.products
             errorMessage = nil
         } catch {

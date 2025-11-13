@@ -52,6 +52,7 @@ extension GraphQLClient {
         first: Int = 20,
         after: String? = nil,
         categoryId: Int? = nil,
+        countryId: Int? = nil,
         sortAscending: Bool? = nil,
         searchQuery: String? = nil,
         productCodeForAlternatives: Int? = nil
@@ -64,6 +65,9 @@ extension GraphQLClient {
         var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
+        }
+        if let countryId = countryId {
+            filterParams += ", countryId: \(countryId)"
         }
         if let productCode = productCodeForAlternatives {
             filterParams += ", productIdForAlternatives: \(productCode)"

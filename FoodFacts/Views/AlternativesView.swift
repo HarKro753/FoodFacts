@@ -67,7 +67,8 @@ struct AlternativesView: View {
                             Array(viewModel.comparisons.enumerated()),
                             id: \.element.id
                         ) { index, comparison in
-                            if let alternative = comparison.alternativeProduct {
+                            if !comparison.alternativeProducts.isEmpty,
+                               let topAlternative = comparison.alternativeProducts.first {
                                 HStack(spacing: 0) {
                                     // Original Product (with X badge) - No chevron
                                     Button {
@@ -91,11 +92,11 @@ struct AlternativesView: View {
 
                                     // Alternative Product (with checkmark badge) - With chevron
                                     Button {
-                                        navigationPath.append(alternative)
+                                        navigationPath.append(comparison)
                                     } label: {
                                         HStack {
                                             ProductCard(
-                                                product: alternative,
+                                                product: topAlternative,
                                                 badgeIcon: "checkmark",
                                                 badgeColor: .green
                                             )
@@ -154,6 +155,12 @@ struct AlternativesView: View {
             .navigationDestination(for: Product.self) { product in
                 ProductDetail(product: product)
             }
+            .navigationDestination(for: ProductComparison.self) { comparison in
+                AlternativeProductsList(
+                    originalProduct: comparison.originalProduct,
+                    alternatives: comparison.alternativeProducts
+                )
+            }
             .task {
                 await viewModel.fetchAlternatives()
             }
@@ -169,6 +176,59 @@ struct AlternativesView: View {
             return displayFormatter.string(from: date)
         }
         return dateString
+    }
+}
+
+// MARK: - Alternatives Product List
+
+struct AlternativeProductsList: View {
+    let originalProduct: Product
+    let alternatives: [Product]
+
+    var body: some View {
+        Group {
+            if alternatives.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+
+                    Text("No alternatives found")
+                        .font(.headline)
+                }
+            } else {
+                List {
+                    ForEach(Array(alternatives.enumerated()), id: \.element.id) { index, product in
+                        NavigationLink {
+                            ProductDetail(product: product)
+                        } label: {
+                            ListRankItem(
+                                rank: index + 1,
+                                product: product
+                            )
+                        }
+                        .listRowInsets(
+                            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+                        )
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+        .navigationTitle("Alternativen")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 2) {
+                    Text("Alternativen zu")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(originalProduct.name ?? "Unknown Product")
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+            }
+        }
     }
 }
 

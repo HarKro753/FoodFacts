@@ -5,9 +5,9 @@
 //  Created by Harro Krog on 10.11.25.
 //
 
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 @MainActor
 class ProductDetailViewModel: ObservableObject {
@@ -26,7 +26,10 @@ class ProductDetailViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await GraphQLClient.shared.fetchProducts(productCodeForAlternatives: productCode)
+            let result = try await GraphQLClient.shared.fetchProducts(
+                countryId: 9,
+                productCodeForAlternatives: productCode
+            )
             alternatives = result.products
             errorMessage = nil
         } catch {
