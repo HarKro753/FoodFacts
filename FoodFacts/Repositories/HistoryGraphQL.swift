@@ -37,6 +37,7 @@ struct ProductNode: Decodable {
     let normalizedNutriScore: Int?
     let positiveNutrientRatings: [NutrientRatingNode]
     let negativeNutrientRatings: [NutrientRatingNode]
+    let additivesRatings: AdditiveRatingNode?
 }
 
 struct NutrientRatingNode: Decodable {
@@ -46,7 +47,7 @@ struct NutrientRatingNode: Decodable {
     let unit: String
     let rating: String
     let text: String
-    let ratingSections: [RatingSectionNode]
+    let ratingSections: [RatingSectionNode]?
 }
 
 struct RatingSectionNode: Decodable {
@@ -54,6 +55,40 @@ struct RatingSectionNode: Decodable {
     let minValue: Double
     let maxValue: Double
     let description: String
+}
+
+struct AdditiveRatingNode: Decodable {
+    let rating: String
+    let description: String
+    let numberOfAdditives: Int
+    let additives: [AdditiveNode]
+}
+
+struct AdditiveNode: Decodable {
+    let id: Int
+    let name: String
+    let description: String?
+    let risk: String?
+    let additiveTypeId: Int?
+    let additiveType: AdditiveTypeNode?
+    let additiveHealthRisks: [AdditiveHealthRiskRelationNode]?
+}
+
+struct AdditiveTypeNode: Decodable {
+    let id: Int
+    let name: String
+    let description: String?
+}
+
+struct AdditiveHealthRiskRelationNode: Decodable {
+    let additiveId: Int
+    let healthRiskId: Int
+    let healthRisk: HealthRiskNode
+}
+
+struct HealthRiskNode: Decodable {
+    let id: Int
+    let name: String
 }
 
 struct ProductHistoryData: Decodable {
@@ -147,6 +182,31 @@ extension GraphQLClient {
                                     description
                                 }
                             }
+                            additivesRatings {
+                                rating
+                                description
+                                numberOfAdditives
+                                additives {
+                                    id
+                                    name
+                                    description
+                                    risk
+                                    additiveTypeId
+                                    additiveType {
+                                        id
+                                        name
+                                        description
+                                    }
+                                    additiveHealthRisks {
+                                        additiveId
+                                        healthRiskId
+                                        healthRisk {
+                                            id
+                                            name
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     pageInfo {
@@ -184,7 +244,7 @@ extension GraphQLClient {
                                 unit: rating.unit,
                                 rating: rating.rating,
                                 text: rating.text,
-                                ratingSections: rating.ratingSections.map { section in
+                                ratingSections: rating.ratingSections?.map { section in
                                     RatingSection(
                                         rating: section.rating,
                                         minValue: section.minValue,
@@ -202,12 +262,45 @@ extension GraphQLClient {
                                 unit: rating.unit,
                                 rating: rating.rating,
                                 text: rating.text,
-                                ratingSections: rating.ratingSections.map { section in
+                                ratingSections: rating.ratingSections?.map { section in
                                     RatingSection(
                                         rating: section.rating,
                                         minValue: section.minValue,
                                         maxValue: section.maxValue,
                                         description: section.description
+                                    )
+                                }
+                            )
+                        },
+                        additivesRatings: productNode.additivesRatings.map { additivesRating in
+                            AdditiveRating(
+                                rating: additivesRating.rating,
+                                description: additivesRating.description,
+                                numberOfAdditives: additivesRating.numberOfAdditives,
+                                additives: additivesRating.additives.map { additive in
+                                    Additive(
+                                        id: additive.id,
+                                        name: additive.name,
+                                        description: additive.description,
+                                        risk: additive.risk,
+                                        additiveTypeId: additive.additiveTypeId,
+                                        additiveType: additive.additiveType.map { type in
+                                            AdditiveType(
+                                                id: type.id,
+                                                name: type.name,
+                                                description: type.description
+                                            )
+                                        },
+                                        additiveHealthRisks: additive.additiveHealthRisks?.map { relation in
+                                            AdditiveHealthRiskRelation(
+                                                additiveId: relation.additiveId,
+                                                healthRiskId: relation.healthRiskId,
+                                                healthRisk: HealthRisk(
+                                                    id: relation.healthRisk.id,
+                                                    name: relation.healthRisk.name
+                                                )
+                                            )
+                                        }
                                     )
                                 }
                             )
@@ -232,8 +325,39 @@ extension GraphQLClient {
             mutation AddProductHistoryItem {
                 addProductHistoryItem(input: { productCode: \(productCode) }) {
                     id
-                    productCode
-                    scannedAt
+                    code
+                    productName
+                    productBrand
+                    imageUrl
+                    normalizedNutriScore
+                    positiveNutrientRatings {
+                        nutrientType
+                        name
+                        value
+                        unit
+                        rating
+                        text
+                        ratingSections {
+                        rating
+                        minValue
+                        maxValue
+                        description
+                        }
+                    }
+                    negativeNutrientRatings {
+                        nutrientType
+                        name
+                        value
+                        unit
+                        rating
+                        text
+                        ratingSections {
+                        rating
+                        minValue
+                        maxValue
+                        description
+                        }
+                    }                    
                 }
             }
             """

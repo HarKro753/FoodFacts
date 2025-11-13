@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - Product Models
 
-struct Product: Codable, Identifiable {
+struct Product: Codable, Identifiable, Hashable {
     let id: Int
     let name: String?
     let brand: String?
@@ -18,8 +18,8 @@ struct Product: Codable, Identifiable {
     let nutriScore: Int?
     let positiveNutrientRatings: [NutrientRating]
     let negativeNutrientRatings: [NutrientRating]
+    let additivesRatings: AdditiveRating?
 
-    // Initializer for GraphQL response (generic to work with any GraphQL Product type)
     init(
         code: Int,
         name: String?,
@@ -27,7 +27,8 @@ struct Product: Codable, Identifiable {
         imageUrl: String?,
         nutriScore: Int?,
         positiveNutrientRatings: [NutrientRating],
-        negativeNutrientRatings: [NutrientRating]
+        negativeNutrientRatings: [NutrientRating],
+        additivesRatings: AdditiveRating? = nil
     ) {
         self.id = code
         self.name = name
@@ -36,6 +37,7 @@ struct Product: Codable, Identifiable {
         self.nutriScore = nutriScore
         self.positiveNutrientRatings = positiveNutrientRatings
         self.negativeNutrientRatings = negativeNutrientRatings
+        self.additivesRatings = additivesRatings
     }
 
     var overallRatingText: String {

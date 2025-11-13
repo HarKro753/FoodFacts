@@ -86,12 +86,6 @@ struct ProductHistoryRowItem: View {
         Spacer()
         List {
             NavigationLink(destination: Text("Hello")) {
-                //                ListRowItem(product: Product.sampleProduct)
-            }
-            .listRowInsets(
-                EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
-            )
-            NavigationLink(destination: Text("Hello")) {
                 ProductHistoryRowItem(product: Product.sampleProducts[1])
             }
             .listRowInsets(

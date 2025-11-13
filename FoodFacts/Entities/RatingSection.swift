@@ -1,5 +1,5 @@
 import SwiftUI
-struct RatingSection: Codable {
+struct RatingSection: Codable, Hashable {
     let rating: String
     let minValue: Double
     let maxValue: Double

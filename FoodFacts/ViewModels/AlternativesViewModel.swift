@@ -49,13 +49,18 @@ class AlternativesViewModel: ObservableObject {
                 // Use the product already embedded in the history item
                 guard let original = historyItem.product else { continue }
 
-                // Fetch alternative product
-                let alternativeResult = try await GraphQLClient.shared.fetchProducts(
-                    first: 1,
-                    productCodeForAlternatives: historyItem.productCode
-                )
-
-                let alternative = alternativeResult.products.first
+                // Fetch alternative product - catch errors per-item
+                var alternative: Product? = nil
+                do {
+                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
+                        first: 1,
+                        productCodeForAlternatives: historyItem.productCode
+                    )
+                    alternative = alternativeResult.products.first
+                } catch {
+                    // If alternative fetch fails, just continue without alternative
+                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                }
 
                 // Add comparison (with or without alternative)
                 let comparison = ProductComparison(
@@ -74,6 +79,10 @@ class AlternativesViewModel: ObservableObject {
             // Clear error on successful fetch, even if no alternatives found
             errorMessage = nil
         } catch {
+            // Ignore cancellation errors (happens when user navigates away or refreshes again)
+            if error is CancellationError {
+                return
+            }
             errorMessage = error.localizedDescription
             comparisons = []
             hasNextPage = false
@@ -103,13 +112,18 @@ class AlternativesViewModel: ObservableObject {
                 // Use the product already embedded in the history item
                 guard let original = historyItem.product else { continue }
 
-                // Fetch alternative product
-                let alternativeResult = try await GraphQLClient.shared.fetchProducts(
-                    first: 1,
-                    productCodeForAlternatives: historyItem.productCode
-                )
-
-                let alternative = alternativeResult.products.first
+                // Fetch alternative product - catch errors per-item
+                var alternative: Product? = nil
+                do {
+                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
+                        first: 1,
+                        productCodeForAlternatives: historyItem.productCode
+                    )
+                    alternative = alternativeResult.products.first
+                } catch {
+                    // If alternative fetch fails, just continue without alternative
+                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                }
 
                 // Add comparison (with or without alternative)
                 let comparison = ProductComparison(

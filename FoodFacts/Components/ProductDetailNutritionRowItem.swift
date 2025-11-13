@@ -19,20 +19,6 @@ struct ProductDetailNutritionRowItem: View {
 
     @State private var isExpanded = false
 
-    private func formatValue(_ value: Double) -> String {
-        let formatted = String(format: "%.2f", value)
-        if let number = Double(formatted) {
-            if number.truncatingRemainder(dividingBy: 1) == 0 {
-                return String(format: "%.0f", number)
-            }
-        }
-        return formatted.replacingOccurrences(
-            of: #"\.?0+$"#,
-            with: "",
-            options: .regularExpression
-        )
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             Button(action: {
@@ -107,17 +93,6 @@ struct ProductDetailNutritionRowItem: View {
             Divider()
                 .padding(.leading, 52)
         }
-    }
-}
-
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
-        return path
     }
 }
 

@@ -42,6 +42,7 @@ struct ProductQueryNode: Decodable {
     let normalizedNutriScore: Int?
     let positiveNutrientRatings: [NutrientRating]
     let negativeNutrientRatings: [NutrientRating]
+    let additivesRatings: AdditiveRating?
 }
 
 // MARK: - GraphQL Client Extension
@@ -55,13 +56,11 @@ extension GraphQLClient {
         searchQuery: String? = nil,
         productCodeForAlternatives: Int? = nil
     ) async throws -> ProductsResult {
-        // Build pagination parameters
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
         }
 
-        // Build filter parameters
         var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
@@ -70,13 +69,11 @@ extension GraphQLClient {
             filterParams += ", productIdForAlternatives: \(productCode)"
         }
 
-        // Build where clause for search
         var whereClause = ""
         if let searchQuery = searchQuery {
             whereClause = ", where: { productName: { startsWith: \"\(searchQuery)\" } }"
         }
 
-        // Build order parameter
         var orderParam = ""
         if sortAscending == true {
             orderParam = ", order: [{ nutriScore: ASC }]"
@@ -187,6 +184,31 @@ extension GraphQLClient {
                             description
                         }
                     }
+                    additivesRatings {
+                        rating
+                        description
+                        numberOfAdditives
+                        additives {
+                            id
+                            name
+                            description
+                            risk
+                            additiveTypeId
+                            additiveType {
+                                id
+                                name
+                                description
+                            }
+                            additiveHealthRisks {
+                                additiveId
+                                healthRiskId
+                                healthRisk {
+                                    id
+                                    name
+                                }
+                            }
+                        }
+                    }
                 }
             }
             """
@@ -204,7 +226,8 @@ extension GraphQLClient {
             imageUrl: node.imageUrl,
             nutriScore: node.normalizedNutriScore,
             positiveNutrientRatings: node.positiveNutrientRatings,
-            negativeNutrientRatings: node.negativeNutrientRatings
+            negativeNutrientRatings: node.negativeNutrientRatings,
+            additivesRatings: node.additivesRatings
         )
     }
 }

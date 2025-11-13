@@ -35,6 +35,10 @@ class HistoryViewModel: ObservableObject {
             // Clear error on successful fetch, even if empty
             errorMessage = nil
         } catch {
+            // Ignore cancellation errors (happens when user navigates away or refreshes again)
+            if error is CancellationError {
+                return
+            }
             // Only set error if fetch actually failed
             errorMessage = error.localizedDescription
             historyItems = []
@@ -59,6 +63,11 @@ class HistoryViewModel: ObservableObject {
             // Clear error on successful fetch
             errorMessage = nil
         } catch {
+            // Ignore cancellation errors
+            if error is CancellationError {
+                isLoadingMore = false
+                return
+            }
             errorMessage = error.localizedDescription
         }
 

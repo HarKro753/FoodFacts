@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct NutrientRating: Codable, Identifiable {
+struct NutrientRating: Codable, Identifiable, Hashable {
     let id = UUID()
     let nutrientType: String
     let name: String
@@ -13,6 +13,26 @@ struct NutrientRating: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case nutrientType, name, value, unit, rating, text, ratingSections
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(nutrientType)
+        hasher.combine(name)
+        hasher.combine(value)
+        hasher.combine(unit)
+        hasher.combine(rating)
+        hasher.combine(text)
+        hasher.combine(ratingSections)
+    }
+
+    static func == (lhs: NutrientRating, rhs: NutrientRating) -> Bool {
+        lhs.nutrientType == rhs.nutrientType &&
+        lhs.name == rhs.name &&
+        lhs.value == rhs.value &&
+        lhs.unit == rhs.unit &&
+        lhs.rating == rhs.rating &&
+        lhs.text == rhs.text &&
+        lhs.ratingSections == rhs.ratingSections
     }
 
     var ratingScore: Int {
