@@ -65,12 +65,17 @@ class FavoritesViewModel: ObservableObject {
     }
 
     func refresh() async {
-        hasLoadedInitially = false
-        endCursor = nil
-        hasNextPage = false
-        products = []
         errorMessage = nil
-        await fetchFavorites()
+
+        do {
+            let result = try await GraphQLClient.shared.fetchFavoriteProducts()
+            products = result.products
+            hasNextPage = result.pageInfo.hasNextPage
+            endCursor = result.pageInfo.endCursor
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     func addFavorite(productCode: Int) async {

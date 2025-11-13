@@ -148,11 +148,48 @@ class AlternativesViewModel: ObservableObject {
     }
 
     func refresh() async {
-        hasLoadedInitially = false
-        endCursor = nil
-        hasNextPage = false
-        comparisons = []
         errorMessage = nil
-        await fetchAlternatives()
+
+        do {
+            // Fetch history items (which already include product data)
+            let historyResult = try await GraphQLClient.shared.fetchProductHistory(first: 20)
+
+            // For each history item, use the embedded product and fetch its alternative
+            var newComparisons: [ProductComparison] = []
+
+            for historyItem in historyResult.historyItems {
+                // Use the product already embedded in the history item
+                guard let original = historyItem.product else { continue }
+
+                // Fetch alternative product - catch errors per-item
+                var alternative: Product? = nil
+                do {
+                    let alternativeResult = try await GraphQLClient.shared.fetchProducts(
+                        first: 1,
+                        productCodeForAlternatives: historyItem.productCode
+                    )
+                    alternative = alternativeResult.products.first
+                } catch {
+                    // If alternative fetch fails, just continue without alternative
+                    print("Failed to fetch alternative for \(historyItem.productCode): \(error)")
+                }
+
+                // Add comparison (with or without alternative)
+                let comparison = ProductComparison(
+                    historyId: historyItem.id,
+                    originalProduct: original,
+                    alternativeProduct: alternative,
+                    scannedAt: historyItem.scannedAt
+                )
+                newComparisons.append(comparison)
+            }
+
+            comparisons = newComparisons
+            hasNextPage = historyResult.pageInfo.hasNextPage
+            endCursor = historyResult.pageInfo.endCursor
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

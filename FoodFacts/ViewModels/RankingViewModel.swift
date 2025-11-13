@@ -59,8 +59,24 @@ class RankingViewModel: ObservableObject {
     }
 
     func refresh() async {
-        hasLoadedInitially = false
-        categories = []
-        await fetchCategories()
+        errorMessage = nil
+
+        do {
+            let allCategories = try await GraphQLClient.shared.fetchCategories()
+            categories = allCategories
+                .filter { categoryStyles.keys.contains($0.id) }
+                .map { node in
+                    let style = categoryStyles[node.id] ?? CategoryStyle(icon: "square.grid.2x2", color: .gray)
+                    return Category(
+                        id: node.id,
+                        name: node.name,
+                        icon: style.icon,
+                        color: style.color
+                    )
+                }
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

@@ -75,12 +75,17 @@ class HistoryViewModel: ObservableObject {
     }
 
     func refresh() async {
-        hasLoadedInitially = false
-        endCursor = nil
-        hasNextPage = false
-        historyItems = []
         errorMessage = nil
-        await fetchHistory()
+
+        do {
+            let result = try await GraphQLClient.shared.fetchProductHistory()
+            historyItems = result.historyItems
+            hasNextPage = result.pageInfo.hasNextPage
+            endCursor = result.pageInfo.endCursor
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     func removeHistoryItem(_ historyId: Int) async {
