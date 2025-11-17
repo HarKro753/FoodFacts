@@ -15,7 +15,7 @@ struct ScannerView: View {
     @StateObject private var cameraManager = CameraManager()
     @State private var detectedBarcode: String?
     @State private var isFlashOn = false
-    @State private var showProductDetail = false
+    @State private var navigateToProduct = false
     @State private var isProcessingScan = false
 
     var body: some View {
@@ -30,6 +30,17 @@ struct ScannerView: View {
             }
             .navigationTitle("Scanner")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(isPresented: $navigateToProduct) {
+                if let product = viewModel.scannedProduct {
+                    ProductDetail(product: product)
+                        .onDisappear {
+                            viewModel.clearScannedProduct()
+                            detectedBarcode = nil
+                            isProcessingScan = false
+                            cameraManager.startSession()
+                        }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -50,25 +61,25 @@ struct ScannerView: View {
                     // Use DispatchQueue to defer the state update outside of the current view update cycle
                     DispatchQueue.main.async { [weak viewModel] in
                         // Prevent re-entrant calls and ignore if already showing product
-                        guard !self.isProcessingScan && !self.showProductDetail && self.detectedBarcode != barcode else {
+                        guard !self.isProcessingScan && !self.navigateToProduct && self.detectedBarcode != barcode else {
                             return
                         }
-                        
+
                         self.isProcessingScan = true
                         self.detectedBarcode = barcode
-                        
+
                         Task {
                             await viewModel?.handleScannedBarcode(
                                 productCode: barcode
                             )
-                            
+
                             await MainActor.run {
                                 if viewModel?.scannedProduct != nil && viewModel?.errorMessage == nil {
-                                    self.showProductDetail = true
+                                    self.navigateToProduct = true
                                 } else {
                                     self.detectedBarcode = nil
                                 }
-                                
+
                                 self.isProcessingScan = false
                             }
                         }
@@ -78,20 +89,7 @@ struct ScannerView: View {
             .onDisappear {
                 cameraManager.stopSession()
             }
-            .sheet(
-                isPresented: $showProductDetail,
-                onDismiss: {
-                    viewModel.clearScannedProduct()
-                    detectedBarcode = nil
-                    isProcessingScan = false
-                    cameraManager.startSession()
-                }
-            ) {
-                if let product = viewModel.scannedProduct {
-                    ProductDetailSheet(product: product)
-                }
-            }
-            .onChange(of: showProductDetail) { oldValue, newValue in
+            .onChange(of: navigateToProduct) { oldValue, newValue in
                 if newValue {
                     cameraManager.stopSession()
                 }
@@ -99,7 +97,7 @@ struct ScannerView: View {
             .alert(
                 "Error",
                 isPresented: Binding(
-                    get: { viewModel.errorMessage != nil && !showProductDetail },
+                    get: { viewModel.errorMessage != nil && !navigateToProduct },
                     set: { if !$0 { viewModel.errorMessage = nil } }
                 )
             ) {
@@ -117,33 +115,6 @@ struct ScannerView: View {
     }
 }
 
-// MARK: - Product Detail Sheet
-struct ProductDetailSheet: View {
-    let product: Product
-    @Environment(\.dismiss) var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ProductDetail(product: product)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
-
-                        }
-                    }
-                }
-        }
-        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-    }
-}
-
 #Preview("Scanner") {
     ScannerView()
-}
-
-#Preview("Product Detail Sheet") {
-    ProductDetailSheet(product: Product.sampleProducts[0])
 }
