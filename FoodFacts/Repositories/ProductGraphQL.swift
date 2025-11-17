@@ -53,6 +53,7 @@ extension GraphQLClient {
         after: String? = nil,
         categoryId: Int? = nil,
         countryId: Int? = nil,
+        foodGroup: Int? = nil,
         sortAscending: Bool? = nil,
         searchQuery: String? = nil,
         productCodeForAlternatives: Int? = nil
@@ -69,9 +70,13 @@ extension GraphQLClient {
         if let countryId = countryId {
             filterParams += ", countryId: \(countryId)"
         }
+        if let foodGroup = foodGroup {
+            filterParams += ", foodGroup: \(foodGroup)"
+        }
         if let productCode = productCodeForAlternatives {
             filterParams += ", productIdForAlternatives: \(productCode)"
         }
+        
 
         var whereClause = ""
         if let searchQuery = searchQuery {

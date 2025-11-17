@@ -21,7 +21,7 @@ struct RankingView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Category List
+                // Food Groups List
                 Section {
                     if selectedCategory == .lebensmittel {
                         if viewModel.isLoading {
@@ -31,7 +31,7 @@ struct RankingView: View {
                                 Spacer()
                             }
                         } else if let errorMessage = viewModel.errorMessage,
-                            viewModel.categories.isEmpty
+                            viewModel.foodGroups.isEmpty
                         {
                             VStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.triangle")
@@ -40,18 +40,18 @@ struct RankingView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                        } else if viewModel.categories.isEmpty {
-                            Text("No categories found")
+                        } else if viewModel.foodGroups.isEmpty {
+                            Text("No food groups found")
                                 .foregroundStyle(.secondary)
                         } else {
-                            ForEach(viewModel.categories) { category in
+                            ForEach(viewModel.foodGroups) { foodGroup in
                                 NavigationLink {
                                     ProductRankingList(
-                                        categoryId: category.id,
-                                        categoryName: category.name
+                                        foodGroupId: foodGroup.id,
+                                        foodGroupName: foodGroup.name
                                     )
                                 } label: {
-                                    CategoryRowItem(category: category)
+                                    FoodGroupRowItem(foodGroup: foodGroup)
                                 }
                             }
                         }
@@ -64,32 +64,24 @@ struct RankingView: View {
             }
             .navigationTitle("Ranking")
             .task {
-                await viewModel.fetchCategories()
+                await viewModel.fetchFoodGroups()
             }
         }
     }
 }
 
-//MARK: Categorie Row Item
+//MARK: Food Group Row Item
 
-struct CategoryRowItem: View {
-    let category: Category
+struct FoodGroupRowItem: View {
+    let foodGroup: FoodGroup
 
     var body: some View {
         HStack {
-            if let imageName = category.imageName {
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 32, height: 32)
-            } else {
-                Image(systemName: category.icon)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(category.color)
-            }
-            Text(category.name)
+            Image(foodGroup.icon)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 32, height: 32)
+            Text(foodGroup.name)
         }
     }
 }
@@ -100,15 +92,15 @@ struct CategoryRowItem: View {
 Die Liste welche geoefnfet wird wenn man clickt
 **/
 struct ProductRankingList: View {
-    let categoryId: Int
-    let categoryName: String
+    let foodGroupId: Int
+    let foodGroupName: String
 
     @StateObject private var viewModel: ProductRankingViewModel
 
-    init(categoryId: Int, categoryName: String) {
-        self.categoryId = categoryId
-        self.categoryName = categoryName
-        self._viewModel = StateObject(wrappedValue: ProductRankingViewModel(categoryId: categoryId))
+    init(foodGroupId: Int, foodGroupName: String) {
+        self.foodGroupId = foodGroupId
+        self.foodGroupName = foodGroupName
+        self._viewModel = StateObject(wrappedValue: ProductRankingViewModel(foodGroupId: foodGroupId))
     }
 
     var body: some View {
@@ -175,7 +167,7 @@ struct ProductRankingList: View {
                 }
             }
         }
-        .navigationTitle(categoryName)
+        .navigationTitle(foodGroupName)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.fetchProducts()

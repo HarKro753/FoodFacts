@@ -11,127 +11,96 @@ import Combine
 
 @MainActor
 class RankingViewModel: ObservableObject {
-    @Published var categories: [Category] = []
+    @Published var foodGroups: [FoodGroup] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     private var hasLoadedInitially = false
 
-    struct CategoryStyle {
-        let icon: String
+    struct FoodGroupStyle {
+        let imageName: String
         let color: Color
-        let imageName: String?
     }
 
-    private let categoryStyles: [Int: CategoryStyle] = [
-        4: CategoryStyle(icon: "leaf", color: .green, imageName: "Leaf Color Hand Drawn"), // Plant based foods and beverages
-        9: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Halloween Candy Color Hand Drawn"), // Snacks
-        1: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Pack Of Milk Color Hand Drawn"), // Dairies
-        2: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Meat Color Hand Drawn"), // Meats and their products
-        3: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cola Color Hand Drawn"), // Beverages and beverages preparations
-        6: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Soy Sauce Color Hand Drawn"), // Condiments
-        53: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cola Color Hand Drawn"), // Beverages
-        10: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Meal Color Hand Drawn"), // Meals
-        20: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Whole Fish Color Hand Drawn"), // Seafood
-        19: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Brownie Color Hand Drawn"), // Desserts
-        33: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Pancake Stack Color Hand Drawn"), // Breakfasts
-        31: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Hamburger Color Hand Drawn"), // Sandwiches
-        100: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Sugar Cube Color Hand Drawn"), // Sweeteners
-        74: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Wheat Color Hand Drawn"), // Farming products
-        261: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Halloween Candy Color Hand Drawn"), // Salted snacks
-        32: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Firm Tofu Color Hand Drawn"), // Meat alternatives
-        173: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Flour Color Hand Drawn"), // Cooking helpers
-        29: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Egg Color Hand Drawn"), // Fish and meat and eggs
-        64: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Peanut Butter Color Hand Drawn"), // Spreads
-        28: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Bento Color Hand Drawn"), // Appetizers sides
-        169: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Butter Color Hand Drawn"), // Fats
-        231: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Merry Pie Color Hand Drawn"), // Sweet pies
-        63: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "French Fries Color Hand Drawn"), // Chips and fries
-        8: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cinnamon Roll Color Hand Drawn"), // Baked goods
-        36: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Salad Color Hand Drawn"), // Salads
-        119: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Maple Syrup Color Hand Drawn"), // Syrups
-        86: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Gingerbread House Color Hand Drawn"), // Festive foods
-        1103: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Kawaii Taco Color Hand Drawn"), // Mexican dinner mixes
-        71: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Merry Pie Color Hand Drawn"), // Pies
-        282: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Food Cart Color Hand Drawn"), // Groceries
-        37: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Potato Color Hand Drawn"), // Fried potatoes
-        127: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Bread Crumbs Color Hand Drawn"), // Bread coverings
-        662: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Food Color Hand Drawn"), // Food
-        182: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Bento Color Hand Drawn"), // Meal kits
-        9492: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Spinach Color Hand Drawn"), // Vegetables prepared processed frozen
-        13798: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Meat Color Hand Drawn"), // Meat products
-        1559: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Brownie Color Hand Drawn"), // Десерт
-        9486: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Spinach Color Hand Drawn"), // Vegetables prepared processed shelf stable
-        375: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Halloween Candy Color Hand Drawn"), // Snack bar
-        490: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Dog Bowl Color Hand Drawn"), // Open Pet Food Facts
-        335: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "French Fries Color Hand Drawn"), // Chips
-        1641: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Dog Bowl Color Hand Drawn"), // Dog and cat food
-        1259: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Vegan Food Color Hand Drawn"), // Vegan products
-        266: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Raspberry Color Hand Drawn"), // Fruit snack
-        557: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Farfalle Color Hand Drawn"), // tagliolini
-        820: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Leaf Color Hand Drawn"), // Aliments d origine vegetale
-        6480: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Organic Food Color Hand Drawn"), // Produce
-        457: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Flour Color Hand Drawn"), // Baking
-        19709: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Avocado Color Hand Drawn"), // fruits legumes
-        1251: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Peanuts Color Hand Drawn"), // Trail mix
-        97: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Meat Color Hand Drawn"), // boucherie
-        1266: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Chinese Noodle Color Hand Drawn"), // Rice noodles
-        827: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cinnamon Roll Color Hand Drawn"), // boulangerie patisserie
-        674: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Halloween Candy Color Hand Drawn"), // Gummy candies
-        1048: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Sausage Color Hand Drawn"), // Meat snack
-        2212: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Dumplings Color Hand Drawn"), // Dumplings
-        931: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Halloween Candy Color Hand Drawn"), // Gummies
-        3528: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Lentil Color Hand Drawn"), // Beans
-        10090: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Food Color Hand Drawn"), // epicerie
-        9493: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Spinach Color Hand Drawn"), // Vegetables unprepared unprocessed frozen
-        9508: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Spinach Color Hand Drawn"), // Vegetables prepared processed perishable
-        701: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Peanuts Color Hand Drawn"), // pralines aux cacahuetes
-        10910: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Heap Of Spice Color Hand Drawn"), // epices et aromates
-        963: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Organic Food Color Hand Drawn"), // Fresh foods
-        24875: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Rice Bowl Color Hand Drawn"), // Prepared mixes for risotto
-        441: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Leaf Color Hand Drawn"), // Alimentos de origen vegetal
-        923: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cola Color Hand Drawn"), // Soft drinks
-        4475: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Raspberry Color Hand Drawn"), // Fruit spread
-        320: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Ground Beef Color Hand Drawn"), // Meatballs
-        1489: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Vegan Food Color Hand Drawn"), // Vegan
-        1100: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Organic Food Color Hand Drawn"), // Natural organic
-        563: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cinnamon Roll Color Hand Drawn"), // boulangerie
-        1937: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Cola Color Hand Drawn"), // Soft drink
-        1943: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "French Fries Color Hand Drawn"), // Fried foods
-        2973: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Heap Of Spice Color Hand Drawn"), // sazonador
-        1596: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Oat Milk Color Hand Drawn"), // Plant based milk
-        1792: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Food Color Hand Drawn"), // food
-        879: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Vegan Food Color Hand Drawn"), // vegan
-        3286: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Korean Rice Cake Color Hand Drawn"), // Rice cakes
-        2688: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Avocado Color Hand Drawn"), // obst
-        1598: CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: "Salad Color Hand Drawn"), // Салата
+    private let foodGroupStyleMap: [String: FoodGroupStyle] = [
+        "Composite foods": FoodGroupStyle(imageName: "Food Color Hand Drawn", color: .orange),
+        "Sandwiches": FoodGroupStyle(imageName: "Hamburger Color Hand Drawn", color: .brown),
+        "Fish‚ Meat‚ Eggs": FoodGroupStyle(imageName: "Meat Color Hand Drawn", color: .blue),
+        "Processed meat": FoodGroupStyle(imageName: "Sausage Color Hand Drawn", color: .red),
+        "Beverages": FoodGroupStyle(imageName: "Cola Color Hand Drawn", color: .cyan),
+        "Sweetened beverages": FoodGroupStyle(imageName: "Shake Shack Color Hand Drawn", color: .pink),
+        "Sugary snacks": FoodGroupStyle(imageName: "Halloween Candy Color Hand Drawn", color: .pink),
+        "Sweets": FoodGroupStyle(imageName: "Kawaii Cupcake Color Hand Drawn", color: .red),
+        "Fats and sauces": FoodGroupStyle(imageName: "Butter Color Hand Drawn", color: .yellow),
+        "Fats": FoodGroupStyle(imageName: "Butter Color Hand Drawn", color: .orange),
+        "Cereals and potatoes": FoodGroupStyle(imageName: "Grains Of Rice Color Hand Drawn", color: .green),
+        "Cereals": FoodGroupStyle(imageName: "Rice Bowl Color Hand Drawn", color: .brown),
+        "Salty snacks": FoodGroupStyle(imageName: "French Fries Color Hand Drawn", color: .orange),
+        "Appetizers": FoodGroupStyle(imageName: "Bento Color Hand Drawn", color: .purple),
+        "Eggs": FoodGroupStyle(imageName: "Egg Color Hand Drawn", color: .yellow),
+        "Dressings and sauces": FoodGroupStyle(imageName: "Soy Sauce Color Hand Drawn", color: .brown),
+        "Fruit juices": FoodGroupStyle(imageName: "Infusion Pumps Color Hand Drawn", color: .orange),
+        "Fruits and vegetables": FoodGroupStyle(imageName: "Vegan Food Color Hand Drawn", color: .green),
+        "Vegetables": FoodGroupStyle(imageName: "Salad Color Hand Drawn", color: .green),
+        "Artificially sweetened beverages": FoodGroupStyle(imageName: "Shake Shack Color Hand Drawn(2)", color: .cyan),
+        "Unsweetened beverages": FoodGroupStyle(imageName: "Hot Chocolate With Marshmallows Color Hand Drawn", color: .gray),
+        "Nuts": FoodGroupStyle(imageName: "Peanuts Color Hand Drawn", color: .brown),
+        "Fruits": FoodGroupStyle(imageName: "Bitten Apple Color Hand Drawn", color: .red),
+        "Soups": FoodGroupStyle(imageName: "Rice Bowl Color Hand Drawn", color: .orange),
+        "One-dish meals": FoodGroupStyle(imageName: "Meal Color Hand Drawn", color: .purple),
+        "Potatoes": FoodGroupStyle(imageName: "Potato Color Hand Drawn", color: .brown),
+        "Biscuits and cakes": FoodGroupStyle(imageName: "Brownie Color Hand Drawn", color: .pink),
+        "Chocolate products": FoodGroupStyle(imageName: "Brownie Color Hand Drawn", color: .brown),
+        "Fish and seafood": FoodGroupStyle(imageName: "Whole Fish Color Hand Drawn", color: .blue),
+        "Dried fruits": FoodGroupStyle(imageName: "Raisins Color Hand Drawn", color: .orange),
+        "Milk and dairy products": FoodGroupStyle(imageName: "Pack Of Milk Color Hand Drawn", color: .cyan),
+        "Milk and yogurt": FoodGroupStyle(imageName: "Pack Of Milk Color Hand Drawn", color: .white),
+        "Cheese": FoodGroupStyle(imageName: "Mozzarella Color Hand Drawn", color: .yellow),
+        "Alcoholic beverages": FoodGroupStyle(imageName: "Hops Color Hand Drawn", color: .purple),
+        "Waters and flavored waters": FoodGroupStyle(imageName: "Infusion Pumps Color Hand Drawn", color: .blue),
+        "Meat": FoodGroupStyle(imageName: "Kawaii Steak Color Hand Drawn", color: .red),
+        "Meat other than poultry": FoodGroupStyle(imageName: "Ground Beef Color Hand Drawn", color: .orange),
+        "Bread": FoodGroupStyle(imageName: "Bread Crumbs Color Hand Drawn", color: .brown),
+        "Poultry": FoodGroupStyle(imageName: "Kawaii Steak Color Hand Drawn(2)", color: .orange),
+        "Pizza pies and quiches": FoodGroupStyle(imageName: "Pizza Color Hand Drawn", color: .red),
+        "Breakfast cereals": FoodGroupStyle(imageName: "Rice Bowl Color Hand Drawn", color: .orange),
+        "Ice cream": FoodGroupStyle(imageName: "Banana Split Color Hand Drawn", color: .cyan),
+        "Plant-based milk substitutes": FoodGroupStyle(imageName: "Oat Milk Color Hand Drawn", color: .green),
+        "Fatty fish": FoodGroupStyle(imageName: "Whole Fish Color Hand Drawn", color: .blue),
+        "Salty and fatty products": FoodGroupStyle(imageName: "French Fries Color Hand Drawn", color: .orange),
+        "Legumes": FoodGroupStyle(imageName: "Lentil Color Hand Drawn", color: .green),
+        "Fruit nectars": FoodGroupStyle(imageName: "Slice Of Watermelon Color Hand Drawn", color: .orange),
+        "Pastries": FoodGroupStyle(imageName: "Merry Pie Color Hand Drawn", color: .pink),
+        "Teas and herbal teas and coffees": FoodGroupStyle(imageName: "Hot Chocolate With Marshmallows Color Hand Drawn", color: .brown),
+        "Dairy desserts": FoodGroupStyle(imageName: "Banana Split Color Hand Drawn", color: .pink),
     ]
 
-    func fetchCategories() async {
+    private func getStyle(for name: String) -> FoodGroupStyle {
+        foodGroupStyleMap[name] ?? FoodGroupStyle(imageName: "Food Color Hand Drawn", color: .gray)
+    }
+
+    func fetchFoodGroups() async {
         guard !hasLoadedInitially else { return }
 
         isLoading = true
         errorMessage = nil
 
         do {
-            let allCategories = try await GraphQLClient.shared.fetchCategories()
-            categories = allCategories
-                .filter { categoryStyles.keys.contains($0.id) }
-                .map { node in
-                    let style = categoryStyles[node.id] ?? CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: nil)
-                    return Category(
-                        id: node.id,
-                        name: node.name,
-                        icon: style.icon,
-                        color: style.color,
-                        imageName: style.imageName
-                    )
-                }
+            let foodGroupNodes = try await GraphQLClient.shared.fetchFoodGroups()
+            foodGroups = foodGroupNodes.map { node in
+                let style = getStyle(for: node.name)
+                return FoodGroup(
+                    id: node.id,
+                    name: node.name,
+                    icon: style.imageName,
+                    color: style.color
+                )
+            }
             errorMessage = nil
             hasLoadedInitially = true
         } catch {
             errorMessage = error.localizedDescription
-            categories = []
+            foodGroups = []
             hasLoadedInitially = true
         }
 
@@ -142,22 +111,27 @@ class RankingViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let allCategories = try await GraphQLClient.shared.fetchCategories()
-            categories = allCategories
-                .filter { categoryStyles.keys.contains($0.id) }
-                .map { node in
-                    let style = categoryStyles[node.id] ?? CategoryStyle(icon: "square.grid.2x2", color: .gray, imageName: nil)
-                    return Category(
-                        id: node.id,
-                        name: node.name,
-                        icon: style.icon,
-                        color: style.color,
-                        imageName: style.imageName
-                    )
-                }
+            let foodGroupNodes = try await GraphQLClient.shared.fetchFoodGroups()
+            foodGroups = foodGroupNodes.map { node in
+                let style = getStyle(for: node.name)
+                return FoodGroup(
+                    id: node.id,
+                    name: node.name,
+                    icon: style.imageName,
+                    color: style.color
+                )
+            }
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func fetchProducts(for foodGroupId: Int, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+        return try await GraphQLClient.shared.fetchProducts(
+            first: first,
+            after: after,
+            foodGroup: foodGroupId
+        )
     }
 }

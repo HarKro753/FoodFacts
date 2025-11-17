@@ -16,10 +16,10 @@ class ProductRankingViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private var hasLoadedInitially = false
-    private let categoryId: Int
+    private let foodGroupId: Int
 
-    init(categoryId: Int) {
-        self.categoryId = categoryId
+    init(foodGroupId: Int) {
+        self.foodGroupId = foodGroupId
     }
 
     func fetchProducts() async {
@@ -31,8 +31,8 @@ class ProductRankingViewModel: ObservableObject {
         do {
             let result = try await GraphQLClient.shared.fetchProducts(
                 first: 20,
-                categoryId: categoryId,
                 countryId: 2,
+                foodGroup: foodGroupId,
                 sortAscending: true
             )
             products = result.products
@@ -53,8 +53,8 @@ class ProductRankingViewModel: ObservableObject {
         do {
             let result = try await GraphQLClient.shared.fetchProducts(
                 first: 20,
-                categoryId: categoryId,
                 countryId: 2,
+                foodGroup: foodGroupId,
                 sortAscending: true
             )
             products = result.products
