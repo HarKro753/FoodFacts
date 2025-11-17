@@ -41,11 +41,9 @@ struct RatingRangeView: View {
                 let totalGaps = CGFloat(sortedSections.count - 1) * gapSize
                 let availableWidth = geometry.size.width - totalGaps
 
-                // Pre-calculate widths
-                let barWidths: [CGFloat] = sortedSections.indices.map { i in
-                    let s = sortedSections[i]
-                    let range = s.maxValue - s.minValue
-                    return availableWidth * CGFloat(range / totalRange)
+                // Pre-calculate widths - equal width for all sections
+                let barWidths: [CGFloat] = sortedSections.indices.map { _ in
+                    return availableWidth / CGFloat(sortedSections.count)
                 }
 
                 // Triangle position
@@ -110,17 +108,16 @@ struct RatingRangeView: View {
 
                 let labelData: [(value: Double, position: CGFloat)] = {
                     var result: [(Double, CGFloat)] = []
+                    let sectionWidth = availableWidth / CGFloat(sortedSections.count)
                     var cum: CGFloat = 0
                     for i in sortedSections.indices {
                         let s = sortedSections[i]
-                        let sRange = s.maxValue - s.minValue
-                        let sWidth = availableWidth * CGFloat(sRange / totalRange)
 
                         if i < sortedSections.count - 1 {
                             let nextMin = sortedSections[i + 1].minValue
-                            result.append((nextMin, cum + sWidth))
+                            result.append((nextMin, cum + sectionWidth))
                         }
-                        cum += sWidth + (i < sortedSections.count - 1 ? gapSize : 0)
+                        cum += sectionWidth + (i < sortedSections.count - 1 ? gapSize : 0)
                     }
                     return result
                 }()
