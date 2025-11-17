@@ -52,6 +52,7 @@ extension GraphQLClient {
         first: Int = 20,
         after: String? = nil,
         categoryId: Int? = nil,
+        labelId: Int? = nil,
         countryId: Int? = nil,
         foodGroup: Int? = nil,
         sortAscending: Bool? = nil,
@@ -63,9 +64,12 @@ extension GraphQLClient {
             paginationParams += ", after: \"\(after)\""
         }
 
-        var filterParams = "completeness: 0.1, lastImageDatetime: \"2023-01-01\""
+        var filterParams = "completeness: 0.7, lastImageDatetime: \"2025-01-01\""
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
+        }
+        if let labelId = labelId {
+            filterParams += ", labelId: \(labelId)"
         }
         if let countryId = countryId {
             filterParams += ", countryId: \(countryId)"
@@ -76,7 +80,7 @@ extension GraphQLClient {
         if let productCode = productCodeForAlternatives {
             filterParams += ", productIdForAlternatives: \(productCode)"
         }
-        
+
 
         var whereClause = ""
         if let searchQuery = searchQuery {

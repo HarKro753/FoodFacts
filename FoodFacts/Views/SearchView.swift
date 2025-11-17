@@ -6,15 +6,25 @@
 //
 
 import SwiftUI
+import NetworkImage
+import Combine
 
 struct SearchView: View {
     @ObservedObject private var viewModel = SearchViewModel.shared
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
-                if viewModel.searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-                    // Empty state - show placeholder items
+                // State 1: Idle - Show horizontal scrollable label categories
+                if viewModel.shouldShowIdleState {
+                    LabelCategoriesView(
+                        viewModel: viewModel,
+                        navigationPath: $navigationPath
+                    )
+                }
+                // State 2: Typing - Show placeholder
+                else if viewModel.shouldShowPlaceholder {
                     List {
                         ForEach(0..<8, id: \.self) { _ in
                             ProductItemPlaceholder()
@@ -29,99 +39,10 @@ struct SearchView: View {
                         }
                     }
                     .listStyle(.plain)
-                } else if viewModel.isSearching && viewModel.products.isEmpty {
-                    // Loading state - show placeholder items
-                    List {
-                        ForEach(0..<8, id: \.self) { _ in
-                            ProductItemPlaceholder()
-                                .listRowInsets(
-                                    EdgeInsets(
-                                        top: 0,
-                                        leading: 16,
-                                        bottom: 0,
-                                        trailing: 16
-                                    )
-                                )
-                        }
-                    }
-                    .listStyle(.plain)
-                } else if let errorMessage = viewModel.errorMessage,
-                          viewModel.products.isEmpty {
-                    // Error state
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.orange)
-
-                        Text("Error searching products")
-                            .font(.headline)
-
-                        Text(errorMessage)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-
-                        Button("Try Again") {
-                            Task {
-                                await viewModel.performSearch(query: viewModel.searchText)
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                } else if viewModel.products.isEmpty {
-                    // No results state
-                    VStack(spacing: 16) {
-                        Image(systemName: "tray")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.secondary)
-
-                        Text("No Products Found")
-                            .font(.headline)
-
-                        Text("Try a different search term")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    // Results list
-                    List {
-                        ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
-                            NavigationLink {
-                                ProductDetail(product: product)
-                            } label: {
-                                ProductHistoryRowItem(product: product)
-                            }
-                            .listRowInsets(
-                                EdgeInsets(
-                                    top: 0,
-                                    leading: 16,
-                                    bottom: 0,
-                                    trailing: 16
-                                )
-                            )
-                            .onAppear {
-                                // Load more when reaching the 5th item from the end
-                                if index == viewModel.products.count - 5 {
-                                    Task {
-                                        await viewModel.loadMore()
-                                    }
-                                }
-                            }
-                        }
-
-                        if viewModel.isLoadingMore {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                    .padding()
-                                Spacer()
-                            }
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                        }
-                    }
-                    .listStyle(.plain)
+                }
+                // State 3: Search Results
+                else if viewModel.shouldShowSearchResults {
+                    SearchResultsView(viewModel: viewModel)
                 }
             }
             .navigationTitle("Suche")
@@ -130,6 +51,197 @@ struct SearchView: View {
                 placement: .automatic,
                 prompt: "Search products..."
             )
+            .onSubmit(of: .search) {
+                Task {
+                    await viewModel.onSearchSubmit()
+                }
+            }
+            .onChange(of: viewModel.searchText) { oldValue, newValue in
+                // Reset search committed when user clears search
+                if newValue.trimmingCharacters(in: .whitespaces).isEmpty {
+                    viewModel.clearSearch()
+                }
+            }
+            .navigationDestination(for: Product.self) { product in
+                ProductDetail(product: product)
+            }
+            .navigationDestination(for: ProductLabel.self) { label in
+                LabelProductsList(label: label)
+            }
+        }
+    }
+}
+
+// MARK: - Search Results View
+
+struct SearchResultsView: View {
+    @ObservedObject var viewModel: SearchViewModel
+
+    var body: some View {
+        Group {
+            if viewModel.isSearching && viewModel.products.isEmpty {
+                // Loading state
+                List {
+                    ForEach(0..<8, id: \.self) { _ in
+                        ProductItemPlaceholder()
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 0,
+                                    leading: 16,
+                                    bottom: 0,
+                                    trailing: 16
+                                )
+                            )
+                    }
+                }
+                .listStyle(.plain)
+            } else if let errorMessage = viewModel.errorMessage,
+                      viewModel.products.isEmpty {
+                // Error state
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
+
+                    Text("Error searching products")
+                        .font(.headline)
+
+                    Text(errorMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+
+                    Button("Try Again") {
+                        Task {
+                            await viewModel.performSearch(query: viewModel.searchText)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else if viewModel.products.isEmpty {
+                // No results state
+                VStack(spacing: 16) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+
+                    Text("No Products Found")
+                        .font(.headline)
+
+                    Text("Try a different search term")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                // Results list
+                List {
+                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                        NavigationLink {
+                            ProductDetail(product: product)
+                        } label: {
+                            ProductHistoryRowItem(product: product)
+                        }
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: 0,
+                                leading: 16,
+                                bottom: 0,
+                                trailing: 16
+                            )
+                        )
+                        .onAppear {
+                            // Load more when reaching the 5th item from the end
+                            if index == viewModel.products.count - 5 {
+                                Task {
+                                    await viewModel.loadMore()
+                                }
+                            }
+                        }
+                    }
+
+                    if viewModel.isLoadingMore {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .padding()
+                            Spacer()
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                    }
+                }
+                .listStyle(.plain)
+            }
+        }
+    }
+}
+
+//MARK: LabelCateogriesView
+
+struct LabelCategoriesView: View {
+    @ObservedObject var viewModel: SearchViewModel
+    @Binding var navigationPath: NavigationPath
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                ForEach(ProductLabel.labels) { label in
+                    if let products = viewModel.labelProducts[label.id], !products.isEmpty {
+                        VStack(spacing: 0) {
+                            // Header
+                            Button(action: {
+                                navigationPath.append(label)
+                            }) {
+                                HStack {
+                                    Text(label.name)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.gray)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemBackground))
+                            }
+                            .buttonStyle(.plain)
+
+                            // Horizontal scrolling products
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(products) { product in
+                                        Button(action: {
+                                            navigationPath.append(product)
+                                        }) {
+                                            LabelProductCard(product: product)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .background(Color(.systemBackground))
+                    }
+                }
+
+                if viewModel.isLoadingLabels {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                        Text("Loading categories...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+        .task {
+            await viewModel.fetchLabelProducts()
         }
     }
 }

@@ -12,3 +12,6 @@
   - E.g. Vegan, Protein, Calories, Glutenfrei, Palmoelfrei, Laktosefrei, vegetarisch.
 - Alternative fix not full product and click on product
 - Folgen von fehlenden naehrstoffen z.b. Eisenmangel
+
+search:
+custom filter idk tbh.
