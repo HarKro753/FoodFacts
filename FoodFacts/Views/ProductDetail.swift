@@ -5,8 +5,8 @@
 //  Created by Harro Krog on 08.11.25.
 //
 
-import SwiftUI
 import NetworkImage
+import SwiftUI
 
 // MARK: - Product Detail View
 struct ProductDetail: View {
@@ -24,7 +24,9 @@ struct ProductDetail: View {
 
     init(product: Product) {
         self.product = product
-        _viewModel = StateObject(wrappedValue: ProductDetailViewModel(productCode: product.id))
+        _viewModel = StateObject(
+            wrappedValue: ProductDetailViewModel(productCode: product.id)
+        )
     }
 
     var body: some View {
@@ -78,7 +80,9 @@ struct ProductDetailSharedContent: View {
                 // Product Header
                 HStack(alignment: .top, spacing: 20) {
                     Group {
-                        if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
+                        if let imageUrl = product.imageUrl,
+                            let url = URL(string: imageUrl)
+                        {
                             NetworkImage(url: url) { image in
                                 image
                                     .resizable()
@@ -139,7 +143,10 @@ struct ProductDetailSharedContent: View {
                 .padding(.horizontal, 16)
 
                 //MARK: Positive Traits
-                if !product.positiveNutrientRatings.isEmpty || (product.additivesRatings != nil && isPositiveAdditive(product.additivesRatings!)) {
+                if !product.positiveNutrientRatings.isEmpty
+                    || (product.additivesRatings != nil
+                        && isPositiveAdditive(product.additivesRatings!))
+                {
                     VStack(spacing: 0) {
                         HStack {
                             Text("Positive")
@@ -152,7 +159,7 @@ struct ProductDetailSharedContent: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(.white))
+                        .background(Color(.systemBackground))
 
                         ForEach(product.positiveNutrientRatings) { rating in
                             ProductDetailNutritionRowItem(
@@ -166,7 +173,9 @@ struct ProductDetailSharedContent: View {
                             )
                         }
 
-                        if let additivesRating = product.additivesRatings, isPositiveAdditive(additivesRating) {
+                        if let additivesRating = product.additivesRatings,
+                            isPositiveAdditive(additivesRating)
+                        {
                             ProductDetailAdditiveRowItem(
                                 additivesRating: additivesRating,
                                 showAdditivesSheet: $showAdditivesSheet
@@ -177,7 +186,10 @@ struct ProductDetailSharedContent: View {
                 }
 
                 //MARK: Negative Traits
-                if !product.negativeNutrientRatings.isEmpty || (product.additivesRatings != nil && !isPositiveAdditive(product.additivesRatings!)) {
+                if !product.negativeNutrientRatings.isEmpty
+                    || (product.additivesRatings != nil
+                        && !isPositiveAdditive(product.additivesRatings!))
+                {
                     VStack(spacing: 0) {
                         HStack {
                             Text("Negative")
@@ -190,7 +202,7 @@ struct ProductDetailSharedContent: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(.white))
+                        .background(Color(.systemBackground))
 
                         ForEach(product.negativeNutrientRatings) { rating in
                             ProductDetailNutritionRowItem(
@@ -204,7 +216,9 @@ struct ProductDetailSharedContent: View {
                             )
                         }
 
-                        if let additivesRating = product.additivesRatings, !isPositiveAdditive(additivesRating) {
+                        if let additivesRating = product.additivesRatings,
+                            !isPositiveAdditive(additivesRating)
+                        {
                             ProductDetailAdditiveRowItem(
                                 additivesRating: additivesRating,
                                 showAdditivesSheet: $showAdditivesSheet
@@ -225,13 +239,19 @@ struct ProductDetailSharedContent: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(.white))
+                        .background(Color(.systemBackground))
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 ForEach(alternatives) { alternativeProduct in
-                                    NavigationLink(destination: ProductDetail(product: alternativeProduct)) {
-                                        AlternativeProductCard(product: alternativeProduct)
+                                    NavigationLink(
+                                        destination: ProductDetail(
+                                            product: alternativeProduct
+                                        )
+                                    ) {
+                                        AlternativeProductCard(
+                                            product: alternativeProduct
+                                        )
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -243,10 +263,12 @@ struct ProductDetailSharedContent: View {
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("We rate products based on nutritional value, ingredient quality, and processing level.")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
+                    Text(
+                        "We rate products based on nutritional value, ingredient quality, and processing level."
+                    )
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
 
                     Button(action: {
                         showRatingDetails = true
@@ -260,31 +282,8 @@ struct ProductDetailSharedContent: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             }
-            .background(Color(.white))
+            .background(Color(.systemBackground))
 
-            //MARK: Options Section
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Options")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color(.systemBackground))
-
-                VStack(spacing: 0) {
-                    OptionButton(icon: "heart", title: "Add to favorites")
-                    Divider().padding(.leading, 52)
-
-                    OptionButton(icon: "person.crop.circle", title: "Personal preferences")
-                    Divider().padding(.leading, 52)
-
-                    OptionButton(icon: "trash", title: "Remove from history")
-                }
-            }
-            .padding(.top, 8)
         }
         .sheet(isPresented: $showAdditivesSheet) {
             if let additivesRating = product.additivesRatings {
@@ -294,7 +293,8 @@ struct ProductDetailSharedContent: View {
     }
 
     private func isPositiveAdditive(_ additiveRating: AdditiveRating) -> Bool {
-        return additiveRating.rating == "VERY_GOOD" || additiveRating.rating == "GOOD"
+        return additiveRating.rating == "VERY_GOOD"
+            || additiveRating.rating == "GOOD"
     }
 }
 
@@ -305,7 +305,9 @@ struct AlternativeProductCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             Group {
-                if let imageUrl = product.imageUrl, let url = URL(string: imageUrl) {
+                if let imageUrl = product.imageUrl,
+                    let url = URL(string: imageUrl)
+                {
                     NetworkImage(url: url) { image in
                         image
                             .resizable()
@@ -361,7 +363,7 @@ struct AlternativeProductCard: View {
         }
         .padding(12)
         .frame(width: UIScreen.main.bounds.width * 0.8)
-        .background(Color(.white))
+        .background(Color(.systemBackground))
     }
 }
 
@@ -421,26 +423,31 @@ struct RatingDetailsSheet: View {
                         RatingCriteriaRow(
                             icon: "chart.bar.fill",
                             title: "Nutritional Value",
-                            description: "We analyze the macronutrient balance, vitamin and mineral content, and overall nutritional density."
+                            description:
+                                "We analyze the macronutrient balance, vitamin and mineral content, and overall nutritional density."
                         )
 
                         RatingCriteriaRow(
                             icon: "leaf.fill",
                             title: "Ingredient Quality",
-                            description: "We evaluate the quality and origin of ingredients, prioritizing organic and natural components."
+                            description:
+                                "We evaluate the quality and origin of ingredients, prioritizing organic and natural components."
                         )
 
                         RatingCriteriaRow(
                             icon: "gear",
                             title: "Processing Level",
-                            description: "We assess how processed the product is, favoring minimally processed foods with fewer additives."
+                            description:
+                                "We assess how processed the product is, favoring minimally processed foods with fewer additives."
                         )
                     }
 
-                    Text("Each criterion is weighted and combined to produce a final score out of 100.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 8)
+                    Text(
+                        "Each criterion is weighted and combined to produce a final score out of 100."
+                    )
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
                 }
                 .padding()
             }
@@ -492,7 +499,7 @@ struct FullscreenImageView: View {
 
     var body: some View {
         ZStack {
-            Color.white
+            Color(.systemBackground)
                 .opacity(backgroundOpacity)
                 .ignoresSafeArea()
                 .onTapGesture {
@@ -511,15 +518,26 @@ struct FullscreenImageView: View {
                         .onChanged { value in
                             dragOffset = value.translation
                             // Adjust background opacity based on drag distance
-                            let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
-                            backgroundOpacity = max(0.0, 1.0 - dragDistance / 500)
+                            let dragDistance = sqrt(
+                                pow(value.translation.width, 2)
+                                    + pow(value.translation.height, 2)
+                            )
+                            backgroundOpacity = max(
+                                0.0,
+                                1.0 - dragDistance / 500
+                            )
                         }
                         .onEnded { value in
-                            let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+                            let dragDistance = sqrt(
+                                pow(value.translation.width, 2)
+                                    + pow(value.translation.height, 2)
+                            )
                             if dragDistance > 150 {
                                 dismissView()
                             } else {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                withAnimation(
+                                    .spring(response: 0.4, dampingFraction: 0.8)
+                                ) {
                                     dragOffset = .zero
                                     backgroundOpacity = 1.0
                                 }
@@ -530,10 +548,10 @@ struct FullscreenImageView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "photo")
                         .font(.system(size: 48))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.secondary)
                     Text("No image available")
                         .font(.system(size: 16))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -550,7 +568,7 @@ struct FullscreenImageView: View {
 
                             Image(systemName: "xmark")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.primary)
                         }
                     }
                     .padding(20)
@@ -572,187 +590,197 @@ struct FullscreenImageView: View {
 // MARK: - Preview
 #Preview {
     NavigationStack {
-        ProductDetail(product: Product(
-            code: 12345,
-            name: "Chocolate Cookie with Additives",
-            brand: "Sample Brand",
-            imageUrl: nil,
-            nutriScore: 45,
-            positiveNutrientRatings: [
-                NutrientRating(
-                    nutrientType: "FIBER",
-                    name: "Ballaststoffe",
-                    value: 3.5,
-                    unit: "GRAM",
-                    rating: "VERY_GOOD",
-                    text: "Hoher Ballaststoffgehalt",
-                    ratingSections: [
-                        RatingSection(
-                            rating: "VERY_GOOD",
-                            minValue: 3.0,
-                            maxValue: 10.0,
-                            description: "Hoher Gehalt"
-                        ),
-                        RatingSection(
-                            rating: "GOOD",
-                            minValue: 2.0,
-                            maxValue: 3.0,
-                            description: "Guter Gehalt"
-                        ),
-                        RatingSection(
-                            rating: "MEDIUM",
-                            minValue: 1.0,
-                            maxValue: 2.0,
-                            description: "Mittlerer Gehalt"
-                        ),
-                        RatingSection(
-                            rating: "BAD",
-                            minValue: 0,
-                            maxValue: 1.0,
-                            description: "Niedriger Gehalt"
-                        )
-                    ]
-                )
-            ],
-            negativeNutrientRatings: [
-                NutrientRating(
-                    nutrientType: "SUGAR",
-                    name: "Zucker",
-                    value: 25.0,
-                    unit: "GRAM",
-                    rating: "BAD",
-                    text: "Hoher Zuckergehalt",
-                    ratingSections: [
-                        RatingSection(
-                            rating: "VERY_GOOD",
-                            minValue: 0,
-                            maxValue: 5.0,
-                            description: "Niedriger Zuckergehalt"
-                        ),
-                        RatingSection(
-                            rating: "GOOD",
-                            minValue: 5.0,
-                            maxValue: 10.0,
-                            description: "Moderater Zuckergehalt"
-                        ),
-                        RatingSection(
-                            rating: "MEDIUM",
-                            minValue: 10.0,
-                            maxValue: 20.0,
-                            description: "Erhöhter Zuckergehalt"
-                        ),
-                        RatingSection(
-                            rating: "BAD",
-                            minValue: 20.0,
-                            maxValue: 100.0,
-                            description: "Hoher Zuckergehalt"
-                        )
-                    ]
-                ),
-                NutrientRating(
-                    nutrientType: "SALT",
-                    name: "Salz",
-                    value: 1.2,
-                    unit: "GRAM",
-                    rating: "MEDIUM",
-                    text: "Mittlerer Salzgehalt",
-                    ratingSections: nil
-                )
-            ],
-            additivesRatings: AdditiveRating(
-                rating: "MEDIUM",
-                description: "Mittleres Risiko",
-                numberOfAdditives: 4,
-                additives: [
-                    Additive(
-                        id: 1,
-                        name: "E102 - Tartrazin",
-                        description: "Ein synthetischer Azofarbstoff, der gelbe Farbe verleiht",
-                        risk: "MODERATE_RISK",
-                        additiveTypeId: 1,
-                        additiveType: AdditiveType(
-                            id: 1,
-                            name: "Farbstoff",
-                            description: "Wird verwendet, um Lebensmitteln Farbe zu verleihen"
-                        ),
-                        additiveHealthRisks: [
-                            AdditiveHealthRiskRelation(
-                                additiveId: 1,
-                                healthRiskId: 1,
-                                healthRisk: HealthRisk(
-                                    id: 1,
-                                    name: "Hyperaktivität bei Kindern"
-                                )
+        ProductDetail(
+            product: Product(
+                code: 12345,
+                name: "Chocolate Cookie with Additives",
+                brand: "Sample Brand",
+                imageUrl: nil,
+                nutriScore: 45,
+                positiveNutrientRatings: [
+                    NutrientRating(
+                        nutrientType: "FIBER",
+                        name: "Ballaststoffe",
+                        value: 3.5,
+                        unit: "GRAM",
+                        rating: "VERY_GOOD",
+                        text: "Hoher Ballaststoffgehalt",
+                        ratingSections: [
+                            RatingSection(
+                                rating: "VERY_GOOD",
+                                minValue: 3.0,
+                                maxValue: 10.0,
+                                description: "Hoher Gehalt"
                             ),
-                            AdditiveHealthRiskRelation(
-                                additiveId: 1,
-                                healthRiskId: 2,
-                                healthRisk: HealthRisk(
-                                    id: 2,
-                                    name: "Allergische Reaktionen"
-                                )
-                            )
+                            RatingSection(
+                                rating: "GOOD",
+                                minValue: 2.0,
+                                maxValue: 3.0,
+                                description: "Guter Gehalt"
+                            ),
+                            RatingSection(
+                                rating: "MEDIUM",
+                                minValue: 1.0,
+                                maxValue: 2.0,
+                                description: "Mittlerer Gehalt"
+                            ),
+                            RatingSection(
+                                rating: "BAD",
+                                minValue: 0,
+                                maxValue: 1.0,
+                                description: "Niedriger Gehalt"
+                            ),
                         ]
-                    ),
-                    Additive(
-                        id: 2,
-                        name: "E211 - Natriumbenzoat",
-                        description: "Ein Konservierungsmittel zur Verlängerung der Haltbarkeit",
-                        risk: "LOW_RISK",
-                        additiveTypeId: 2,
-                        additiveType: AdditiveType(
-                            id: 2,
-                            name: "Konservierungsmittel",
-                            description: "Verhindert das Wachstum von Mikroorganismen"
-                        ),
-                        additiveHealthRisks: [
-                            AdditiveHealthRiskRelation(
-                                additiveId: 2,
-                                healthRiskId: 3,
-                                healthRisk: HealthRisk(
-                                    id: 3,
-                                    name: "Asthma-Symptome"
-                                )
-                            )
-                        ]
-                    ),
-                    Additive(
-                        id: 3,
-                        name: "E621 - Mononatriumglutamat",
-                        description: "Ein Geschmacksverstärker, der den Umami-Geschmack verstärkt",
-                        risk: "MODERATE_RISK",
-                        additiveTypeId: 3,
-                        additiveType: AdditiveType(
-                            id: 3,
-                            name: "Geschmacksverstärker",
-                            description: "Verstärkt den Geschmack von Lebensmitteln"
-                        ),
-                        additiveHealthRisks: [
-                            AdditiveHealthRiskRelation(
-                                additiveId: 3,
-                                healthRiskId: 4,
-                                healthRisk: HealthRisk(
-                                    id: 4,
-                                    name: "Kopfschmerzen"
-                                )
-                            )
-                        ]
-                    ),
-                    Additive(
-                        id: 4,
-                        name: "E300 - Ascorbinsäure",
-                        description: "Vitamin C, wird als Antioxidans verwendet",
-                        risk: "NO_RISK",
-                        additiveTypeId: 4,
-                        additiveType: AdditiveType(
-                            id: 4,
-                            name: "Antioxidans",
-                            description: "Verhindert die Oxidation und verlängert die Haltbarkeit"
-                        ),
-                        additiveHealthRisks: nil
                     )
-                ]
+                ],
+                negativeNutrientRatings: [
+                    NutrientRating(
+                        nutrientType: "SUGAR",
+                        name: "Zucker",
+                        value: 25.0,
+                        unit: "GRAM",
+                        rating: "BAD",
+                        text: "Hoher Zuckergehalt",
+                        ratingSections: [
+                            RatingSection(
+                                rating: "VERY_GOOD",
+                                minValue: 0,
+                                maxValue: 5.0,
+                                description: "Niedriger Zuckergehalt"
+                            ),
+                            RatingSection(
+                                rating: "GOOD",
+                                minValue: 5.0,
+                                maxValue: 10.0,
+                                description: "Moderater Zuckergehalt"
+                            ),
+                            RatingSection(
+                                rating: "MEDIUM",
+                                minValue: 10.0,
+                                maxValue: 20.0,
+                                description: "Erhöhter Zuckergehalt"
+                            ),
+                            RatingSection(
+                                rating: "BAD",
+                                minValue: 20.0,
+                                maxValue: 100.0,
+                                description: "Hoher Zuckergehalt"
+                            ),
+                        ]
+                    ),
+                    NutrientRating(
+                        nutrientType: "SALT",
+                        name: "Salz",
+                        value: 1.2,
+                        unit: "GRAM",
+                        rating: "MEDIUM",
+                        text: "Mittlerer Salzgehalt",
+                        ratingSections: nil
+                    ),
+                ],
+                additivesRatings: AdditiveRating(
+                    rating: "MEDIUM",
+                    description: "Mittleres Risiko",
+                    numberOfAdditives: 4,
+                    additives: [
+                        Additive(
+                            id: 1,
+                            name: "E102 - Tartrazin",
+                            description:
+                                "Ein synthetischer Azofarbstoff, der gelbe Farbe verleiht",
+                            risk: "MODERATE_RISK",
+                            additiveTypeId: 1,
+                            additiveType: AdditiveType(
+                                id: 1,
+                                name: "Farbstoff",
+                                description:
+                                    "Wird verwendet, um Lebensmitteln Farbe zu verleihen"
+                            ),
+                            additiveHealthRisks: [
+                                AdditiveHealthRiskRelation(
+                                    additiveId: 1,
+                                    healthRiskId: 1,
+                                    healthRisk: HealthRisk(
+                                        id: 1,
+                                        name: "Hyperaktivität bei Kindern"
+                                    )
+                                ),
+                                AdditiveHealthRiskRelation(
+                                    additiveId: 1,
+                                    healthRiskId: 2,
+                                    healthRisk: HealthRisk(
+                                        id: 2,
+                                        name: "Allergische Reaktionen"
+                                    )
+                                ),
+                            ]
+                        ),
+                        Additive(
+                            id: 2,
+                            name: "E211 - Natriumbenzoat",
+                            description:
+                                "Ein Konservierungsmittel zur Verlängerung der Haltbarkeit",
+                            risk: "LOW_RISK",
+                            additiveTypeId: 2,
+                            additiveType: AdditiveType(
+                                id: 2,
+                                name: "Konservierungsmittel",
+                                description:
+                                    "Verhindert das Wachstum von Mikroorganismen"
+                            ),
+                            additiveHealthRisks: [
+                                AdditiveHealthRiskRelation(
+                                    additiveId: 2,
+                                    healthRiskId: 3,
+                                    healthRisk: HealthRisk(
+                                        id: 3,
+                                        name: "Asthma-Symptome"
+                                    )
+                                )
+                            ]
+                        ),
+                        Additive(
+                            id: 3,
+                            name: "E621 - Mononatriumglutamat",
+                            description:
+                                "Ein Geschmacksverstärker, der den Umami-Geschmack verstärkt",
+                            risk: "MODERATE_RISK",
+                            additiveTypeId: 3,
+                            additiveType: AdditiveType(
+                                id: 3,
+                                name: "Geschmacksverstärker",
+                                description:
+                                    "Verstärkt den Geschmack von Lebensmitteln"
+                            ),
+                            additiveHealthRisks: [
+                                AdditiveHealthRiskRelation(
+                                    additiveId: 3,
+                                    healthRiskId: 4,
+                                    healthRisk: HealthRisk(
+                                        id: 4,
+                                        name: "Kopfschmerzen"
+                                    )
+                                )
+                            ]
+                        ),
+                        Additive(
+                            id: 4,
+                            name: "E300 - Ascorbinsäure",
+                            description:
+                                "Vitamin C, wird als Antioxidans verwendet",
+                            risk: "NO_RISK",
+                            additiveTypeId: 4,
+                            additiveType: AdditiveType(
+                                id: 4,
+                                name: "Antioxidans",
+                                description:
+                                    "Verhindert die Oxidation und verlängert die Haltbarkeit"
+                            ),
+                            additiveHealthRisks: nil
+                        ),
+                    ]
+                )
             )
-        ))
+        )
     }
 }
