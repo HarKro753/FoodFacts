@@ -98,12 +98,6 @@ struct Shimmer: ViewModifier {
     }
 }
 
-extension View {
-    func shimmer() -> some View {
-        modifier(Shimmer())
-    }
-}
-
 #Preview {
     List {
         ProductItemPlaceholder()

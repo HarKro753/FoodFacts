@@ -5,9 +5,9 @@
 //  Created by Harro Krog on 10.11.25.
 //
 
-import SwiftUI
-import NetworkImage
 import Combine
+import NetworkImage
+import SwiftUI
 
 struct SearchView: View {
     @ObservedObject private var viewModel = SearchViewModel.shared
@@ -96,7 +96,8 @@ struct SearchResultsView: View {
                 }
                 .listStyle(.plain)
             } else if let errorMessage = viewModel.errorMessage,
-                      viewModel.products.isEmpty {
+                viewModel.products.isEmpty
+            {
                 // Error state
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
@@ -114,7 +115,9 @@ struct SearchResultsView: View {
 
                     Button("Try Again") {
                         Task {
-                            await viewModel.performSearch(query: viewModel.searchText)
+                            await viewModel.performSearch(
+                                query: viewModel.searchText
+                            )
                         }
                     }
                     .buttonStyle(.bordered)
@@ -136,7 +139,10 @@ struct SearchResultsView: View {
             } else {
                 // Results list
                 List {
-                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                    ForEach(
+                        Array(viewModel.products.enumerated()),
+                        id: \.element.id
+                    ) { index, product in
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
@@ -187,30 +193,41 @@ struct LabelCategoriesView: View {
         ScrollView {
             VStack(spacing: 16) {
                 ForEach(ProductLabel.labels) { label in
-                    if let products = viewModel.labelProducts[label.id], !products.isEmpty {
-                        VStack(spacing: 0) {
-                            // Header
-                            Button(action: {
+                    VStack(spacing: 0) {
+                        // Header - always shown
+                        Button(action: {
+                            // Only allow navigation if products are loaded
+                            if let products = viewModel.labelProducts[label.id],
+                                !products.isEmpty
+                            {
                                 navigationPath.append(label)
-                            }) {
-                                HStack {
-                                    Text(label.name)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(.gray)
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color(.systemBackground))
                             }
-                            .buttonStyle(.plain)
+                        }) {
+                            HStack {
+                                Text(label.name)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.gray)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color(.systemBackground))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(
+                            viewModel.labelProducts[label.id]?.isEmpty ?? true
+                        )
 
-                            // Horizontal scrolling products
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                        // Horizontal scrolling products or placeholders
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(alignment: .top, spacing: 12) {
+                                if let products = viewModel.labelProducts[
+                                    label.id
+                                ], !products.isEmpty {
+                                    // Show actual products
                                     ForEach(products) { product in
                                         Button(action: {
                                             navigationPath.append(product)
@@ -219,23 +236,18 @@ struct LabelCategoriesView: View {
                                         }
                                         .buttonStyle(.plain)
                                     }
+                                } else {
+                                    // Show placeholders while loading
+                                    ForEach(0..<5, id: \.self) { _ in
+                                        LabelProductCardPlaceholder()
+                                    }
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
                         }
-                        .background(Color(.systemBackground))
                     }
-                }
-
-                if viewModel.isLoadingLabels {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                        Text("Loading categories...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
+                    .background(Color(.systemBackground))
                 }
             }
         }

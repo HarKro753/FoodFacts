@@ -45,7 +45,6 @@ struct LabelProductCard: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                    .frame(height: 36, alignment: .top)
 
                 Text(product.brand ?? "Unknown Brand")
                     .font(.system(size: 12))
@@ -66,8 +65,95 @@ struct LabelProductCard: View {
                     .padding(.top, 2)
                 }
             }
-            .frame(width: 120)
+            .frame(width: 120, alignment: .leading)
         }
         .frame(width: 120)
+    }
+}
+
+// MARK: - Placeholder
+
+struct LabelProductCardPlaceholder: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Image placeholder
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 120, height: 120)
+                .shimmer()
+
+            // Product Info placeholder
+            VStack(alignment: .leading, spacing: 4) {
+                // Product name placeholder (2 lines)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(width: 100, height: 14)
+                    .shimmer()
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(width: 80, height: 14)
+                    .shimmer()
+
+                // Brand placeholder
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(width: 70, height: 12)
+                    .padding(.top, 2)
+                    .shimmer()
+
+                // Rating placeholder
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 8, height: 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 40, height: 12)
+                }
+                .padding(.top, 2)
+                .shimmer()
+            }
+            .frame(width: 120, alignment: .leading)
+        }
+        .frame(width: 120)
+    }
+}
+
+// MARK: - Shimmer Effect
+
+extension View {
+    func shimmer() -> some View {
+        self.modifier(ShimmerModifier())
+    }
+}
+
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.white.opacity(0),
+                        Color.white.opacity(0.3),
+                        Color.white.opacity(0)
+                    ]),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .offset(x: phase)
+                .mask(content)
+            )
+            .onAppear {
+                withAnimation(
+                    Animation.linear(duration: 1.5)
+                        .repeatForever(autoreverses: false)
+                ) {
+                    phase = 300
+                }
+            }
     }
 }
