@@ -57,7 +57,10 @@ extension GraphQLClient {
         foodGroup: Int? = nil,
         sortAscending: Bool? = nil,
         searchQuery: String? = nil,
-        productCodeForAlternatives: Int? = nil
+        productCodeForAlternatives: Int? = nil,
+        nutrientFieldName: String? = nil,
+        nutrientMinValue: Double? = nil,
+        nutrientMaxValue: Double? = nil
     ) async throws -> ProductsResult {
         var paginationParams = "first: \(first)"
         if let after = after {
@@ -82,9 +85,28 @@ extension GraphQLClient {
         }
 
 
-        var whereClause = ""
+        var whereConditions: [String] = []
+
         if let searchQuery = searchQuery {
-            whereClause = ", where: { productName: { startsWith: \"\(searchQuery)\" } }"
+            whereConditions.append("productName: { startsWith: \"\(searchQuery)\" }")
+        }
+
+        if let fieldName = nutrientFieldName {
+            var nutrientFilter = ""
+            if let minValue = nutrientMinValue {
+                nutrientFilter = "\(fieldName): { gte: \(minValue) }"
+            } else if let maxValue = nutrientMaxValue {
+                nutrientFilter = "\(fieldName): { lte: \(maxValue) }"
+            }
+
+            if !nutrientFilter.isEmpty {
+                whereConditions.append(nutrientFilter)
+            }
+        }
+
+        var whereClause = ""
+        if !whereConditions.isEmpty {
+            whereClause = ", where: { \(whereConditions.joined(separator: ", ")) }"
         }
 
         var orderParam = ""

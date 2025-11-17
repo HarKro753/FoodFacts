@@ -65,8 +65,8 @@ struct SearchView: View {
             .navigationDestination(for: Product.self) { product in
                 ProductDetail(product: product)
             }
-            .navigationDestination(for: ProductLabel.self) { label in
-                LabelProductsList(label: label)
+            .navigationDestination(for: ProductCategory.self) { category in
+                CategoryProductsList(category: category)
             }
         }
     }
@@ -183,7 +183,7 @@ struct SearchResultsView: View {
     }
 }
 
-//MARK: LabelCateogriesView
+//MARK: CategoryView
 
 struct LabelCategoriesView: View {
     @ObservedObject var viewModel: SearchViewModel
@@ -192,19 +192,19 @@ struct LabelCategoriesView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                ForEach(ProductLabel.labels) { label in
+                ForEach(ProductCategory.categories) { category in
                     VStack(spacing: 0) {
                         // Header - always shown
                         Button(action: {
                             // Only allow navigation if products are loaded
-                            if let products = viewModel.labelProducts[label.id],
+                            if let products = viewModel.categoryProducts[category.id],
                                 !products.isEmpty
                             {
-                                navigationPath.append(label)
+                                navigationPath.append(category)
                             }
                         }) {
                             HStack {
-                                Text(label.name)
+                                Text(category.name)
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundStyle(.primary)
                                 Spacer()
@@ -218,14 +218,14 @@ struct LabelCategoriesView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(
-                            viewModel.labelProducts[label.id]?.isEmpty ?? true
+                            viewModel.categoryProducts[category.id]?.isEmpty ?? true
                         )
 
                         // Horizontal scrolling products or placeholders
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(alignment: .top, spacing: 12) {
-                                if let products = viewModel.labelProducts[
-                                    label.id
+                                if let products = viewModel.categoryProducts[
+                                    category.id
                                 ], !products.isEmpty {
                                     // Show actual products
                                     ForEach(products) { product in
@@ -253,7 +253,7 @@ struct LabelCategoriesView: View {
         }
         .background(Color(.systemBackground))
         .task {
-            await viewModel.fetchLabelProducts()
+            await viewModel.fetchCategoryProducts()
         }
     }
 }
