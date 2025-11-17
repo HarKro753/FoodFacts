@@ -5,8 +5,8 @@
 //  Created by Harro Krog on 11.11.25.
 //
 
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 class ScannerViewModel: ObservableObject {
@@ -17,6 +17,7 @@ class ScannerViewModel: ObservableObject {
 
     /// Fetches product details and adds it to history when a barcode is scanned
     func handleScannedBarcode(productCode: String) async {
+
         guard let code = Int(productCode) else {
             errorMessage = "Invalid product code"
             return
@@ -26,24 +27,24 @@ class ScannerViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // Fetch product details
-            let product = try await GraphQLClient.shared.fetchProductByCode(code: productCode)
+            let product = try await GraphQLClient.shared.fetchProductByCode(
+                code: productCode
+            )
 
             if let product = product {
                 scannedProduct = product
 
-                // Add to history
                 isAddingToHistory = true
-                _ = try await GraphQLClient.shared.addProductHistoryItem(productCode: code)
+                _ = try await GraphQLClient.shared.addProductHistoryItem(
+                    productCode: code
+                )
                 isAddingToHistory = false
 
-                print("Product \(code) fetched and added to history")
             } else {
                 errorMessage = "Product not found"
             }
         } catch {
             errorMessage = error.localizedDescription
-            print("Error handling scanned barcode: \(error)")
         }
 
         isFetchingProduct = false

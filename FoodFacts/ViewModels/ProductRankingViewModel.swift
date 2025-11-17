@@ -32,7 +32,7 @@ class ProductRankingViewModel: ObservableObject {
             let result = try await GraphQLClient.shared.fetchProducts(
                 first: 20,
                 categoryId: categoryId,
-                countryId: 9,
+                countryId: 2,
                 sortAscending: true
             )
             products = result.products
@@ -54,7 +54,7 @@ class ProductRankingViewModel: ObservableObject {
             let result = try await GraphQLClient.shared.fetchProducts(
                 first: 20,
                 categoryId: categoryId,
-                countryId: 9,
+                countryId: 2,
                 sortAscending: true
             )
             products = result.products

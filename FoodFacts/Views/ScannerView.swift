@@ -46,19 +46,23 @@ struct ScannerView: View {
             .onAppear {
                 cameraManager.requestPermission()
                 cameraManager.onBarcodeDetected = { barcode in
-                    // Only fetch if it's a new barcode
-                    if detectedBarcode != barcode {
-                        detectedBarcode = barcode
-                        // Fetch product and add to history
-                        Task {
-                            await viewModel.handleScannedBarcode(
-                                productCode: barcode
-                            )
-                            if viewModel.scannedProduct != nil {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showProductDetail = true
-                                }
+                    guard detectedBarcode != barcode && !showProductDetail
+                    else {
+                        return
+                    }
+
+                    detectedBarcode = barcode
+
+                    Task {
+                        await viewModel.handleScannedBarcode(
+                            productCode: barcode
+                        )
+                        if viewModel.scannedProduct != nil {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showProductDetail = true
                             }
+                        } else {
+                            detectedBarcode = nil
                         }
                     }
                 }
@@ -69,18 +73,26 @@ struct ScannerView: View {
             .sheet(
                 isPresented: $showProductDetail,
                 onDismiss: {
-                    // Clear the scanned product when sheet is dismissed
                     viewModel.clearScannedProduct()
                     detectedBarcode = nil
+                    cameraManager.startSession()
                 }
             ) {
                 if let product = viewModel.scannedProduct {
                     ProductDetailSheet(product: product)
                 }
             }
+            .onChange(of: showProductDetail) { oldValue, newValue in
+                if newValue {
+                    cameraManager.stopSession()
+                }
+            }
             .alert(
                 "Error",
-                isPresented: .constant(viewModel.errorMessage != nil)
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
             ) {
                 Button("OK") {
                     viewModel.errorMessage = nil

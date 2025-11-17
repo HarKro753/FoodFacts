@@ -27,7 +27,7 @@ class ProductDetailViewModel: ObservableObject {
 
         do {
             let result = try await GraphQLClient.shared.fetchProducts(
-                countryId: 9,
+                countryId: 2,
                 productCodeForAlternatives: productCode
             )
             alternatives = result.products

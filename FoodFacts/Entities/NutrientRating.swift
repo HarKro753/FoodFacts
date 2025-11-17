@@ -73,6 +73,8 @@ struct NutrientRating: Codable, Identifiable, Hashable {
             return String(format: "%.0fmg", value)
         case "KILOCALORIE":
             return String(format: "%.0fkcal", value)
+        case "PERCENTAGE":
+            return String(format: "%.0f%%", value)
         default:
             return String(format: "%.1f%@", value, unit.lowercased())
         }
@@ -90,7 +92,6 @@ struct NutrientRating: Codable, Identifiable, Hashable {
 struct NutrientTypeMapper {
     static func icon(for nutrientType: String) -> String {
         switch nutrientType {
-        // Positive nutrients
         case "FIBER":
             return "leaf.fill"
         case "PROTEIN", "PROTEINS":
@@ -99,8 +100,6 @@ struct NutrientTypeMapper {
             return "star.fill"
         case "MINERALS":
             return "sparkles"
-
-        // Negative nutrients
         case "SALT":
             return "cube.fill"
         case "SODIUM":

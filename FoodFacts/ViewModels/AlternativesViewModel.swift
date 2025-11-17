@@ -121,7 +121,7 @@ class AlternativesViewModel: ObservableObject {
                     let alternativeResult = try await GraphQLClient.shared
                         .fetchProducts(
                             first: 10,
-                            countryId: 9,
+                            countryId: 2,
                             productCodeForAlternatives: historyItem.productCode
                         )
                     alternatives = alternativeResult.products
