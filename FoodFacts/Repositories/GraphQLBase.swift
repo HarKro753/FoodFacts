@@ -52,6 +52,11 @@ class GraphQLClient {
         let body = GraphQLRequest(query: query, variables: variables)
         request.httpBody = try JSONEncoder().encode(body)
 
+        // Debug: Print raw request
+        if let requestBody = request.httpBody, let jsonString = String(data: requestBody, encoding: .utf8) {
+            print("📤 GraphQL Request: \(jsonString)")
+        }
+
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse,

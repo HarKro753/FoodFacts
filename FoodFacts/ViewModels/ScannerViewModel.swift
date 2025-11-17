@@ -11,20 +11,16 @@ import Foundation
 @MainActor
 class ScannerViewModel: ObservableObject {
     @Published var scannedProduct: Product?
-    @Published var isFetchingProduct = false
-    @Published var isAddingToHistory = false
     @Published var errorMessage: String?
 
-    /// Fetches product details and adds it to history when a barcode is scanned
     func handleScannedBarcode(productCode: String) async {
-
+        errorMessage = nil
+        scannedProduct = nil
+        
         guard let code = Int(productCode) else {
             errorMessage = "Invalid product code"
             return
         }
-
-        isFetchingProduct = true
-        errorMessage = nil
 
         do {
             let product = try await GraphQLClient.shared.fetchProductByCode(
@@ -32,25 +28,26 @@ class ScannerViewModel: ObservableObject {
             )
 
             if let product = product {
+                Task {
+                    do {
+                        _ = try await GraphQLClient.shared.addProductHistoryItem(
+                            productCode: code
+                        )
+                    } catch {
+                        print("Failed to add to history: \(error)")
+                    }
+                }
+                
                 scannedProduct = product
-
-                isAddingToHistory = true
-                _ = try await GraphQLClient.shared.addProductHistoryItem(
-                    productCode: code
-                )
-                isAddingToHistory = false
-
             } else {
                 errorMessage = "Product not found"
             }
         } catch {
             errorMessage = error.localizedDescription
+            scannedProduct = nil
         }
-
-        isFetchingProduct = false
     }
 
-    /// Clears the scanned product state
     func clearScannedProduct() {
         scannedProduct = nil
         errorMessage = nil

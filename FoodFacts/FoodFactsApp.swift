@@ -28,19 +28,19 @@ struct ContentView: View {
                     .environmentObject(rankingViewModel)
             }
 
-            Tab("Verlauf", systemImage: "clock") {
-                HistoryView()
-                    .environmentObject(historyViewModel)
-            }
+//            Tab("Verlauf", systemImage: "clock") {
+//                HistoryView()
+//                    .environmentObject(historyViewModel)
+//            }
 
             Tab("Scanner", systemImage: "barcode.viewfinder") {
                 ScannerView()
             }
 
-            Tab("Alternativen", systemImage: "arrow.left.arrow.right") {
-                AlternativesView()
-                    .environmentObject(alternativesViewModel)
-            }
+//            Tab("Alternativen", systemImage: "arrow.left.arrow.right") {
+//                AlternativesView()
+//                    .environmentObject(alternativesViewModel)
+//            }
 
             Tab(role: .search) {
                 SearchView()

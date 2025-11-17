@@ -16,6 +16,7 @@ struct ScannerView: View {
     @State private var detectedBarcode: String?
     @State private var isFlashOn = false
     @State private var showProductDetail = false
+    @State private var isProcessingScan = false
 
     var body: some View {
         NavigationStack {
@@ -46,23 +47,30 @@ struct ScannerView: View {
             .onAppear {
                 cameraManager.requestPermission()
                 cameraManager.onBarcodeDetected = { barcode in
-                    guard detectedBarcode != barcode && !showProductDetail
-                    else {
-                        return
-                    }
-
-                    detectedBarcode = barcode
-
-                    Task {
-                        await viewModel.handleScannedBarcode(
-                            productCode: barcode
-                        )
-                        if viewModel.scannedProduct != nil {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                showProductDetail = true
+                    // Use DispatchQueue to defer the state update outside of the current view update cycle
+                    DispatchQueue.main.async { [weak viewModel] in
+                        // Prevent re-entrant calls and ignore if already showing product
+                        guard !self.isProcessingScan && !self.showProductDetail && self.detectedBarcode != barcode else {
+                            return
+                        }
+                        
+                        self.isProcessingScan = true
+                        self.detectedBarcode = barcode
+                        
+                        Task {
+                            await viewModel?.handleScannedBarcode(
+                                productCode: barcode
+                            )
+                            
+                            await MainActor.run {
+                                if viewModel?.scannedProduct != nil && viewModel?.errorMessage == nil {
+                                    self.showProductDetail = true
+                                } else {
+                                    self.detectedBarcode = nil
+                                }
+                                
+                                self.isProcessingScan = false
                             }
-                        } else {
-                            detectedBarcode = nil
                         }
                     }
                 }
@@ -75,6 +83,7 @@ struct ScannerView: View {
                 onDismiss: {
                     viewModel.clearScannedProduct()
                     detectedBarcode = nil
+                    isProcessingScan = false
                     cameraManager.startSession()
                 }
             ) {
@@ -90,12 +99,14 @@ struct ScannerView: View {
             .alert(
                 "Error",
                 isPresented: Binding(
-                    get: { viewModel.errorMessage != nil },
+                    get: { viewModel.errorMessage != nil && !showProductDetail },
                     set: { if !$0 { viewModel.errorMessage = nil } }
                 )
             ) {
                 Button("OK") {
                     viewModel.errorMessage = nil
+                    detectedBarcode = nil
+                    isProcessingScan = false
                 }
             } message: {
                 if let error = viewModel.errorMessage {
