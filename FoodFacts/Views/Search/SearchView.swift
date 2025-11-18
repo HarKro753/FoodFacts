@@ -171,7 +171,7 @@ struct LabelCategoriesView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
-                ForEach(ProductCategoryData.categories.filter { viewModel.shouldShowCategory($0.id) }) { category in
+                ForEach(viewModel.categories.filter { viewModel.shouldShowCategory($0.id) }) { category in
                     VStack(spacing: 0) {
                         // Header - always shown
                         Button(action: {

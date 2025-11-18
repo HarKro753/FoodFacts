@@ -35,11 +35,15 @@ class SearchViewModel: ObservableObject {
     @Published var categoryProducts: [Int: [Product]] = [:]
     @Published var loadingCategories: Set<Int> = []
     @Published var fetchedCategories: Set<Int> = []
+    @Published var categories: [ProductCategoryData] = []
 
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
 
     init() {
+        // Randomize categories on initialization
+        categories = ProductCategoryData.categories.shuffled()
+
         $searchText
             .removeDuplicates()
             .sink { [weak self] text in
