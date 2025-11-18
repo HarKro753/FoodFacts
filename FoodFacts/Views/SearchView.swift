@@ -39,6 +39,11 @@ struct SearchView: View {
                     await viewModel.onSearchSubmit()
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    FilterMenuButton(viewModel: viewModel)
+                }
+            }
             .navigationDestination(for: Product.self) { product in
                 ProductDetail(product: product)
             }
@@ -231,14 +236,55 @@ struct LabelCategoriesView: View {
                         }
                     }
                     .background(Color(.systemBackground))
-                    .task {
-                        // Fetch products when category appears
+                    .id("\(category.id)-\(viewModel.filterStateId)")
+                    .task(id: viewModel.filterStateId) {
+                        // Fetch products when category appears or filters change
                         await viewModel.fetchProductsForCategory(category)
                     }
                 }
             }
         }
         .background(Color(.systemBackground))
+    }
+}
+
+// MARK: - Filter Menu Button
+
+struct FilterMenuButton: View {
+    @ObservedObject var viewModel: SearchViewModel
+
+    var body: some View {
+        Menu {
+            ForEach(SearchFilter.allCases) { filter in
+                Button {
+                    viewModel.toggleFilter(filter)
+                } label: {
+                    Label {
+                        Text(filter.displayName)
+                    } icon: {
+                        if viewModel.activeFilters.contains(filter) {
+                            Image(systemName: "checkmark")
+                        }
+                        Image(systemName: filter.icon)
+                    }
+                }
+            }
+
+            if !viewModel.activeFilters.isEmpty {
+                Divider()
+
+                Button(role: .destructive) {
+                    viewModel.clearFilters()
+                } label: {
+                    Label("Clear All Filters", systemImage: "xmark.circle.fill")
+                }
+            }
+        } label: {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .font(.system(size: 22))
+                    .foregroundStyle(.primary)
+            
+        }
     }
 }
 

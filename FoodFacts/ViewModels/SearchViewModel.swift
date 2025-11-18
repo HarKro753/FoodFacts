@@ -19,43 +19,64 @@ enum CategoryFilter: Hashable {
     case nutrientMax(fieldName: String, maxValue: Double)
 
     // Generic method to fetch products for any filter type
-    func fetchProducts(first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+    func fetchProducts(
+        first: Int = 20,
+        after: String? = nil,
+        labelIds: [Int]? = nil,
+        nutrientConditions: [(String, Double?, Double?)]? = nil,
+        sortAscending: Bool? = nil
+    ) async throws -> ProductsResult {
         switch self {
         case .label(let id):
             return try await GraphQLClient.shared.fetchProducts(
                 first: first,
                 after: after,
-                labelId: id
+                labelId: id,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
             )
 
         case .category(let id):
             return try await GraphQLClient.shared.fetchProducts(
                 first: first,
                 after: after,
-                categoryId: id
+                categoryId: id,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
             )
 
         case .foodGroup(let id):
             return try await GraphQLClient.shared.fetchProducts(
                 first: first,
                 after: after,
-                foodGroup: id
+                labelIds: labelIds,
+                foodGroup: id,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
             )
 
         case .nutrientMin(let fieldName, let minValue):
             return try await GraphQLClient.shared.fetchProducts(
                 first: first,
                 after: after,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
                 nutrientFieldName: fieldName,
-                nutrientMinValue: minValue
+                nutrientMinValue: minValue,
+                nutrientConditions: nutrientConditions
             )
 
         case .nutrientMax(let fieldName, let maxValue):
             return try await GraphQLClient.shared.fetchProducts(
                 first: first,
                 after: after,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
                 nutrientFieldName: fieldName,
-                nutrientMaxValue: maxValue
+                nutrientMaxValue: maxValue,
+                nutrientConditions: nutrientConditions
             )
         }
     }
@@ -142,57 +163,57 @@ struct ProductCategory: Identifiable, Hashable {
 
     static let categories: [ProductCategory] = [
         // Nutrient-based categories
-        ProductCategory(
-            id: 0,
-            name: "High Protein",
-            filter: .nutrientMin(fieldName: "proteins100g", minValue: 10.0)
-        ),
-        ProductCategory(
-            id: 1,
-            name: "Less than 500 Cal",
-            filter: .nutrientMax(fieldName: "energyKcal100g", maxValue: 500.0)
-        ),
-        ProductCategory(
-            id: 2,
-            name: "Vitamin A High",
-            filter: .nutrientMin(fieldName: "vitaminA100g", minValue: 50.0)
-        ),
-        ProductCategory(
-            id: 3,
-            name: "Vitamin D High",
-            filter: .nutrientMin(fieldName: "vitaminD100g", minValue: 5.0)
-        ),
-        // Label-based categories
-        ProductCategory(
-            id: 4,
-            name: "Organic",
-            filter: .label(id: 1)
-        ),
-        ProductCategory(
-            id: 5,
-            name: "No gluten",
-            filter: .label(id: 5)
-        ),
-        ProductCategory(
-            id: 6,
-            name: "EU Organic",
-            filter: .label(id: 11)
-        ),
-        ProductCategory(
-            id: 7,
-            name: "Vegetarian",
-            filter: .label(id: 3)
-        ),
-        ProductCategory(
-            id: 8,
-            name: "Vegan",
-            filter: .label(id: 4)
-        ),
-        ProductCategory(
-            id: 9,
-            name: "No GMOs",
-            filter: .label(id: 6)
-        ),
+        // ProductCategory(
+        //     id: 0,
+        //     name: "High Protein",
+        //     filter: .nutrientMin(fieldName: "proteins100g", minValue: 10.0)
+        // ),
+        // ProductCategory(
+        //     id: 1,
+        //     name: "Less than 500 Cal",
+        //     filter: .nutrientMax(fieldName: "energyKcal100g", maxValue: 500.0)
+        // ),
+        // ProductCategory(
+        //     id: 2,
+        //     name: "Vitamin A High",
+        //     filter: .nutrientMin(fieldName: "vitaminA100g", minValue: 50.0)
+        // ),
+        // ProductCategory(
+        //     id: 3,
+        //     name: "Vitamin D High",
+        //     filter: .nutrientMin(fieldName: "vitaminD100g", minValue: 5.0)
+        // ),
+        // // Label-based categories
+        // ProductCategory(
+        //     id: 4,
+        //     name: "Organic",
+        //     filter: .label(id: 1)
+        // ),
+        // ProductCategory(
+        //     id: 5,
+        //     name: "No gluten",
+        //     filter: .label(id: 5)
+        // ),
+        // ProductCategory(
+        //     id: 6,
+        //     name: "EU Organic",
+        //     filter: .label(id: 11)
+        // ),
+        // ProductCategory(
+        //     id: 7,
+        //     name: "Vegetarian",
+        //     filter: .label(id: 3)
+        // ),
+        // ProductCategory(
+        //     id: 8,
+        //     name: "Vegan",
+        //     filter: .label(id: 4)
+        // ),
+        // ProductCategory(
+        //     id: 9,
+        //     name: "No GMOs",
+        //     filter: .label(id: 6)
+        // ),
 
         // Staples / Pasta / Grains
         ProductCategory(id: 10, name: "Spaghetti", filter: .category(id: 319)),
@@ -277,6 +298,46 @@ enum SearchState: Equatable {
     case error(String)
 }
 
+// MARK: - Search Filters
+
+enum SearchFilter: Hashable, Identifiable, CaseIterable {
+    case lowCalorie
+    case highProtein
+    case highNutriScore
+    case vegan
+    case vegetarian
+
+    var id: String {
+        switch self {
+        case .lowCalorie: return "lowCalorie"
+        case .highProtein: return "highProtein"
+        case .highNutriScore: return "highNutriScore"
+        case .vegan: return "vegan"
+        case .vegetarian: return "vegetarian"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .lowCalorie: return "Low Calorie"
+        case .highProtein: return "High Protein"
+        case .highNutriScore: return "High Nutri Score"
+        case .vegan: return "Vegan"
+        case .vegetarian: return "Vegetarian"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .lowCalorie: return "flame.fill"
+        case .highProtein: return "figure.strengthtraining.traditional"
+        case .highNutriScore: return "star.fill"
+        case .vegan: return "leaf.fill"
+        case .vegetarian: return "carrot.fill"
+        }
+    }
+}
+
 @MainActor
 class SearchViewModel: ObservableObject {
     static let shared = SearchViewModel()
@@ -286,6 +347,14 @@ class SearchViewModel: ObservableObject {
     @Published var searchText = ""
     @Published var searchState: SearchState = .idle
     @Published var hasNextPage = false
+
+    // Active filters
+    @Published var activeFilters: Set<SearchFilter> = []
+
+    // Filter state ID for triggering view updates
+    var filterStateId: String {
+        activeFilters.sorted(by: { $0.id < $1.id }).map { $0.id }.joined(separator: "-")
+    }
 
     // Category products
     @Published var categoryProducts: [Int: [Product]] = [:]
@@ -339,10 +408,14 @@ class SearchViewModel: ObservableObject {
         searchTask = Task {
 
             do {
+                let filterParams = buildFilterParameters()
+
                 let result = try await GraphQLClient.shared.fetchProducts(
                     after: nil,
-                    sortAscending: true,
-                    searchQuery: query
+                    labelIds: filterParams.labelIds,
+                    sortAscending: filterParams.sortAscending,
+                    searchQuery: query,
+                    nutrientConditions: filterParams.nutrientConditions
                 )
 
                 guard !Task.isCancelled else { return }
@@ -373,10 +446,14 @@ class SearchViewModel: ObservableObject {
         searchState = .loadingMore
 
         do {
+            let filterParams = buildFilterParameters()
+
             let result = try await GraphQLClient.shared.fetchProducts(
                 after: cursor,
-                sortAscending: true,
+                labelIds: filterParams.labelIds,
+                sortAscending: filterParams.sortAscending,
                 searchQuery: searchText,
+                nutrientConditions: filterParams.nutrientConditions
             )
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage
@@ -395,6 +472,71 @@ class SearchViewModel: ObservableObject {
         endCursor = nil
     }
 
+    // MARK: - Filter Management
+
+    func toggleFilter(_ filter: SearchFilter) {
+        if activeFilters.contains(filter) {
+            activeFilters.remove(filter)
+        } else {
+            activeFilters.insert(filter)
+        }
+
+        // Clear and refetch category products with new filters
+        categoryProducts.removeAll()
+        fetchedCategories.removeAll()
+
+        // Re-run search if we have a search query or if we're showing results
+        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty || searchState == .searchResults {
+            Task {
+                await performSearch(query: searchText)
+            }
+        }
+    }
+
+    func clearFilters() {
+        activeFilters.removeAll()
+
+        // Clear and refetch category products without filters
+        categoryProducts.removeAll()
+        fetchedCategories.removeAll()
+
+        // Re-run search if we have a search query or if we're showing results
+        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty || searchState == .searchResults {
+            Task {
+                await performSearch(query: searchText)
+            }
+        }
+    }
+
+    private func buildFilterParameters() -> (labelIds: [Int]?, nutrientConditions: [(String, Double?, Double?)]?, sortAscending: Bool?) {
+        var labelIds: [Int] = []
+        var nutrientConditions: [(String, Double?, Double?)] = []
+        var sortAscending: Bool? = nil
+
+        for filter in activeFilters {
+            switch filter {
+            case .vegan:
+                labelIds.append(4)
+            case .vegetarian:
+                labelIds.append(3)
+            case .lowCalorie:
+                // Low calorie: less than 200 kcal per 100g
+                nutrientConditions.append(("energyKcal100g", nil, 200.0))
+            case .highProtein:
+                // High protein: more than 10g per 100g
+                nutrientConditions.append(("proteins100g", 10.0, nil))
+            case .highNutriScore:
+                sortAscending = true
+            }
+        }
+
+        return (
+            labelIds: labelIds.isEmpty ? nil : labelIds,
+            nutrientConditions: nutrientConditions.isEmpty ? nil : nutrientConditions,
+            sortAscending: sortAscending
+        )
+    }
+
     // MARK: - Category Products
 
     func fetchProductsForCategory(_ category: ProductCategory) async {
@@ -405,7 +547,14 @@ class SearchViewModel: ObservableObject {
         loadingCategories.insert(category.id)
 
         do {
-            let result = try await category.filter.fetchProducts(first: 10)
+            let filterParams = buildFilterParameters()
+
+            let result = try await category.filter.fetchProducts(
+                first: 10,
+                labelIds: filterParams.labelIds,
+                nutrientConditions: filterParams.nutrientConditions,
+                sortAscending: filterParams.sortAscending
+            )
             categoryProducts[category.id] = result.products
             fetchedCategories.insert(category.id)
 

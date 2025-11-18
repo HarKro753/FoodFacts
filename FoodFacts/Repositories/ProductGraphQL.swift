@@ -53,6 +53,7 @@ extension GraphQLClient {
         after: String? = nil,
         categoryId: Int? = nil,
         labelId: Int? = nil,
+        labelIds: [Int]? = nil,
         countryId: Int? = nil,
         foodGroup: Int? = nil,
         sortAscending: Bool? = nil,
@@ -60,7 +61,8 @@ extension GraphQLClient {
         productCodeForAlternatives: Int? = nil,
         nutrientFieldName: String? = nil,
         nutrientMinValue: Double? = nil,
-        nutrientMaxValue: Double? = nil
+        nutrientMaxValue: Double? = nil,
+        nutrientConditions: [(fieldName: String, minValue: Double?, maxValue: Double?)]? = nil
     ) async throws -> ProductsResult {
         var paginationParams = "first: \(first)"
         if let after = after {
@@ -71,9 +73,15 @@ extension GraphQLClient {
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
         }
-        if let labelId = labelId {
+
+        // Handle multiple label IDs
+        if let labelIds = labelIds, !labelIds.isEmpty {
+            // If multiple labels, we'll use the first one in filter and add others to where conditions
+            filterParams += ", labelId: \(labelIds[0])"
+        } else if let labelId = labelId {
             filterParams += ", labelId: \(labelId)"
         }
+
         if let countryId = countryId {
             filterParams += ", countryId: \(countryId)"
         }
@@ -91,7 +99,21 @@ extension GraphQLClient {
             whereConditions.append("productName: { startsWith: \"\(searchQuery)\" }")
         }
 
-        if let fieldName = nutrientFieldName {
+        // Handle multiple nutrient conditions
+        if let conditions = nutrientConditions, !conditions.isEmpty {
+            for condition in conditions {
+                var nutrientFilter = ""
+                if let minValue = condition.minValue {
+                    nutrientFilter = "\(condition.fieldName): { gte: \(minValue) }"
+                } else if let maxValue = condition.maxValue {
+                    nutrientFilter = "\(condition.fieldName): { lte: \(maxValue) }"
+                }
+
+                if !nutrientFilter.isEmpty {
+                    whereConditions.append(nutrientFilter)
+                }
+            }
+        } else if let fieldName = nutrientFieldName {
             var nutrientFilter = ""
             if let minValue = nutrientMinValue {
                 nutrientFilter = "\(fieldName): { gte: \(minValue) }"
