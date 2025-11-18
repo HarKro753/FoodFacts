@@ -147,7 +147,7 @@ struct CategoryProductsList: View {
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
-                            ProductHistoryRowItem(product: product)
+                            ProductSearchRowItem(product: product)
                         }
                         .listRowInsets(
                             EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
