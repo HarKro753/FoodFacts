@@ -10,38 +10,21 @@ import NetworkImage
 import SwiftUI
 
 struct SearchView: View {
-    @ObservedObject private var viewModel = SearchViewModel.shared
+    @EnvironmentObject private var viewModel: SearchViewModel
     @State private var navigationPath = NavigationPath()
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
             Group {
-                // State 1: Idle - Show horizontal scrollable label categories
-                if viewModel.shouldShowIdleState {
+                switch viewModel.searchState {
+                case .idle:
+                    // Show horizontal scrollable label categories
                     LabelCategoriesView(
                         viewModel: viewModel,
                         navigationPath: $navigationPath
                     )
-                }
-                // State 2: Typing - Show placeholder
-                else if viewModel.shouldShowPlaceholder {
-                    List {
-                        ForEach(0..<8, id: \.self) { _ in
-                            ProductItemPlaceholder()
-                                .listRowInsets(
-                                    EdgeInsets(
-                                        top: 0,
-                                        leading: 16,
-                                        bottom: 0,
-                                        trailing: 16
-                                    )
-                                )
-                        }
-                    }
-                    .listStyle(.plain)
-                }
-                // State 3: Search Results
-                else if viewModel.shouldShowSearchResults {
+
+                case .searching, .searchResults, .loadingMore, .error:
                     SearchResultsView(viewModel: viewModel)
                 }
             }
@@ -54,12 +37,6 @@ struct SearchView: View {
             .onSubmit(of: .search) {
                 Task {
                     await viewModel.onSearchSubmit()
-                }
-            }
-            .onChange(of: viewModel.searchText) { oldValue, newValue in
-                // Reset search committed when user clears search
-                if newValue.trimmingCharacters(in: .whitespaces).isEmpty {
-                    viewModel.clearSearch()
                 }
             }
             .navigationDestination(for: Product.self) { product in
@@ -79,8 +56,9 @@ struct SearchResultsView: View {
 
     var body: some View {
         Group {
-            if viewModel.isSearching && viewModel.products.isEmpty {
-                // Loading state
+            switch viewModel.searchState {
+            case .searching:
+                // Show loading placeholders
                 List {
                     ForEach(0..<8, id: \.self) { _ in
                         ProductItemPlaceholder()
@@ -95,10 +73,9 @@ struct SearchResultsView: View {
                     }
                 }
                 .listStyle(.plain)
-            } else if let errorMessage = viewModel.errorMessage,
-                viewModel.products.isEmpty
-            {
-                // Error state
+
+            case .error(let errorMessage):
+                // Show error view
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
@@ -122,62 +99,68 @@ struct SearchResultsView: View {
                     }
                     .buttonStyle(.bordered)
                 }
-            } else if viewModel.products.isEmpty {
-                // No results state
-                VStack(spacing: 16) {
-                    Image(systemName: "tray")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
 
-                    Text("No Products Found")
-                        .font(.headline)
+            case .searchResults, .loadingMore:
+                // Show results or no results
+                if viewModel.products.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
 
-                    Text("Try a different search term")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                // Results list
-                List {
-                    ForEach(
-                        Array(viewModel.products.enumerated()),
-                        id: \.element.id
-                    ) { index, product in
-                        NavigationLink {
-                            ProductDetail(product: product)
-                        } label: {
-                            ProductHistoryRowItem(product: product)
-                        }
-                        .listRowInsets(
-                            EdgeInsets(
-                                top: 0,
-                                leading: 16,
-                                bottom: 0,
-                                trailing: 16
+                        Text("No Products Found")
+                            .font(.headline)
+
+                        Text("Try a different search term")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    // Results list
+                    List {
+                        ForEach(
+                            Array(viewModel.products.enumerated()),
+                            id: \.element.id
+                        ) { index, product in
+                            NavigationLink {
+                                ProductDetail(product: product)
+                            } label: {
+                                ProductHistoryRowItem(product: product)
+                            }
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 0,
+                                    leading: 16,
+                                    bottom: 0,
+                                    trailing: 16
+                                )
                             )
-                        )
-                        .onAppear {
-                            // Load more when reaching the 5th item from the end
-                            if index == viewModel.products.count - 5 {
-                                Task {
-                                    await viewModel.loadMore()
+                            .onAppear {
+                                // Load more when reaching the 5th item from the end
+                                if index == viewModel.products.count - 5 {
+                                    Task {
+                                        await viewModel.loadMore()
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if viewModel.isLoadingMore {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .padding()
-                            Spacer()
+                        if case .loadingMore = viewModel.searchState {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .padding()
+                                Spacer()
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
                         }
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
                     }
+                    .listStyle(.plain)
                 }
-                .listStyle(.plain)
+
+            default:
+                EmptyView()
             }
         }
     }
@@ -207,10 +190,10 @@ struct LabelCategoriesView: View {
                                 Text(category.name)
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundStyle(.primary)
-                                Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(.gray)
+                                Spacer()
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)

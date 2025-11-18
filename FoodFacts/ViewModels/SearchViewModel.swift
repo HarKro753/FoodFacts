@@ -18,71 +18,78 @@ enum CategoryFilter: Hashable {
 }
 
 struct ProductCategory: Identifiable, Hashable {
-    let id: String
+    let id: Int
     let name: String
     let filter: CategoryFilter
 
     static let categories: [ProductCategory] = [
         // Nutrient-based categories
         ProductCategory(
-            id: "high-protein",
+            id: 0,
             name: "High Protein",
             filter: .nutrientMin(fieldName: "proteins100g", minValue: 10.0)
         ),
         ProductCategory(
-            id: "low-calorie",
+            id: 1,
             name: "Less than 500 Cal",
             filter: .nutrientMax(fieldName: "energyKcal100g", maxValue: 500.0)
         ),
         ProductCategory(
-            id: "vitamin-a",
+            id: 2,
             name: "Vitamin A High",
             filter: .nutrientMin(fieldName: "vitaminA100g", minValue: 50.0)
         ),
         ProductCategory(
-            id: "vitamin-d",
+            id: 3,
             name: "Vitamin D High",
             filter: .nutrientMin(fieldName: "vitaminD100g", minValue: 5.0)
         ),
         // Label-based categories
         ProductCategory(
-            id: "label-1",
+            id: 4,
             name: "Organic",
             filter: .label(id: 1)
         ),
         ProductCategory(
-            id: "label-5",
+            id: 5,
             name: "No gluten",
             filter: .label(id: 5)
         ),
         ProductCategory(
-            id: "label-11",
+            id: 6,
             name: "EU Organic",
             filter: .label(id: 11)
         ),
         ProductCategory(
-            id: "label-3",
+            id: 7,
             name: "Vegetarian",
             filter: .label(id: 3)
         ),
         ProductCategory(
-            id: "label-4",
+            id: 8,
             name: "Vegan",
             filter: .label(id: 4)
         ),
         ProductCategory(
-            id: "label-6",
+            id: 9,
             name: "No GMOs",
             filter: .label(id: 6)
         ),
     ]
 }
 
-// Keep ProductLabel for backward compatibility with navigation
 struct ProductLabel: Identifiable, Hashable {
     let id: String
     let name: String
     let filter: CategoryFilter
+}
+
+enum SearchState: Equatable {
+    case idle
+    case searching
+    case searchResults
+    case loadingMore
+    case error(String)
 }
 
 @MainActor
@@ -92,20 +99,31 @@ class SearchViewModel: ObservableObject {
     // Search results
     @Published var products: [Product] = []
     @Published var searchText = ""
-    @Published var isSearching = false
-    @Published var isLoadingMore = false
-    @Published var errorMessage: String?
+    @Published var searchState: SearchState = .idle
     @Published var hasNextPage = false
 
     // Category products
-    @Published var categoryProducts: [String: [Product]] = [:]
+    @Published var categoryProducts: [Int: [Product]] = [:]
     @Published var isLoadingCategories = false
 
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
-    private var isSearchCommitted = false
 
-    private init() {}
+    init() {
+        // Watch for search text changes to update state
+        $searchText
+            .removeDuplicates()
+            .sink { [weak self] text in
+                guard let self = self else { return }
+
+                let trimmedText = text.trimmingCharacters(in: .whitespaces)
+
+                if trimmedText.isEmpty && self.searchState != .idle {
+                    self.searchState = .idle
+                }
+            }
+            .store(in: &cancellables)
+    }
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -114,30 +132,22 @@ class SearchViewModel: ObservableObject {
             return
         }
 
-        isSearchCommitted = true
         await performSearch(query: searchText)
     }
 
     func performSearch(query: String) async {
-        // Cancel any existing search task
         searchTask?.cancel()
 
-        // Reset state
         endCursor = nil
         hasNextPage = false
 
-        // Don't search if query is empty
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             products = []
-            errorMessage = nil
-            isSearching = false
-            isSearchCommitted = false
+            searchState = .idle
             return
         }
 
-        // Set loading state and clear products immediately before Task starts
-        isSearching = true
-        errorMessage = nil
+        searchState = .searching
         products = []
 
         searchTask = Task {
@@ -149,37 +159,32 @@ class SearchViewModel: ObservableObject {
                     searchQuery: query
                 )
 
-                // Check if task was cancelled
                 guard !Task.isCancelled else { return }
 
                 products = result.products
                 hasNextPage = result.pageInfo.hasNextPage
                 endCursor = result.pageInfo.endCursor
-                errorMessage = nil
+                searchState = .searchResults
             } catch {
-                // Only update error if task wasn't cancelled
                 guard !Task.isCancelled else { return }
-                errorMessage = error.localizedDescription
+                searchState = .error(error.localizedDescription)
                 products = []
                 hasNextPage = false
                 endCursor = nil
             }
-
-            isSearching = false
         }
 
         await searchTask?.value
     }
 
     func loadMore() async {
-        guard !isLoadingMore,
+        guard case .searchResults = searchState,
             hasNextPage,
             let cursor = endCursor,
             !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
 
-        isLoadingMore = true
-        errorMessage = nil
+        searchState = .loadingMore
 
         do {
             let result = try await GraphQLClient.shared.fetchProducts(
@@ -190,21 +195,18 @@ class SearchViewModel: ObservableObject {
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage
             endCursor = result.pageInfo.endCursor
-            errorMessage = nil
+            searchState = .searchResults
         } catch {
-            errorMessage = error.localizedDescription
+            searchState = .error(error.localizedDescription)
         }
-
-        isLoadingMore = false
     }
 
     func clearSearch() {
         searchText = ""
         products = []
-        errorMessage = nil
+        searchState = .idle
         hasNextPage = false
         endCursor = nil
-        isSearchCommitted = false
     }
 
     // MARK: - Category Products
@@ -215,7 +217,7 @@ class SearchViewModel: ObservableObject {
         isLoadingCategories = true
 
         // Fetch products for each category concurrently
-        await withTaskGroup(of: (String, [Product]).self) { group in
+        await withTaskGroup(of: (Int, [Product]).self) { group in
             for category in ProductCategory.categories {
                 group.addTask {
                     do {
@@ -226,13 +228,11 @@ class SearchViewModel: ObservableObject {
                             result = try await GraphQLClient.shared.fetchProducts(
                                 first: 10,
                                 labelId: id,
-                                sortAscending: true
                             )
 
                         case .nutrientMin(let fieldName, let minValue):
                             result = try await GraphQLClient.shared.fetchProducts(
                                 first: 10,
-                                sortAscending: true,
                                 nutrientFieldName: fieldName,
                                 nutrientMinValue: minValue
                             )
@@ -240,7 +240,6 @@ class SearchViewModel: ObservableObject {
                         case .nutrientMax(let fieldName, let maxValue):
                             result = try await GraphQLClient.shared.fetchProducts(
                                 first: 10,
-                                sortAscending: true,
                                 nutrientFieldName: fieldName,
                                 nutrientMaxValue: maxValue
                             )
@@ -249,7 +248,6 @@ class SearchViewModel: ObservableObject {
                         print("Successfully fetched \(result.products.count) products for category \(category.name)")
                         return (category.id, result.products)
                     } catch {
-                        // Return empty array on error to prevent blocking
                         print(
                             "Error fetching products for category \(category.name): \(error.localizedDescription)"
                         )
@@ -269,18 +267,4 @@ class SearchViewModel: ObservableObject {
         isLoadingCategories = false
     }
 
-    var shouldShowIdleState: Bool {
-        return searchText.trimmingCharacters(in: .whitespaces).isEmpty
-            && !isSearchCommitted
-    }
-
-    var shouldShowSearchResults: Bool {
-        return isSearchCommitted
-            && !searchText.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    var shouldShowPlaceholder: Bool {
-        return !searchText.trimmingCharacters(in: .whitespaces).isEmpty
-            && !isSearchCommitted
-    }
 }
