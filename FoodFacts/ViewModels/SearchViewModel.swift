@@ -290,6 +290,7 @@ class SearchViewModel: ObservableObject {
     // Category products
     @Published var categoryProducts: [Int: [Product]] = [:]
     @Published var loadingCategories: Set<Int> = []
+    @Published var fetchedCategories: Set<Int> = [] // Track which categories have been fetched
 
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
@@ -397,8 +398,8 @@ class SearchViewModel: ObservableObject {
     // MARK: - Category Products
 
     func fetchProductsForCategory(_ category: ProductCategory) async {
-        // Skip if already loaded or currently loading
-        guard categoryProducts[category.id] == nil,
+        // Skip if already fetched or currently loading
+        guard !fetchedCategories.contains(category.id),
               !loadingCategories.contains(category.id) else { return }
 
         loadingCategories.insert(category.id)
@@ -406,13 +407,20 @@ class SearchViewModel: ObservableObject {
         do {
             let result = try await category.filter.fetchProducts(first: 10)
             categoryProducts[category.id] = result.products
-            print("Successfully fetched \(result.products.count) products for category \(category.name)")
+            fetchedCategories.insert(category.id)
+
+            if result.products.isEmpty {
+                print("No products found for category \(category.name)")
+            } else {
+                print("Successfully fetched \(result.products.count) products for category \(category.name)")
+            }
         } catch {
             print("Error fetching products for category \(category.name): \(error.localizedDescription)")
             if let decodingError = error as? DecodingError {
                 print("Decoding error details: \(decodingError)")
             }
             categoryProducts[category.id] = []
+            fetchedCategories.insert(category.id)
         }
 
         loadingCategories.remove(category.id)
@@ -420,6 +428,26 @@ class SearchViewModel: ObservableObject {
 
     func isLoadingCategory(_ categoryId: Int) -> Bool {
         loadingCategories.contains(categoryId)
+    }
+
+    func shouldShowCategory(_ categoryId: Int) -> Bool {
+        // Show if we have products
+        if let products = categoryProducts[categoryId], !products.isEmpty {
+            return true
+        }
+
+        // Show if we're currently loading
+        if loadingCategories.contains(categoryId) {
+            return true
+        }
+
+        // Show if we haven't fetched yet
+        if !fetchedCategories.contains(categoryId) {
+            return true
+        }
+
+        // Don't show if fetched but empty
+        return false
     }
 
 }
