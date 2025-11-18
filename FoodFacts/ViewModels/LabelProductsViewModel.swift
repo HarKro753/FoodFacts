@@ -5,10 +5,9 @@
 //  Created by Harro Krog on 17.11.25.
 //
 
-
-import SwiftUI
-import NetworkImage
 import Combine
+import NetworkImage
+import SwiftUI
 
 @MainActor
 class LabelProductsViewModel: ObservableObject {
@@ -40,6 +39,12 @@ class LabelProductsViewModel: ObservableObject {
                     labelId: id
                 )
 
+            case .category(let id):
+                result = try await GraphQLClient.shared.fetchProducts(
+                    first: 10,
+                    categoryId: id
+                )
+
             case .nutrientMin(let fieldName, let minValue):
                 result = try await GraphQLClient.shared.fetchProducts(
                     first: 20,
@@ -69,9 +74,10 @@ class LabelProductsViewModel: ObservableObject {
 
     func loadMore() async {
         guard !isLoadingMore,
-              hasNextPage,
-              let cursor = endCursor,
-              let filter = currentFilter else { return }
+            hasNextPage,
+            let cursor = endCursor,
+            let filter = currentFilter
+        else { return }
 
         isLoadingMore = true
         errorMessage = nil
@@ -93,6 +99,11 @@ class LabelProductsViewModel: ObservableObject {
                     after: cursor,
                     nutrientFieldName: fieldName,
                     nutrientMinValue: minValue
+                )
+            case .category(let id):
+                result = try await GraphQLClient.shared.fetchProducts(
+                    first: 10,
+                    categoryId: id
                 )
 
             case .nutrientMax(let fieldName, let maxValue):
