@@ -174,7 +174,7 @@ struct LabelCategoriesView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            LazyVStack(spacing: 16) {
                 ForEach(ProductCategory.categories) { category in
                     VStack(spacing: 0) {
                         // Header - always shown
@@ -219,8 +219,13 @@ struct LabelCategoriesView: View {
                                         }
                                         .buttonStyle(.plain)
                                     }
-                                } else {
+                                } else if viewModel.isLoadingCategory(category.id) {
                                     // Show placeholders while loading
+                                    ForEach(0..<5, id: \.self) { _ in
+                                        LabelProductCardPlaceholder()
+                                    }
+                                } else {
+                                    // Show placeholders as default state
                                     ForEach(0..<5, id: \.self) { _ in
                                         LabelProductCardPlaceholder()
                                     }
@@ -231,13 +236,14 @@ struct LabelCategoriesView: View {
                         }
                     }
                     .background(Color(.systemBackground))
+                    .task {
+                        // Fetch products when category appears
+                        await viewModel.fetchProductsForCategory(category)
+                    }
                 }
             }
         }
         .background(Color(.systemBackground))
-        .task {
-            await viewModel.fetchCategoryProducts()
-        }
     }
 }
 

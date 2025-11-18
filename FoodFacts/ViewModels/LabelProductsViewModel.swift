@@ -30,35 +30,7 @@ class LabelProductsViewModel: ObservableObject {
         hasNextPage = false
 
         do {
-            let result: ProductsResult
-
-            switch filter {
-            case .label(let id):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    labelId: id
-                )
-
-            case .category(let id):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 10,
-                    categoryId: id
-                )
-
-            case .nutrientMin(let fieldName, let minValue):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    nutrientFieldName: fieldName,
-                    nutrientMinValue: minValue
-                )
-
-            case .nutrientMax(let fieldName, let maxValue):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    nutrientFieldName: fieldName,
-                    nutrientMaxValue: maxValue
-                )
-            }
+            let result = try await filter.fetchProducts(first: 20)
 
             products = result.products
             hasNextPage = result.pageInfo.hasNextPage
@@ -83,37 +55,7 @@ class LabelProductsViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result: ProductsResult
-
-            switch filter {
-            case .label(let id):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    after: cursor,
-                    labelId: id
-                )
-
-            case .nutrientMin(let fieldName, let minValue):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    after: cursor,
-                    nutrientFieldName: fieldName,
-                    nutrientMinValue: minValue
-                )
-            case .category(let id):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 10,
-                    categoryId: id
-                )
-
-            case .nutrientMax(let fieldName, let maxValue):
-                result = try await GraphQLClient.shared.fetchProducts(
-                    first: 20,
-                    after: cursor,
-                    nutrientFieldName: fieldName,
-                    nutrientMaxValue: maxValue
-                )
-            }
+            let result = try await filter.fetchProducts(first: 20, after: cursor)
 
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage

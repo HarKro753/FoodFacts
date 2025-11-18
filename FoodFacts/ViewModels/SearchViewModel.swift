@@ -14,8 +14,51 @@ import SwiftUI
 enum CategoryFilter: Hashable {
     case label(id: Int)
     case category(id: Int)
+    case foodGroup(id: Int)
     case nutrientMin(fieldName: String, minValue: Double)
     case nutrientMax(fieldName: String, maxValue: Double)
+
+    // Generic method to fetch products for any filter type
+    func fetchProducts(first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+        switch self {
+        case .label(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                labelId: id
+            )
+
+        case .category(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                categoryId: id
+            )
+
+        case .foodGroup(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                foodGroup: id
+            )
+
+        case .nutrientMin(let fieldName, let minValue):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                nutrientFieldName: fieldName,
+                nutrientMinValue: minValue
+            )
+
+        case .nutrientMax(let fieldName, let maxValue):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                nutrientFieldName: fieldName,
+                nutrientMaxValue: maxValue
+            )
+        }
+    }
 }
 
 //Staples / Pasta / Grains
@@ -207,6 +250,16 @@ struct ProductCategory: Identifiable, Hashable {
         ProductCategory(id: 54, name: "Chocolate chip cookies", filter: .category(id: 4846)),
         ProductCategory(id: 55, name: "Madeleines", filter: .category(id: 1769)),
         ProductCategory(id: 56, name: "Ice cream tubs", filter: .category(id: 375)),
+
+        // Food Groups - commonly used groups
+        ProductCategory(id: 57, name: "Composite foods", filter: .foodGroup(id: 1)),
+        ProductCategory(id: 58, name: "Fruits and vegetables", filter: .foodGroup(id: 2)),
+        ProductCategory(id: 59, name: "Cereals and potatoes", filter: .foodGroup(id: 3)),
+        ProductCategory(id: 60, name: "Fish, Meat, Eggs", filter: .foodGroup(id: 4)),
+        ProductCategory(id: 61, name: "Milk and dairy products", filter: .foodGroup(id: 5)),
+        ProductCategory(id: 62, name: "Beverages", filter: .foodGroup(id: 6)),
+        ProductCategory(id: 63, name: "Fats and sauces", filter: .foodGroup(id: 7)),
+        ProductCategory(id: 64, name: "Sugary snacks", filter: .foodGroup(id: 8)),
     ]
 }
 
@@ -236,7 +289,7 @@ class SearchViewModel: ObservableObject {
 
     // Category products
     @Published var categoryProducts: [Int: [Product]] = [:]
-    @Published var isLoadingCategories = false
+    @Published var loadingCategories: Set<Int> = []
 
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
@@ -343,66 +396,30 @@ class SearchViewModel: ObservableObject {
 
     // MARK: - Category Products
 
-    func fetchCategoryProducts() async {
-        guard categoryProducts.isEmpty else { return }
+    func fetchProductsForCategory(_ category: ProductCategory) async {
+        // Skip if already loaded or currently loading
+        guard categoryProducts[category.id] == nil,
+              !loadingCategories.contains(category.id) else { return }
 
-        isLoadingCategories = true
+        loadingCategories.insert(category.id)
 
-        // Fetch products for each category concurrently
-        await withTaskGroup(of: (Int, [Product]).self) { group in
-            for category in ProductCategory.categories {
-                group.addTask {
-                    do {
-                        let result: ProductsResult
-
-                        switch category.filter {
-                        case .label(let id):
-                            result = try await GraphQLClient.shared.fetchProducts(
-                                first: 10,
-                                labelId: id
-                            )
-
-                        case .category(let id):
-                            result = try await GraphQLClient.shared.fetchProducts(
-                                first: 10,
-                                categoryId: id
-                            )
-
-                        case .nutrientMin(let fieldName, let minValue):
-                            result = try await GraphQLClient.shared.fetchProducts(
-                                first: 10,
-                                nutrientFieldName: fieldName,
-                                nutrientMinValue: minValue
-                            )
-
-                        case .nutrientMax(let fieldName, let maxValue):
-                            result = try await GraphQLClient.shared.fetchProducts(
-                                first: 10,
-                                nutrientFieldName: fieldName,
-                                nutrientMaxValue: maxValue
-                            )
-                        }
-
-                        print("Successfully fetched \(result.products.count) products for category \(category.name)")
-                        return (category.id, result.products)
-                    } catch {
-                        print(
-                            "Error fetching products for category \(category.name): \(error.localizedDescription)"
-                        )
-                        if let decodingError = error as? DecodingError {
-                            print("Decoding error details: \(decodingError)")
-                        }
-                        return (category.id, [])
-                    }
-                }
+        do {
+            let result = try await category.filter.fetchProducts(first: 10)
+            categoryProducts[category.id] = result.products
+            print("Successfully fetched \(result.products.count) products for category \(category.name)")
+        } catch {
+            print("Error fetching products for category \(category.name): \(error.localizedDescription)")
+            if let decodingError = error as? DecodingError {
+                print("Decoding error details: \(decodingError)")
             }
-
-            for await (categoryId, products) in group {
-                categoryProducts[categoryId] = products
-            }
+            categoryProducts[category.id] = []
         }
 
-        isLoadingCategories = false
+        loadingCategories.remove(category.id)
+    }
+
+    func isLoadingCategory(_ categoryId: Int) -> Bool {
+        loadingCategories.contains(categoryId)
     }
 
 }
