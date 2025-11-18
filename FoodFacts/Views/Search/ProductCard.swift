@@ -10,7 +10,7 @@ import SwiftUI
 import NetworkImage
 import Combine
 
-struct LabelProductCard: View {
+struct ProductCard: View {
     let product: Product
 
     var body: some View {

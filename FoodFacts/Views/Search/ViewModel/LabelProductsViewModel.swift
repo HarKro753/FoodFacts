@@ -9,6 +9,12 @@ import Combine
 import NetworkImage
 import SwiftUI
 
+struct ProductLabel: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let filter: CategoryFilter
+}
+
 @MainActor
 class LabelProductsViewModel: ObservableObject {
     @Published var products: [Product] = []

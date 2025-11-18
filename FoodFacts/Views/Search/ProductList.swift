@@ -10,7 +10,8 @@ import SwiftUI
 import NetworkImage
 import Combine
 
-struct LabelProductsList: View {
+
+struct ProductList: View {
     let label: ProductLabel
     @StateObject private var viewModel = LabelProductsViewModel()
 
@@ -97,7 +98,7 @@ struct LabelProductsList: View {
 }
 
 struct CategoryProductsList: View {
-    let category: ProductCategory
+    let category: ProductCategoryData
     @StateObject private var viewModel = LabelProductsViewModel()
 
     var body: some View {

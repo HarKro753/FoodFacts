@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ProductItemPlaceholder: View {
+struct ProductListItemPlaceholder: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Placeholder for product image
@@ -100,15 +100,15 @@ struct Shimmer: ViewModifier {
 
 #Preview {
     List {
-        ProductItemPlaceholder()
+        ProductListItemPlaceholder()
             .listRowInsets(
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
             )
-        ProductItemPlaceholder()
+        ProductListItemPlaceholder()
             .listRowInsets(
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
             )
-        ProductItemPlaceholder()
+        ProductListItemPlaceholder()
             .listRowInsets(
                 EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
             )

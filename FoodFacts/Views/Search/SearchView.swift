@@ -47,7 +47,7 @@ struct SearchView: View {
             .navigationDestination(for: Product.self) { product in
                 ProductDetail(product: product)
             }
-            .navigationDestination(for: ProductCategory.self) { category in
+            .navigationDestination(for: ProductCategoryData.self) { category in
                 CategoryProductsList(category: category)
             }
         }
@@ -66,7 +66,7 @@ struct SearchResultsView: View {
                 // Show loading placeholders
                 List {
                     ForEach(0..<8, id: \.self) { _ in
-                        ProductItemPlaceholder()
+                        ProductListItemPlaceholder()
                             .listRowInsets(
                                 EdgeInsets(
                                     top: 0,
@@ -94,15 +94,6 @@ struct SearchResultsView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-
-                    Button("Try Again") {
-                        Task {
-                            await viewModel.performSearch(
-                                query: viewModel.searchText
-                            )
-                        }
-                    }
-                    .buttonStyle(.bordered)
                 }
 
             case .searchResults, .loadingMore:
@@ -180,7 +171,7 @@ struct LabelCategoriesView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
-                ForEach(ProductCategory.categories.filter { viewModel.shouldShowCategory($0.id) }) { category in
+                ForEach(ProductCategoryData.categories.filter { viewModel.shouldShowCategory($0.id) }) { category in
                     VStack(spacing: 0) {
                         // Header - always shown
                         Button(action: {
@@ -220,7 +211,7 @@ struct LabelCategoriesView: View {
                                         Button(action: {
                                             navigationPath.append(product)
                                         }) {
-                                            LabelProductCard(product: product)
+                                            ProductCard(product: product)
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -255,7 +246,7 @@ struct FilterMenuButton: View {
 
     var body: some View {
         Menu {
-            ForEach(SearchFilter.allCases) { filter in
+            ForEach(ProductFilter.allCases) { filter in
                 Button {
                     viewModel.toggleFilter(filter)
                 } label: {
