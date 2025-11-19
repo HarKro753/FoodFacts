@@ -37,8 +37,19 @@ class SearchViewModel: ObservableObject {
     @Published var fetchedCategories: Set<Int> = []
     @Published var categories: [ProductCategoryData] = []
 
+    // Autocomplete
+    @Published var completions: CompletionsData? = nil
+
+    var shouldShowCompletions: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty &&
+        searchState != .searching &&
+        searchState != .searchResults &&
+        searchState != .loadingMore
+    }
+
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
+    private var completionTask: Task<Void, Never>?
 
     init() {
         // Randomize categories on initialization
@@ -46,20 +57,79 @@ class SearchViewModel: ObservableObject {
 
         $searchText
             .removeDuplicates()
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .sink { [weak self] text in
                 guard let self = self else { return }
 
                 let trimmedText = text.trimmingCharacters(in: .whitespaces)
 
-                if trimmedText.isEmpty && self.searchState != .idle {
-                    self.searchState = .idle
+                if trimmedText.isEmpty {
+                    self.completions = nil
+                    // Only reset to idle if we're not showing search results
+                    if self.searchState != .idle &&
+                       self.searchState != .searchResults &&
+                       self.searchState != .loadingMore {
+                        self.searchState = .idle
+                    }
+                } else {
+                    // Only fetch completions if we're in idle state
+                    if self.searchState == .idle {
+                        Task {
+                            await self.fetchCompletions(for: trimmedText)
+                        }
+                    }
                 }
             }
             .store(in: &cancellables)
     }
 
     private var cancellables = Set<AnyCancellable>()
-    
+
+    // MARK: - Autocomplete
+
+    func fetchCompletions(for text: String) async {
+        completionTask?.cancel()
+
+        guard !text.trimmingCharacters(in: .whitespaces).isEmpty else {
+            completions = nil
+            return
+        }
+
+        completionTask = Task {
+            do {
+                let fetchedCompletions = try await GraphQLClient.shared.fetchCompletions(prefix: text)
+
+                guard !Task.isCancelled else { return }
+
+                completions = fetchedCompletions
+            } catch {
+                guard !Task.isCancelled else { return }
+                // If completions fail, set to nil
+                print("Error fetching completions: \(error.localizedDescription)")
+                completions = nil
+            }
+        }
+
+        await completionTask?.value
+    }
+
+    func selectProductCompletion(_ product: CompletionItem) async {
+        // Cancel any pending completion and search tasks
+        completionTask?.cancel()
+        searchTask?.cancel()
+
+        // Clear completions and set state to searching immediately
+        completions = nil
+        searchState = .searching
+
+        // Perform the search WITHOUT modifying searchText
+        // (modifying searchText triggers the Combine publisher)
+        await performSearch(query: product.name)
+
+        // After search completes, clear the search text
+        searchText = ""
+    }
+
     ///
     ///
     ///
@@ -76,9 +146,11 @@ class SearchViewModel: ObservableObject {
     ///
     private func performSearch(query: String) async {
         searchTask?.cancel()
+        completionTask?.cancel()
 
         endCursor = nil
         hasNextPage = false
+        completions = nil  // Clear completions when starting a search
 
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             products = []
@@ -151,6 +223,20 @@ class SearchViewModel: ObservableObject {
     func clearSearch() {
         searchText = ""
         products = []
+        searchState = .idle
+        hasNextPage = false
+        endCursor = nil
+    }
+
+    func resetToIdle() {
+        // Cancel any ongoing tasks
+        searchTask?.cancel()
+        completionTask?.cancel()
+
+        // Clear all state
+        searchText = ""
+        products = []
+        completions = nil
         searchState = .idle
         hasNextPage = false
         endCursor = nil
