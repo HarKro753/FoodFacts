@@ -13,12 +13,20 @@ class ScannerViewModel: ObservableObject {
     @Published var scannedProduct: Product?
     @Published var errorMessage: String?
 
+    let networkMonitor = NetworkMonitor.shared
+
     func handleScannedBarcode(productCode: String) async {
         errorMessage = nil
         scannedProduct = nil
-        
+
         guard let code = Int(productCode) else {
             errorMessage = "Invalid product code"
+            return
+        }
+
+        // Check network connectivity before attempting to fetch
+        guard networkMonitor.isConnected else {
+            errorMessage = "No internet connection. Please check your network and try scanning again."
             return
         }
 
@@ -37,13 +45,18 @@ class ScannerViewModel: ObservableObject {
                         print("Failed to add to history: \(error)")
                     }
                 }
-                
+
                 scannedProduct = product
             } else {
                 errorMessage = "Product not found"
             }
         } catch {
-            errorMessage = error.localizedDescription
+            // Provide better error messages based on network state
+            if !networkMonitor.isConnected {
+                errorMessage = "Lost internet connection. Please check your network and try scanning again."
+            } else {
+                errorMessage = error.localizedDescription
+            }
             scannedProduct = nil
         }
     }

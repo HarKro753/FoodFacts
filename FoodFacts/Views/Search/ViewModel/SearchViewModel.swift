@@ -27,6 +27,7 @@ class SearchViewModel: ObservableObject {
     @Published var hasNextPage = false
 
     let filterManager = FilterManager.shared
+    let networkMonitor = NetworkMonitor.shared
 
     @Published var filterStateId: String = ""
 
@@ -156,6 +157,13 @@ class SearchViewModel: ObservableObject {
             return
         }
 
+        // Check network connectivity before attempting search
+        guard networkMonitor.isConnected else {
+            searchState = .error("No internet connection. Please check your network and try again.")
+            products = []
+            return
+        }
+
         searchState = .searching
         products = []
 
@@ -180,7 +188,16 @@ class SearchViewModel: ObservableObject {
                 searchState = .searchResults
             } catch {
                 guard !Task.isCancelled else { return }
-                searchState = .error(error.localizedDescription)
+
+                // Provide better error messages based on network state
+                let errorMessage: String
+                if !networkMonitor.isConnected {
+                    errorMessage = "Lost internet connection. Please check your network and try again."
+                } else {
+                    errorMessage = error.localizedDescription
+                }
+
+                searchState = .error(errorMessage)
                 products = []
                 hasNextPage = false
                 endCursor = nil
@@ -196,6 +213,12 @@ class SearchViewModel: ObservableObject {
             let cursor = endCursor,
             !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
+
+        // Check network connectivity before attempting to load more
+        guard networkMonitor.isConnected else {
+            searchState = .error("No internet connection. Please check your network and try again.")
+            return
+        }
 
         searchState = .loadingMore
 
@@ -214,7 +237,15 @@ class SearchViewModel: ObservableObject {
             endCursor = result.pageInfo.endCursor
             searchState = .searchResults
         } catch {
-            searchState = .error(error.localizedDescription)
+            // Provide better error messages based on network state
+            let errorMessage: String
+            if !networkMonitor.isConnected {
+                errorMessage = "Lost internet connection. Please check your network and try again."
+            } else {
+                errorMessage = error.localizedDescription
+            }
+
+            searchState = .error(errorMessage)
         }
     }
 
@@ -254,6 +285,12 @@ class SearchViewModel: ObservableObject {
             !loadingCategories.contains(category.id)
         else { return }
 
+        // Check network connectivity - don't mark as fetched if there's no connection
+        guard networkMonitor.isConnected else {
+            print("No network connection - skipping category \(category.name)")
+            return
+        }
+
         loadingCategories.insert(category.id)
 
         do {
@@ -282,8 +319,13 @@ class SearchViewModel: ObservableObject {
             if let decodingError = error as? DecodingError {
                 print("Decoding error details: \(decodingError)")
             }
-            categoryProducts[category.id] = []
-            fetchedCategories.insert(category.id)
+
+            // Only mark as fetched if it's not a network error
+            // This allows retry when network is restored
+            if networkMonitor.isConnected {
+                categoryProducts[category.id] = []
+                fetchedCategories.insert(category.id)
+            }
         }
 
         loadingCategories.remove(category.id)

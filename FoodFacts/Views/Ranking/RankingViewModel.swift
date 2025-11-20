@@ -15,6 +15,8 @@ class RankingViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    let networkMonitor = NetworkMonitor.shared
+
     private var hasLoadedInitially = false
 
     struct FoodGroupStyle {
@@ -82,6 +84,14 @@ class RankingViewModel: ObservableObject {
     func fetchFoodGroups() async {
         guard !hasLoadedInitially else { return }
 
+        // Check network connectivity before attempting to fetch
+        guard networkMonitor.isConnected else {
+            errorMessage = "No internet connection. Pull down to refresh when connected."
+            foodGroups = []
+            hasLoadedInitially = true
+            return
+        }
+
         isLoading = true
         errorMessage = nil
 
@@ -99,7 +109,12 @@ class RankingViewModel: ObservableObject {
             errorMessage = nil
             hasLoadedInitially = true
         } catch {
-            errorMessage = error.localizedDescription
+            // Provide better error messages based on network state
+            if !networkMonitor.isConnected {
+                errorMessage = "Lost internet connection. Pull down to refresh when connected."
+            } else {
+                errorMessage = error.localizedDescription
+            }
             foodGroups = []
             hasLoadedInitially = true
         }
@@ -109,6 +124,12 @@ class RankingViewModel: ObservableObject {
 
     func refresh() async {
         errorMessage = nil
+
+        // Check network connectivity before attempting to refresh
+        guard networkMonitor.isConnected else {
+            errorMessage = "No internet connection. Please check your network and try again."
+            return
+        }
 
         do {
             let foodGroupNodes = try await GraphQLClient.shared.fetchFoodGroups()
@@ -123,7 +144,12 @@ class RankingViewModel: ObservableObject {
             }
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            // Provide better error messages based on network state
+            if !networkMonitor.isConnected {
+                errorMessage = "Lost internet connection. Please check your network and try again."
+            } else {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 

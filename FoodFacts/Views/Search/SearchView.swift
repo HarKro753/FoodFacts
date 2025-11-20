@@ -187,52 +187,60 @@ struct CompletionView: View {
     var body: some View {
         List {
             if let completions = viewModel.completions {
-                // Products
+
+                // MARK: - Products
                 ForEach(completions.productNames) { product in
-                    Button(action: {
+                    CompletionRow(
+                        icon: "cube.box.fill",
+                        iconColor: .gray,
+                        name: product.name,
+                        searchText: viewModel.searchText
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         viewModel.clearCompletions()
                         navigationPath.append(product.id)
-                    }) {
-                        CompletionRow(
-                            icon: "cube.box.fill",
-                            iconColor: .gray,
-                            name: product.name,
-                            searchText: viewModel.searchText
-                        )
                     }
-                    .buttonStyle(.plain)
                     .listRowInsets(
                         EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
                     )
                 }
 
-                // Categories
+                // MARK: - Categories
                 ForEach(completions.categoryNames) { category in
-                    Button(action: {
+                    CompletionRow(
+                        icon: "tag.fill",
+                        iconColor: .gray,
+                        name: category.name,
+                        searchText: viewModel.searchText
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         viewModel.clearCompletions()
+
                         let categoryData = ProductCategoryData(
                             id: category.id,
                             name: category.name,
                             filter: .category(id: category.id)
                         )
+
                         navigationPath.append(categoryData)
-                    }) {
-                        CompletionRow(
-                            icon: "tag.fill",
-                            iconColor: .gray,
-                            name: category.name,
-                            searchText: viewModel.searchText
-                        )
                     }
-                    .buttonStyle(.plain)
                     .listRowInsets(
                         EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
                     )
                 }
 
-                // Food Groups
+                // MARK: - Food Groups
                 ForEach(completions.foodGroups) { foodGroup in
-                    Button(action: {
+                    CompletionRow(
+                        icon: "leaf.fill",
+                        iconColor: .gray,
+                        name: foodGroup.name,
+                        searchText: viewModel.searchText
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
                         viewModel.clearCompletions()
 
                         let label = ProductLabel(
@@ -240,23 +248,16 @@ struct CompletionView: View {
                             name: foodGroup.name,
                             filter: .foodGroup(id: foodGroup.id)
                         )
-                        navigationPath.append(label)
 
-                    }) {
-                        CompletionRow(
-                            icon: "leaf.fill",
-                            iconColor: .gray,
-                            name: foodGroup.name,
-                            searchText: viewModel.searchText
-                        )
+                        navigationPath.append(label)
                     }
-                    .buttonStyle(.plain)
                     .listRowInsets(
                         EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
                     )
                 }
+
             } else {
-                // Loading placeholders
+                // MARK: - Placeholders
                 ForEach(0..<10, id: \.self) { _ in
                     CompletionRowPlaceholder()
                         .listRowInsets(
@@ -312,13 +313,14 @@ struct ExploreView: View {
                             .background(Color(.systemBackground))
                         }
                         .buttonStyle(.plain)
+                        .buttonStyle(PressScaleButtonStyle())
                         .disabled(
                             viewModel.categoryProducts[category.id]?.isEmpty
                                 ?? true
                         )
 
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(alignment: .top, spacing: 12) {
+                            LazyHStack(alignment: .top, spacing: 12) {
                                 if let products = viewModel.categoryProducts[
                                     category.id
                                 ], !products.isEmpty {
@@ -349,6 +351,19 @@ struct ExploreView: View {
             }
         }
         .background(Color(.systemBackground))
+    }
+}
+
+struct PressScaleButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.9
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(
+                .spring(response: 0.2, dampingFraction: 0.7),
+                value: configuration.isPressed
+            )
     }
 }
 

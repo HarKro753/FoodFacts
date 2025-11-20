@@ -21,7 +21,10 @@ struct ProductDetail: View {
 
     init(product: Product) {
         _viewModel = StateObject(
-            wrappedValue: ProductDetailViewModel(productCode: product.id, product: product)
+            wrappedValue: ProductDetailViewModel(
+                productCode: product.id,
+                product: product
+            )
         )
     }
 
@@ -40,7 +43,9 @@ struct ProductDetail: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage, viewModel.product == nil {
+            } else if let errorMessage = viewModel.errorMessage,
+                viewModel.product == nil
+            {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
@@ -613,203 +618,5 @@ struct FullscreenImageView: View {
         dragOffset = .zero
         backgroundOpacity = 1.0
         isPresented = false
-    }
-}
-
-// MARK: - Preview
-#Preview {
-    NavigationStack {
-        ProductDetail(
-            product: Product(
-                code: 12345,
-                name: "Chocolate Cookie with Additives",
-                brand: "Sample Brand",
-                imageUrl: nil,
-                nutriScore: 45,
-                positiveNutrientRatings: [
-                    NutrientRating(
-                        nutrientType: "FIBER",
-                        name: "Ballaststoffe",
-                        value: 3.5,
-                        unit: "GRAM",
-                        rating: "VERY_GOOD",
-                        text: "Hoher Ballaststoffgehalt",
-                        ratingSections: [
-                            RatingSection(
-                                rating: "VERY_GOOD",
-                                minValue: 3.0,
-                                maxValue: 10.0,
-                                description: "Hoher Gehalt"
-                            ),
-                            RatingSection(
-                                rating: "GOOD",
-                                minValue: 2.0,
-                                maxValue: 3.0,
-                                description: "Guter Gehalt"
-                            ),
-                            RatingSection(
-                                rating: "MEDIUM",
-                                minValue: 1.0,
-                                maxValue: 2.0,
-                                description: "Mittlerer Gehalt"
-                            ),
-                            RatingSection(
-                                rating: "BAD",
-                                minValue: 0,
-                                maxValue: 1.0,
-                                description: "Niedriger Gehalt"
-                            ),
-                        ]
-                    )
-                ],
-                negativeNutrientRatings: [
-                    NutrientRating(
-                        nutrientType: "SUGAR",
-                        name: "Zucker",
-                        value: 25.0,
-                        unit: "GRAM",
-                        rating: "BAD",
-                        text: "Hoher Zuckergehalt",
-                        ratingSections: [
-                            RatingSection(
-                                rating: "VERY_GOOD",
-                                minValue: 0,
-                                maxValue: 5.0,
-                                description: "Niedriger Zuckergehalt"
-                            ),
-                            RatingSection(
-                                rating: "GOOD",
-                                minValue: 5.0,
-                                maxValue: 10.0,
-                                description: "Moderater Zuckergehalt"
-                            ),
-                            RatingSection(
-                                rating: "MEDIUM",
-                                minValue: 10.0,
-                                maxValue: 20.0,
-                                description: "Erhöhter Zuckergehalt"
-                            ),
-                            RatingSection(
-                                rating: "BAD",
-                                minValue: 20.0,
-                                maxValue: 100.0,
-                                description: "Hoher Zuckergehalt"
-                            ),
-                        ]
-                    ),
-                    NutrientRating(
-                        nutrientType: "SALT",
-                        name: "Salz",
-                        value: 1.2,
-                        unit: "GRAM",
-                        rating: "MEDIUM",
-                        text: "Mittlerer Salzgehalt",
-                        ratingSections: nil
-                    ),
-                ],
-                additivesRatings: AdditiveRating(
-                    rating: "MEDIUM",
-                    description: "Mittleres Risiko",
-                    numberOfAdditives: 4,
-                    additives: [
-                        Additive(
-                            id: 1,
-                            name: "E102 - Tartrazin",
-                            description:
-                                "Ein synthetischer Azofarbstoff, der gelbe Farbe verleiht",
-                            risk: "MODERATE_RISK",
-                            additiveTypeId: 1,
-                            additiveType: AdditiveType(
-                                id: 1,
-                                name: "Farbstoff",
-                                description:
-                                    "Wird verwendet, um Lebensmitteln Farbe zu verleihen"
-                            ),
-                            additiveHealthRisks: [
-                                AdditiveHealthRiskRelation(
-                                    additiveId: 1,
-                                    healthRiskId: 1,
-                                    healthRisk: HealthRisk(
-                                        id: 1,
-                                        name: "Hyperaktivität bei Kindern"
-                                    )
-                                ),
-                                AdditiveHealthRiskRelation(
-                                    additiveId: 1,
-                                    healthRiskId: 2,
-                                    healthRisk: HealthRisk(
-                                        id: 2,
-                                        name: "Allergische Reaktionen"
-                                    )
-                                ),
-                            ]
-                        ),
-                        Additive(
-                            id: 2,
-                            name: "E211 - Natriumbenzoat",
-                            description:
-                                "Ein Konservierungsmittel zur Verlängerung der Haltbarkeit",
-                            risk: "LOW_RISK",
-                            additiveTypeId: 2,
-                            additiveType: AdditiveType(
-                                id: 2,
-                                name: "Konservierungsmittel",
-                                description:
-                                    "Verhindert das Wachstum von Mikroorganismen"
-                            ),
-                            additiveHealthRisks: [
-                                AdditiveHealthRiskRelation(
-                                    additiveId: 2,
-                                    healthRiskId: 3,
-                                    healthRisk: HealthRisk(
-                                        id: 3,
-                                        name: "Asthma-Symptome"
-                                    )
-                                )
-                            ]
-                        ),
-                        Additive(
-                            id: 3,
-                            name: "E621 - Mononatriumglutamat",
-                            description:
-                                "Ein Geschmacksverstärker, der den Umami-Geschmack verstärkt",
-                            risk: "MODERATE_RISK",
-                            additiveTypeId: 3,
-                            additiveType: AdditiveType(
-                                id: 3,
-                                name: "Geschmacksverstärker",
-                                description:
-                                    "Verstärkt den Geschmack von Lebensmitteln"
-                            ),
-                            additiveHealthRisks: [
-                                AdditiveHealthRiskRelation(
-                                    additiveId: 3,
-                                    healthRiskId: 4,
-                                    healthRisk: HealthRisk(
-                                        id: 4,
-                                        name: "Kopfschmerzen"
-                                    )
-                                )
-                            ]
-                        ),
-                        Additive(
-                            id: 4,
-                            name: "E300 - Ascorbinsäure",
-                            description:
-                                "Vitamin C, wird als Antioxidans verwendet",
-                            risk: "NO_RISK",
-                            additiveTypeId: 4,
-                            additiveType: AdditiveType(
-                                id: 4,
-                                name: "Antioxidans",
-                                description:
-                                    "Verhindert die Oxidation und verlängert die Haltbarkeit"
-                            ),
-                            additiveHealthRisks: nil
-                        ),
-                    ]
-                )
-            )
-        )
     }
 }

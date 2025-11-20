@@ -105,3 +105,73 @@ struct ListRankItem: View {
         }
     }
 }
+
+// MARK: - Placeholder
+
+struct ListRankItemPlaceholder: View {
+    let rank: Int
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            // Placeholder Image
+            RoundedRectangle(cornerRadius: 0)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 80, height: 120)
+                .shimmering()
+
+            // Placeholder Rank Number
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 24, height: 20)
+                .shimmering()
+
+            // Placeholder Product Info
+            VStack(alignment: .leading, spacing: 4) {
+                // Product name placeholder
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: 16)
+                    .shimmering()
+
+                // Brand name placeholder
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(width: 120, height: 15)
+                    .shimmering()
+
+                Spacer()
+
+                // Rating placeholder
+                HStack(alignment: .center, spacing: 8) {
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 12, height: 12)
+                        .shimmering()
+
+                    VStack(spacing: 2) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(width: 60, height: 15)
+                            .shimmering()
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(width: 50, height: 15)
+                            .shimmering()
+                    }
+                }
+            }
+            .frame(height: 100, alignment: .top)
+        }
+        .padding(.vertical, 8)
+        .alignmentGuide(.listRowSeparatorLeading) { _ in
+            0
+        }
+    }
+}
+
+extension View {
+    func shimmering() -> some View {
+        modifier(ShimmerModifier())
+    }
+}

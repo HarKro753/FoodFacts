@@ -24,25 +24,18 @@ struct RankingView: View {
                 // Food Groups List
                 Section {
                     if selectedCategory == .lebensmittel {
-                        if viewModel.isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                        } else if let errorMessage = viewModel.errorMessage,
-                            viewModel.foodGroups.isEmpty
-                        {
-                            VStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .foregroundStyle(.orange)
-                                Text(errorMessage)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                        if viewModel.isLoading || (viewModel.foodGroups.isEmpty && viewModel.errorMessage != nil) {
+                            // Show placeholders while loading or on error
+                            ForEach(0..<8, id: \.self) { index in
+                                FoodGroupRowItemPlaceholder()
                             }
                         } else if viewModel.foodGroups.isEmpty {
-                            Text("No food groups found")
-                                .foregroundStyle(.secondary)
+                            HStack {
+                                Spacer()
+                                Text("No food groups found")
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
                         } else {
                             ForEach(viewModel.foodGroups) { foodGroup in
                                 NavigationLink {
@@ -61,6 +54,9 @@ struct RankingView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            }
+            .refreshable {
+                await viewModel.refresh()
             }
             .navigationTitle("Ranking")
             .task {
@@ -83,6 +79,25 @@ struct FoodGroupRowItem: View {
                 .frame(width: 32, height: 32)
             Text(foodGroup.name)
         }
+    }
+}
+
+struct FoodGroupRowItemPlaceholder: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon placeholder
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 32, height: 32)
+                .shimmering()
+
+            // Text placeholder
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.gray.opacity(0.2))
+                .frame(height: 16)
+                .shimmering()
+        }
+        .padding(.vertical, 4)
     }
 }
 
