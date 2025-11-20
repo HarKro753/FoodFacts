@@ -10,10 +10,7 @@ import SwiftUI
 
 // MARK: - Product Detail View
 struct ProductDetail: View {
-    let product: Product
-
     @StateObject private var viewModel: ProductDetailViewModel
-    @State private var selectedTab: DetailTab = .nutrition
     @State private var showRatingDetails = false
     @State private var showFullscreenImage = false
 
@@ -23,20 +20,57 @@ struct ProductDetail: View {
     }
 
     init(product: Product) {
-        self.product = product
         _viewModel = StateObject(
-            wrappedValue: ProductDetailViewModel(productCode: product.id)
+            wrappedValue: ProductDetailViewModel(productCode: product.id, product: product)
+        )
+    }
+
+    init(productCode: Int) {
+        _viewModel = StateObject(
+            wrappedValue: ProductDetailViewModel(productCode: productCode)
         )
     }
 
     var body: some View {
-        ScrollView {
-            ProductDetailSharedContent(
-                product: product,
-                alternatives: viewModel.alternatives,
-                showFullscreenImage: $showFullscreenImage,
-                showRatingDetails: $showRatingDetails
-            )
+        Group {
+            if viewModel.isLoadingProduct {
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Loading product...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            } else if let errorMessage = viewModel.errorMessage, viewModel.product == nil {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
+
+                    Text("Error loading product")
+                        .font(.headline)
+
+                    Text(errorMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+            } else if let product = viewModel.product {
+                ScrollView {
+                    ProductDetailSharedContent(
+                        product: product,
+                        alternatives: viewModel.alternatives,
+                        showFullscreenImage: $showFullscreenImage,
+                        showRatingDetails: $showRatingDetails
+                    )
+                }
+                .fullScreenCover(isPresented: $showFullscreenImage) {
+                    FullscreenImageView(
+                        imageUrl: product.imageUrl,
+                        isPresented: $showFullscreenImage
+                    )
+                }
+            }
         }
         .background(Color(.systemBackground))
         .navigationTitle("Product Details")
@@ -53,13 +87,8 @@ struct ProductDetail: View {
         .sheet(isPresented: $showRatingDetails) {
             RatingDetailsSheet()
         }
-        .fullScreenCover(isPresented: $showFullscreenImage) {
-            FullscreenImageView(
-                imageUrl: product.imageUrl,
-                isPresented: $showFullscreenImage
-            )
-        }
         .task {
+            await viewModel.fetchProduct()
             await viewModel.fetchAlternatives()
         }
     }

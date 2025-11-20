@@ -5,12 +5,12 @@
 //  Created by Harro Krog on 17.11.25.
 //
 
-
-import SwiftUI
-import NetworkImage
 import Combine
+import NetworkImage
+import SwiftUI
 
-
+/// This is the list which is opened from SearchView when pressing on a header.
+/// It displays all the items in a certain Category, Food Group
 struct ProductList: View {
     let label: ProductLabel
     @StateObject private var viewModel = LabelProductsViewModel()
@@ -24,7 +24,9 @@ struct ProductList: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage, viewModel.products.isEmpty {
+            } else if let errorMessage = viewModel.errorMessage,
+                viewModel.products.isEmpty
+            {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
@@ -57,14 +59,22 @@ struct ProductList: View {
                 }
             } else {
                 List {
-                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                    ForEach(
+                        Array(viewModel.products.enumerated()),
+                        id: \.element.id
+                    ) { index, product in
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
                             ProductHistoryRowItem(product: product)
                         }
                         .listRowInsets(
-                            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+                            EdgeInsets(
+                                top: 0,
+                                leading: 16,
+                                bottom: 0,
+                                trailing: 16
+                            )
                         )
                         .onAppear {
                             if index == viewModel.products.count - 5 {
@@ -110,7 +120,9 @@ struct CategoryProductsList: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage, viewModel.products.isEmpty {
+            } else if let errorMessage = viewModel.errorMessage,
+                viewModel.products.isEmpty
+            {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
@@ -143,14 +155,22 @@ struct CategoryProductsList: View {
                 }
             } else {
                 List {
-                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                    ForEach(
+                        Array(viewModel.products.enumerated()),
+                        id: \.element.id
+                    ) { index, product in
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
-                            ProductSearchRowItem(product: product)
+                            ProductSearchProductItem(product: product)
                         }
                         .listRowInsets(
-                            EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+                            EdgeInsets(
+                                top: 0,
+                                leading: 16,
+                                bottom: 0,
+                                trailing: 16
+                            )
                         )
                         .onAppear {
                             if index == viewModel.products.count - 5 {

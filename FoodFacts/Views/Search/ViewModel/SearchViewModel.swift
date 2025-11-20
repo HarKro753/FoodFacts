@@ -29,7 +29,9 @@ class SearchViewModel: ObservableObject {
     @Published var activeFilters: Set<ProductFilter> = []
 
     var filterStateId: String {
-        activeFilters.sorted(by: { $0.id < $1.id }).map { $0.id }.joined(separator: "-")
+        activeFilters.sorted(by: { $0.id < $1.id }).map { $0.id }.joined(
+            separator: "-"
+        )
     }
 
     @Published var categoryProducts: [Int: [Product]] = [:]
@@ -41,10 +43,9 @@ class SearchViewModel: ObservableObject {
     @Published var completions: CompletionsData? = nil
 
     var shouldShowCompletions: Bool {
-        !searchText.trimmingCharacters(in: .whitespaces).isEmpty &&
-        searchState != .searching &&
-        searchState != .searchResults &&
-        searchState != .loadingMore
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+            && searchState != .searching && searchState != .searchResults
+            && searchState != .loadingMore
     }
 
     private var endCursor: String?
@@ -66,9 +67,10 @@ class SearchViewModel: ObservableObject {
                 if trimmedText.isEmpty {
                     self.completions = nil
                     // Only reset to idle if we're not showing search results
-                    if self.searchState != .idle &&
-                       self.searchState != .searchResults &&
-                       self.searchState != .loadingMore {
+                    if self.searchState != .idle
+                        && self.searchState != .searchResults
+                        && self.searchState != .loadingMore
+                    {
                         self.searchState = .idle
                     }
                 } else {
@@ -97,7 +99,8 @@ class SearchViewModel: ObservableObject {
 
         completionTask = Task {
             do {
-                let fetchedCompletions = try await GraphQLClient.shared.fetchCompletions(prefix: text)
+                let fetchedCompletions = try await GraphQLClient.shared
+                    .fetchCompletions(prefix: text)
 
                 guard !Task.isCancelled else { return }
 
@@ -105,7 +108,9 @@ class SearchViewModel: ObservableObject {
             } catch {
                 guard !Task.isCancelled else { return }
                 // If completions fail, set to nil
-                print("Error fetching completions: \(error.localizedDescription)")
+                print(
+                    "Error fetching completions: \(error.localizedDescription)"
+                )
                 completions = nil
             }
         }
@@ -113,20 +118,9 @@ class SearchViewModel: ObservableObject {
         await completionTask?.value
     }
 
-    func selectProductCompletion(_ product: CompletionItem) async {
-        // Cancel any pending completion and search tasks
+    func clearCompletions() {
         completionTask?.cancel()
-        searchTask?.cancel()
-
-        // Clear completions and set state to searching immediately
         completions = nil
-        searchState = .searching
-
-        // Perform the search WITHOUT modifying searchText
-        // (modifying searchText triggers the Combine publisher)
-        await performSearch(query: product.name)
-
-        // After search completes, clear the search text
         searchText = ""
     }
 
@@ -140,7 +134,7 @@ class SearchViewModel: ObservableObject {
 
         await performSearch(query: searchText)
     }
-    
+
     ///
     ///
     ///
@@ -150,7 +144,7 @@ class SearchViewModel: ObservableObject {
 
         endCursor = nil
         hasNextPage = false
-        completions = nil  // Clear completions when starting a search
+        completions = nil
 
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             products = []
@@ -254,7 +248,9 @@ class SearchViewModel: ObservableObject {
         categoryProducts.removeAll()
         fetchedCategories.removeAll()
 
-        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty || searchState == .searchResults {
+        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+            || searchState == .searchResults
+        {
             Task {
                 await performSearch(query: searchText)
             }
@@ -267,14 +263,19 @@ class SearchViewModel: ObservableObject {
         categoryProducts.removeAll()
         fetchedCategories.removeAll()
 
-        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty || searchState == .searchResults {
+        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+            || searchState == .searchResults
+        {
             Task {
                 await performSearch(query: searchText)
             }
         }
     }
 
-    private func buildFilterParameters() -> (labelIds: [Int]?, nutrientConditions: [(String, Double?, Double?)]?, sortAscending: Bool?) {
+    private func buildFilterParameters() -> (
+        labelIds: [Int]?, nutrientConditions: [(String, Double?, Double?)]?,
+        sortAscending: Bool?
+    ) {
         var labelIds: [Int] = []
         var nutrientConditions: [(String, Double?, Double?)] = []
         var sortAscending: Bool? = nil
@@ -296,7 +297,8 @@ class SearchViewModel: ObservableObject {
 
         return (
             labelIds: labelIds.isEmpty ? nil : labelIds,
-            nutrientConditions: nutrientConditions.isEmpty ? nil : nutrientConditions,
+            nutrientConditions: nutrientConditions.isEmpty
+                ? nil : nutrientConditions,
             sortAscending: sortAscending
         )
     }
@@ -306,7 +308,8 @@ class SearchViewModel: ObservableObject {
     func fetchProductsForCategory(_ category: ProductCategoryData) async {
         // Skip if already fetched or currently loading
         guard !fetchedCategories.contains(category.id),
-              !loadingCategories.contains(category.id) else { return }
+            !loadingCategories.contains(category.id)
+        else { return }
 
         loadingCategories.insert(category.id)
 
@@ -325,10 +328,14 @@ class SearchViewModel: ObservableObject {
             if result.products.isEmpty {
                 print("No products found for category \(category.name)")
             } else {
-                print("Successfully fetched \(result.products.count) products for category \(category.name)")
+                print(
+                    "Successfully fetched \(result.products.count) products for category \(category.name)"
+                )
             }
         } catch {
-            print("Error fetching products for category \(category.name): \(error.localizedDescription)")
+            print(
+                "Error fetching products for category \(category.name): \(error.localizedDescription)"
+            )
             if let decodingError = error as? DecodingError {
                 print("Decoding error details: \(decodingError)")
             }

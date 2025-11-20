@@ -10,7 +10,7 @@ import NetworkImage
 import SwiftUI
 
 struct ProductLabel: Identifiable, Hashable {
-    let id: String
+    let id: Int
     let name: String
     let filter: CategoryFilter
 }
@@ -61,7 +61,10 @@ class LabelProductsViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let result = try await filter.fetchProducts(first: 20, after: cursor)
+            let result = try await filter.fetchProducts(
+                first: 20,
+                after: cursor
+            )
 
             products.append(contentsOf: result.products)
             hasNextPage = result.pageInfo.hasNextPage

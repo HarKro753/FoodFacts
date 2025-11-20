@@ -113,5 +113,3 @@ enum ProductFilter: Hashable, Identifiable, CaseIterable {
         }
     }
 }
-
-

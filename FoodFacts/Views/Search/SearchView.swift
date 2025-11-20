@@ -18,11 +18,14 @@ struct SearchView: View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if viewModel.shouldShowCompletions {
-                    TextCompletionView(viewModel: viewModel)
+                    CompletionView(
+                        viewModel: viewModel,
+                        navigationPath: $navigationPath
+                    )
                 } else {
                     switch viewModel.searchState {
                     case .idle:
-                        LabelCategoriesView(
+                        ExploreView(
                             viewModel: viewModel,
                             navigationPath: $navigationPath
                         )
@@ -56,8 +59,14 @@ struct SearchView: View {
             .navigationDestination(for: Product.self) { product in
                 ProductDetail(product: product)
             }
+            .navigationDestination(for: Int.self) { productCode in
+                ProductDetail(productCode: productCode)
+            }
             .navigationDestination(for: ProductCategoryData.self) { category in
                 CategoryProductsList(category: category)
+            }
+            .navigationDestination(for: ProductLabel.self) { label in
+                ProductList(label: label)
             }
             .onDisappear {
                 viewModel.resetToIdle()
@@ -77,7 +86,7 @@ struct SearchResultsView: View {
             case .searching:
                 List {
                     ForEach(0..<8, id: \.self) { _ in
-                        ProductListItemPlaceholder()
+                        ProductSearchItemPlaceholder()
                             .listRowInsets(
                                 EdgeInsets(
                                     top: 0,
@@ -171,8 +180,9 @@ struct SearchResultsView: View {
 
 // MARK: - TextCompletionView
 
-struct TextCompletionView: View {
+struct CompletionView: View {
     @ObservedObject var viewModel: SearchViewModel
+    @Binding var navigationPath: NavigationPath
 
     var body: some View {
         List {
@@ -180,9 +190,8 @@ struct TextCompletionView: View {
                 // Products
                 ForEach(completions.productNames) { product in
                     Button(action: {
-                        Task {
-                            await viewModel.selectProductCompletion(product)
-                        }
+                        viewModel.clearCompletions()
+                        navigationPath.append(product.id)
                     }) {
                         CompletionRow(
                             icon: "cube.box.fill",
@@ -192,13 +201,21 @@ struct TextCompletionView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowInsets(
+                        EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
+                    )
                 }
 
                 // Categories
                 ForEach(completions.categoryNames) { category in
                     Button(action: {
-                        // Empty for now as requested
+                        viewModel.clearCompletions()
+                        let categoryData = ProductCategoryData(
+                            id: category.id,
+                            name: category.name,
+                            filter: .category(id: category.id)
+                        )
+                        navigationPath.append(categoryData)
                     }) {
                         CompletionRow(
                             icon: "tag.fill",
@@ -208,13 +225,23 @@ struct TextCompletionView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowInsets(
+                        EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
+                    )
                 }
 
                 // Food Groups
                 ForEach(completions.foodGroups) { foodGroup in
                     Button(action: {
-                        // Empty for now as requested
+                        viewModel.clearCompletions()
+
+                        let label = ProductLabel(
+                            id: foodGroup.id,
+                            name: foodGroup.name,
+                            filter: .foodGroup(id: foodGroup.id)
+                        )
+                        navigationPath.append(label)
+
                     }) {
                         CompletionRow(
                             icon: "leaf.fill",
@@ -224,13 +251,22 @@ struct TextCompletionView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowInsets(
+                        EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16)
+                    )
                 }
             } else {
                 // Loading placeholders
                 ForEach(0..<10, id: \.self) { _ in
                     CompletionRowPlaceholder()
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: 4,
+                                leading: 16,
+                                bottom: 4,
+                                trailing: 16
+                            )
+                        )
                 }
             }
         }
@@ -238,72 +274,9 @@ struct TextCompletionView: View {
     }
 }
 
-// MARK: - Completion Row
+//MARK: ExploreView
 
-struct CompletionRow: View {
-    let icon: String
-    let iconColor: Color
-    let name: String
-    let searchText: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundStyle(iconColor)
-                .frame(width: 20)
-
-            highlightedText
-                .lineLimit(1)
-
-            Spacer()
-        }
-    }
-
-    @ViewBuilder
-    private var highlightedText: some View {
-        let prefix = searchText.trimmingCharacters(in: .whitespaces)
-
-        if !prefix.isEmpty,
-           let range = name.range(of: prefix, options: [.caseInsensitive, .diacriticInsensitive]) {
-            let beforeMatch = String(name[..<range.lowerBound])
-            let match = String(name[range])
-            let afterMatch = String(name[range.upperBound...])
-
-            (Text(beforeMatch).foregroundColor(.secondary) +
-             Text(match).foregroundColor(.primary).fontWeight(.semibold) +
-             Text(afterMatch).foregroundColor(.secondary))
-                .font(.system(size: 15))
-        } else {
-            Text(name)
-                .font(.system(size: 15))
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-// MARK: - Completion Row Placeholder
-
-struct CompletionRowPlaceholder: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.2))
-                .frame(width: 20, height: 16)
-
-            RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.2))
-                .frame(height: 15)
-                .frame(maxWidth: .infinity)
-
-            Spacer()
-        }
-    }
-}
-
-//MARK: CategoryView
-
-struct LabelCategoriesView: View {
+struct ExploreView: View {
     @ObservedObject var viewModel: SearchViewModel
     @Binding var navigationPath: NavigationPath
 
