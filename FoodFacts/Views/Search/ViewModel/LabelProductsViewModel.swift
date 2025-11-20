@@ -23,8 +23,28 @@ class LabelProductsViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var hasNextPage = false
 
+    let filterManager = FilterManager.shared
+
+    var activeFilters: Set<ProductFilter> {
+        filterManager.activeFilters
+    }
+
     private var endCursor: String?
     private var currentFilter: CategoryFilter?
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        // Observe filter changes and refetch products
+        filterManager.$activeFilters
+            .dropFirst() // Skip initial value
+            .sink { [weak self] _ in
+                guard let self = self, let filter = self.currentFilter else { return }
+                Task {
+                    await self.fetchProducts(for: filter)
+                }
+            }
+            .store(in: &cancellables)
+    }
 
     func fetchProducts(for filter: CategoryFilter) async {
         guard !isLoading else { return }
@@ -36,7 +56,14 @@ class LabelProductsViewModel: ObservableObject {
         hasNextPage = false
 
         do {
-            let result = try await filter.fetchProducts(first: 20)
+            let filterParams = filterManager.buildFilterParameters()
+
+            let result = try await filter.fetchProducts(
+                first: 20,
+                labelIds: filterParams.labelIds,
+                nutrientConditions: filterParams.nutrientConditions,
+                sortAscending: filterParams.sortAscending
+            )
 
             products = result.products
             hasNextPage = result.pageInfo.hasNextPage
@@ -61,9 +88,14 @@ class LabelProductsViewModel: ObservableObject {
         errorMessage = nil
 
         do {
+            let filterParams = filterManager.buildFilterParameters()
+
             let result = try await filter.fetchProducts(
                 first: 20,
-                after: cursor
+                after: cursor,
+                labelIds: filterParams.labelIds,
+                nutrientConditions: filterParams.nutrientConditions,
+                sortAscending: filterParams.sortAscending
             )
 
             products.append(contentsOf: result.products)
@@ -75,5 +107,15 @@ class LabelProductsViewModel: ObservableObject {
         }
 
         isLoadingMore = false
+    }
+
+    // MARK: - Filter Management
+
+    func toggleFilter(_ filter: ProductFilter) {
+        filterManager.toggleFilter(filter)
+    }
+
+    func clearFilters() {
+        filterManager.clearFilters()
     }
 }

@@ -26,20 +26,18 @@ class SearchViewModel: ObservableObject {
     @Published var searchState: SearchState = .idle
     @Published var hasNextPage = false
 
-    @Published var activeFilters: Set<ProductFilter> = []
+    let filterManager = FilterManager.shared
 
-    var filterStateId: String {
-        activeFilters.sorted(by: { $0.id < $1.id }).map { $0.id }.joined(
-            separator: "-"
-        )
+    @Published var filterStateId: String = ""
+
+    var activeFilters: Set<ProductFilter> {
+        filterManager.activeFilters
     }
 
     @Published var categoryProducts: [Int: [Product]] = [:]
     @Published var loadingCategories: Set<Int> = []
     @Published var fetchedCategories: Set<Int> = []
     @Published var categories: [ProductCategoryData] = []
-
-    // Autocomplete
     @Published var completions: CompletionsData? = nil
 
     var shouldShowCompletions: Bool {
@@ -53,8 +51,8 @@ class SearchViewModel: ObservableObject {
     private var completionTask: Task<Void, Never>?
 
     init() {
-        // Randomize categories on initialization
         categories = ProductCategoryData.categories.shuffled()
+        filterStateId = filterManager.filterStateId
 
         $searchText
             .removeDuplicates()
@@ -66,7 +64,6 @@ class SearchViewModel: ObservableObject {
 
                 if trimmedText.isEmpty {
                     self.completions = nil
-                    // Only reset to idle if we're not showing search results
                     if self.searchState != .idle
                         && self.searchState != .searchResults
                         && self.searchState != .loadingMore
@@ -74,13 +71,25 @@ class SearchViewModel: ObservableObject {
                         self.searchState = .idle
                     }
                 } else {
-                    // Only fetch completions if we're in idle state
                     if self.searchState == .idle {
                         Task {
                             await self.fetchCompletions(for: trimmedText)
                         }
                     }
                 }
+            }
+            .store(in: &cancellables)
+
+        filterManager.$activeFilters
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+
+                // Update filterStateId to trigger task refreshes in ExploreView
+                self.filterStateId = self.filterManager.filterStateId
+
+                // Clear cached category products so they refetch with new filters
+                self.categoryProducts.removeAll()
+                self.fetchedCategories.removeAll()
             }
             .store(in: &cancellables)
     }
@@ -107,7 +116,6 @@ class SearchViewModel: ObservableObject {
                 completions = fetchedCompletions
             } catch {
                 guard !Task.isCancelled else { return }
-                // If completions fail, set to nil
                 print(
                     "Error fetching completions: \(error.localizedDescription)"
                 )
@@ -124,9 +132,8 @@ class SearchViewModel: ObservableObject {
         searchText = ""
     }
 
-    ///
-    ///
-    ///
+    // MARK: - Search
+
     func onSearchSubmit() async {
         guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else {
             return
@@ -135,9 +142,6 @@ class SearchViewModel: ObservableObject {
         await performSearch(query: searchText)
     }
 
-    ///
-    ///
-    ///
     private func performSearch(query: String) async {
         searchTask?.cancel()
         completionTask?.cancel()
@@ -158,7 +162,7 @@ class SearchViewModel: ObservableObject {
         searchTask = Task {
 
             do {
-                let filterParams = buildFilterParameters()
+                let filterParams = filterManager.buildFilterParameters()
 
                 let result = try await GraphQLClient.shared.fetchProducts(
                     after: nil,
@@ -196,7 +200,7 @@ class SearchViewModel: ObservableObject {
         searchState = .loadingMore
 
         do {
-            let filterParams = buildFilterParameters()
+            let filterParams = filterManager.buildFilterParameters()
 
             let result = try await GraphQLClient.shared.fetchProducts(
                 after: cursor,
@@ -223,11 +227,8 @@ class SearchViewModel: ObservableObject {
     }
 
     func resetToIdle() {
-        // Cancel any ongoing tasks
         searchTask?.cancel()
         completionTask?.cancel()
-
-        // Clear all state
         searchText = ""
         products = []
         completions = nil
@@ -239,74 +240,16 @@ class SearchViewModel: ObservableObject {
     // MARK: - Filter Management
 
     func toggleFilter(_ filter: ProductFilter) {
-        if activeFilters.contains(filter) {
-            activeFilters.remove(filter)
-        } else {
-            activeFilters.insert(filter)
-        }
-
-        categoryProducts.removeAll()
-        fetchedCategories.removeAll()
-
-        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty
-            || searchState == .searchResults
-        {
-            Task {
-                await performSearch(query: searchText)
-            }
-        }
+        filterManager.toggleFilter(filter)
     }
 
     func clearFilters() {
-        activeFilters.removeAll()
-
-        categoryProducts.removeAll()
-        fetchedCategories.removeAll()
-
-        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty
-            || searchState == .searchResults
-        {
-            Task {
-                await performSearch(query: searchText)
-            }
-        }
-    }
-
-    private func buildFilterParameters() -> (
-        labelIds: [Int]?, nutrientConditions: [(String, Double?, Double?)]?,
-        sortAscending: Bool?
-    ) {
-        var labelIds: [Int] = []
-        var nutrientConditions: [(String, Double?, Double?)] = []
-        var sortAscending: Bool? = nil
-
-        for filter in activeFilters {
-            switch filter {
-            case .vegan:
-                labelIds.append(4)
-            case .vegetarian:
-                labelIds.append(3)
-            case .lowCalorie:
-                nutrientConditions.append(("energyKcal100g", nil, 200.0))
-            case .highProtein:
-                nutrientConditions.append(("proteins100g", 10.0, nil))
-            case .highNutriScore:
-                sortAscending = true
-            }
-        }
-
-        return (
-            labelIds: labelIds.isEmpty ? nil : labelIds,
-            nutrientConditions: nutrientConditions.isEmpty
-                ? nil : nutrientConditions,
-            sortAscending: sortAscending
-        )
+        filterManager.clearFilters()
     }
 
     // MARK: - Category Products
 
     func fetchProductsForCategory(_ category: ProductCategoryData) async {
-        // Skip if already fetched or currently loading
         guard !fetchedCategories.contains(category.id),
             !loadingCategories.contains(category.id)
         else { return }
@@ -314,7 +257,7 @@ class SearchViewModel: ObservableObject {
         loadingCategories.insert(category.id)
 
         do {
-            let filterParams = buildFilterParameters()
+            let filterParams = filterManager.buildFilterParameters()
 
             let result = try await category.filter.fetchProducts(
                 first: 10,

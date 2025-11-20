@@ -202,3 +202,43 @@ struct CategoryProductsList: View {
         }
     }
 }
+
+// MARK: - Filter Menu Button for ProductList
+
+struct ProductListFilterMenuButton: View {
+    @ObservedObject var viewModel: LabelProductsViewModel
+
+    var body: some View {
+        Menu {
+            ForEach(ProductFilter.allCases) { filter in
+                Button {
+                    viewModel.toggleFilter(filter)
+                } label: {
+                    Label {
+                        Text(filter.displayName)
+                    } icon: {
+                        if viewModel.activeFilters.contains(filter) {
+                            Image(systemName: "checkmark")
+                        }
+                        Image(systemName: filter.icon)
+                    }
+                }
+            }
+
+            if !viewModel.activeFilters.isEmpty {
+                Divider()
+
+                Button(role: .destructive) {
+                    viewModel.clearFilters()
+                } label: {
+                    Label("Clear All Filters", systemImage: "xmark.circle.fill")
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: 22))
+                .foregroundStyle(.primary)
+
+        }
+    }
+}
