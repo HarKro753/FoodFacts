@@ -135,78 +135,6 @@ class SearchViewModel: ObservableObject {
 
     // MARK: - Search
 
-    func onSearchSubmit() async {
-        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return
-        }
-
-        await performSearch(query: searchText)
-    }
-
-    private func performSearch(query: String) async {
-        searchTask?.cancel()
-        completionTask?.cancel()
-
-        endCursor = nil
-        hasNextPage = false
-        completions = nil
-
-        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
-            products = []
-            searchState = .idle
-            return
-        }
-
-        // Check network connectivity before attempting search
-        guard networkMonitor.isConnected else {
-            searchState = .error("No internet connection. Please check your network and try again.")
-            products = []
-            return
-        }
-
-        searchState = .searching
-        products = []
-
-        searchTask = Task {
-
-            do {
-                let filterParams = filterManager.buildFilterParameters()
-
-                let result = try await GraphQLClient.shared.fetchProducts(
-                    after: nil,
-                    labelIds: filterParams.labelIds,
-                    sortAscending: filterParams.sortAscending,
-                    searchQuery: query,
-                    nutrientConditions: filterParams.nutrientConditions
-                )
-
-                guard !Task.isCancelled else { return }
-
-                products = result.products
-                hasNextPage = result.pageInfo.hasNextPage
-                endCursor = result.pageInfo.endCursor
-                searchState = .searchResults
-            } catch {
-                guard !Task.isCancelled else { return }
-
-                // Provide better error messages based on network state
-                let errorMessage: String
-                if !networkMonitor.isConnected {
-                    errorMessage = "Lost internet connection. Please check your network and try again."
-                } else {
-                    errorMessage = error.localizedDescription
-                }
-
-                searchState = .error(errorMessage)
-                products = []
-                hasNextPage = false
-                endCursor = nil
-            }
-        }
-
-        await searchTask?.value
-    }
-
     func loadMore() async {
         guard case .searchResults = searchState,
             hasNextPage,
@@ -214,9 +142,10 @@ class SearchViewModel: ObservableObject {
             !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
 
-        // Check network connectivity before attempting to load more
         guard networkMonitor.isConnected else {
-            searchState = .error("No internet connection. Please check your network and try again.")
+            searchState = .error(
+                "No internet connection. Please check your network and try again."
+            )
             return
         }
 
@@ -240,7 +169,8 @@ class SearchViewModel: ObservableObject {
             // Provide better error messages based on network state
             let errorMessage: String
             if !networkMonitor.isConnected {
-                errorMessage = "Lost internet connection. Please check your network and try again."
+                errorMessage =
+                    "Lost internet connection. Please check your network and try again."
             } else {
                 errorMessage = error.localizedDescription
             }
