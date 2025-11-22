@@ -34,7 +34,7 @@ class GraphQLClient {
     let apiURL: URL
 
     private init() {
-        self.apiURL = URL(string: "http://192.168.178.114:3004/graphql")!
+        self.apiURL = URL(string: "http://192.168.178.75:30080/graphql")!
     }
 
     func execute<T: Decodable>(query: String, variables: [String: String]? = nil, headers: [String: String]? = nil) async throws -> T {
