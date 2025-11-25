@@ -36,8 +36,8 @@ struct ProductCard: View {
                     }
                 }
             }
-            .frame(width: 120, height: 120)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(width: 120, height: 140)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
 
             // Product Info
             VStack(alignment: .leading, spacing: 4) {
@@ -77,9 +77,9 @@ struct LabelProductCardPlaceholder: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Image placeholder
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 4)
                 .fill(Color.gray.opacity(0.2))
-                .frame(width: 120, height: 120)
+                .frame(width: 120, height: 140)
                 .shimmer()
 
             // Product Info placeholder

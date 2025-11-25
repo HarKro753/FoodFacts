@@ -11,13 +11,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0DD5928C2EC0ACC0004832B8 /* FoodFacts.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FoodFacts.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cibrus - Product Scanner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		0DD5928E2EC0ACC0004832B8 /* FoodFacts */ = {
+		0DD5928E2EC0ACC0004832B8 /* Cibrus */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = FoodFacts;
+			path = Cibrus;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +37,7 @@
 		0DD592832EC0ACC0004832B8 = {
 			isa = PBXGroup;
 			children = (
-				0DD5928E2EC0ACC0004832B8 /* FoodFacts */,
+				0DD5928E2EC0ACC0004832B8 /* Cibrus */,
 				0DD5928D2EC0ACC0004832B8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		0DD5928D2EC0ACC0004832B8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0DD5928C2EC0ACC0004832B8 /* FoodFacts.app */,
+				0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0DD5928B2EC0ACC0004832B8 /* FoodFacts */ = {
+		0DD5928B2EC0ACC0004832B8 /* Cibrus - Product Scanner */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0DD592972EC0ACC2004832B8 /* Build configuration list for PBXNativeTarget "FoodFacts" */;
+			buildConfigurationList = 0DD592972EC0ACC2004832B8 /* Build configuration list for PBXNativeTarget "Cibrus - Product Scanner" */;
 			buildPhases = (
 				0DD592882EC0ACC0004832B8 /* Sources */,
 				0DD592892EC0ACC0004832B8 /* Frameworks */,
@@ -66,14 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				0DD5928E2EC0ACC0004832B8 /* FoodFacts */,
+				0DD5928E2EC0ACC0004832B8 /* Cibrus */,
 			);
-			name = FoodFacts;
+			name = "Cibrus - Product Scanner";
 			packageProductDependencies = (
 				0DA8CAAD2EC2258000F1988C /* NetworkImage */,
 			);
 			productName = FoodFacts;
-			productReference = 0DD5928C2EC0ACC0004832B8 /* FoodFacts.app */;
+			productReference = 0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -91,7 +91,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 0DD592872EC0ACC0004832B8 /* Build configuration list for PBXProject "FoodFacts" */;
+			buildConfigurationList = 0DD592872EC0ACC0004832B8 /* Build configuration list for PBXProject "Cibrus - Product Scanner" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0DD5928B2EC0ACC0004832B8 /* FoodFacts */,
+				0DD5928B2EC0ACC0004832B8 /* Cibrus - Product Scanner */,
 			);
 		};
 /* End PBXProject section */
@@ -265,26 +265,30 @@
 				DEVELOPMENT_TEAM = 7A5XKYSLAC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan product barcodes";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = harro.FoodFacts;
+				PRODUCT_BUNDLE_IDENTIFIER = harro.Cibrus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -298,33 +302,37 @@
 				DEVELOPMENT_TEAM = 7A5XKYSLAC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan product barcodes";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = harro.FoodFacts;
+				PRODUCT_BUNDLE_IDENTIFIER = harro.Cibrus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0DD592872EC0ACC0004832B8 /* Build configuration list for PBXProject "FoodFacts" */ = {
+		0DD592872EC0ACC0004832B8 /* Build configuration list for PBXProject "Cibrus - Product Scanner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0DD592952EC0ACC2004832B8 /* Debug */,
@@ -333,7 +341,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0DD592972EC0ACC2004832B8 /* Build configuration list for PBXNativeTarget "FoodFacts" */ = {
+		0DD592972EC0ACC2004832B8 /* Build configuration list for PBXNativeTarget "Cibrus - Product Scanner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0DD592982EC0ACC2004832B8 /* Debug */,
