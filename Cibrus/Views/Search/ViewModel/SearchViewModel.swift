@@ -53,7 +53,6 @@ class SearchViewModel: ObservableObject {
 
     init() {
         categories = ProductCategoryData.categories.shuffled()
-        filterStateId = filterManager.filterStateId
 
         $searchText
             .removeDuplicates()
