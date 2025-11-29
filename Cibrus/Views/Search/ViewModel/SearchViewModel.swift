@@ -232,7 +232,12 @@ class SearchViewModel: ObservableObject {
                 nutrientConditions: filterParams.nutrientConditions,
                 sortAscending: filterParams.sortAscending
             )
-            categoryProducts[category.id] = result.products
+
+            let sortedProducts = result.products.sorted {
+                ($0.nutriScore ?? Int.min) > ($1.nutriScore ?? Int.min)
+            }
+
+            categoryProducts[category.id] = sortedProducts
             fetchedCategories.insert(category.id)
 
             if result.products.isEmpty {

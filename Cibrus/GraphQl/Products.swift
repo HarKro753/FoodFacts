@@ -69,7 +69,7 @@ extension GraphQLClient {
             paginationParams += ", after: \"\(after)\""
         }
 
-        var filterParams = "completeness: 0.7, lastImageDatetime: \"2025-01-01\", removeNoNutriScore: true"
+        var filterParams = "completeness: 0.7, lastImageDatetime: \"2025-01-01\", removeNoNutriScore: true, removeNoImage: true"
         if let categoryId = categoryId {
             filterParams += ", categoryId: \(categoryId)"
         }
