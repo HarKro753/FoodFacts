@@ -188,7 +188,6 @@ struct CompletionView: View {
         List {
             if let completions = viewModel.completions {
 
-                // MARK: - Products
                 ForEach(completions.productNames) { product in
                     CompletionRow(
                         icon: "cube.box.fill",
@@ -206,7 +205,6 @@ struct CompletionView: View {
                     )
                 }
 
-                // MARK: - Categories
                 ForEach(completions.categoryNames) { category in
                     CompletionRow(
                         icon: "tag.fill",
@@ -231,7 +229,6 @@ struct CompletionView: View {
                     )
                 }
 
-                // MARK: - Food Groups
                 ForEach(completions.foodGroups) { foodGroup in
                     CompletionRow(
                         icon: "leaf.fill",
@@ -257,7 +254,6 @@ struct CompletionView: View {
                 }
 
             } else {
-                // MARK: - Placeholders
                 ForEach(0..<10, id: \.self) { _ in
                     CompletionRowPlaceholder()
                         .listRowInsets(
@@ -343,7 +339,6 @@ struct ExploreView: View {
                         }
                     }
                     .background(Color(.systemBackground))
-                    .id("\(category.id)-\(viewModel.filterStateId)")
                     .task(id: viewModel.filterStateId) {
                         await viewModel.fetchProductsForCategory(category)
                     }
@@ -351,11 +346,14 @@ struct ExploreView: View {
             }
         }
         .background(Color(.systemBackground))
+        .id("\(viewModel.filterStateId)")
     }
 }
 
+// MARK: - Press Scale Button
+
 struct PressScaleButtonStyle: ButtonStyle {
-    var scale: CGFloat = 0.9
+    var scale: CGFloat = 0.7
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
