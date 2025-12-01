@@ -13,11 +13,12 @@ class FilterManager: ObservableObject {
     static let shared = FilterManager()
 
     @Published var activeFilters: Set<ProductFilter> = []
+    @Published private(set) var filterStateId: String = ""
 
-    var filterStateId: String {
-        activeFilters.sorted(by: { $0.id < $1.id }).map { $0.id }.joined(
-            separator: "-"
-        )
+    private func updateFilterStateId() {
+        filterStateId = activeFilters.sorted(by: { $0.id < $1.id })
+            .map { $0.id }
+            .joined(separator: "-")
     }
 
     func toggleFilter(_ filter: ProductFilter) {
@@ -26,10 +27,12 @@ class FilterManager: ObservableObject {
         } else {
             activeFilters.insert(filter)
         }
+        updateFilterStateId()
     }
 
     func clearFilters() {
         activeFilters.removeAll()
+        updateFilterStateId()
     }
 
     func buildFilterParameters() -> (

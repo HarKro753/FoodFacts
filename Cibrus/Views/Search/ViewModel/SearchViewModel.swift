@@ -80,16 +80,15 @@ class SearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        filterManager.$activeFilters
-            .sink { [weak self] _ in
+        filterManager.$filterStateId
+            .sink { [weak self] newFilterStateId in
                 guard let self = self else { return }
 
-                // Update filterStateId to trigger task refreshes in ExploreView
-                self.filterStateId = self.filterManager.filterStateId
+                self.filterStateId = newFilterStateId
 
-                // Clear cached category products so they refetch with new filters
                 self.categoryProducts.removeAll()
                 self.fetchedCategories.removeAll()
+                self.loadingCategories.removeAll()
             }
             .store(in: &cancellables)
     }
@@ -210,17 +209,20 @@ class SearchViewModel: ObservableObject {
     // MARK: - Category Products
 
     func fetchProductsForCategory(_ category: ProductCategoryData) async {
-        guard !fetchedCategories.contains(category.id),
-            !loadingCategories.contains(category.id)
-        else { return }
+        guard loadingCategories.insert(category.id).inserted else { return }
 
-        // Check network connectivity - don't mark as fetched if there's no connection
+        defer {
+            loadingCategories.remove(category.id)
+        }
+
+        guard !fetchedCategories.contains(category.id) else {
+            return
+        }
+
         guard networkMonitor.isConnected else {
             print("No network connection - skipping category \(category.name)")
             return
         }
-
-        loadingCategories.insert(category.id)
 
         do {
             let filterParams = filterManager.buildFilterParameters()
@@ -232,37 +234,39 @@ class SearchViewModel: ObservableObject {
                 sortAscending: filterParams.sortAscending
             )
 
-            let sortedProducts = result.products.sorted {
+            let validProducts = result.products.filter { product in
+                product.name != nil && product.nutriScore != nil
+            }
+
+            let sortedProducts = validProducts.sorted {
                 ($0.nutriScore ?? Int.min) > ($1.nutriScore ?? Int.min)
             }
 
             categoryProducts[category.id] = sortedProducts
             fetchedCategories.insert(category.id)
 
-            if result.products.isEmpty {
-                print("No products found for category \(category.name)")
+            if sortedProducts.isEmpty {
+                print("No valid products found for category \(category.name)")
             } else {
                 print(
-                    "Successfully fetched \(result.products.count) products for category \(category.name)"
+                    "Successfully fetched \(sortedProducts.count) valid products for category \(category.name)"
                 )
             }
         } catch {
-            print(
-                "Error fetching products for category \(category.name): \(error.localizedDescription)"
-            )
-            if let decodingError = error as? DecodingError {
-                print("Decoding error details: \(decodingError)")
+            if (error as NSError).code != NSURLErrorCancelled {
+                print(
+                    "Error fetching products for category \(category.name): \(error.localizedDescription)"
+                )
+                if let decodingError = error as? DecodingError {
+                    print("Decoding error details: \(decodingError)")
+                }
             }
 
-            // Only mark as fetched if it's not a network error
-            // This allows retry when network is restored
-            if networkMonitor.isConnected {
+            if networkMonitor.isConnected && (error as NSError).code != NSURLErrorCancelled {
                 categoryProducts[category.id] = []
                 fetchedCategories.insert(category.id)
             }
         }
-
-        loadingCategories.remove(category.id)
     }
 
     func isLoadingCategory(_ categoryId: Int) -> Bool {
