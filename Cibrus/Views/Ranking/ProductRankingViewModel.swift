@@ -12,7 +12,7 @@ import SwiftUI
 @MainActor
 class ProductRankingViewModel: ObservableObject {
     @Published var products: [Product] = []
-    @Published var isInitialLoading = false
+    @Published var isInitialLoading = true
     @Published var errorMessage: String?
 
     private var hasLoadedInitially = false

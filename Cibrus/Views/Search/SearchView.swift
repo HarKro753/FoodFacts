@@ -339,6 +339,7 @@ struct ExploreView: View {
                         }
                     }
                     .background(Color(.systemBackground))
+                    .id("\(category.id)-\(viewModel.filterStateId)")
                     .task(id: viewModel.filterStateId) {
                         await viewModel.fetchProductsForCategory(category)
                     }
@@ -346,7 +347,6 @@ struct ExploreView: View {
             }
         }
         .background(Color(.systemBackground))
-        .id("\(viewModel.filterStateId)")
     }
 }
 
