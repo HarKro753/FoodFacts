@@ -11,6 +11,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0D27E66B2EF2CEFA00A14AFD /* Models */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Models; path = Packages/Models; sourceTree = "<group>"; };
+		0D27E66C2EF2CF0E00A14AFD /* GraphQl */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = GraphQl; path = Packages/GraphQl; sourceTree = "<group>"; };
 		0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cibrus - Product Scanner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -37,6 +39,8 @@
 		0DD592832EC0ACC0004832B8 = {
 			isa = PBXGroup;
 			children = (
+				0D27E66C2EF2CF0E00A14AFD /* GraphQl */,
+				0D27E66B2EF2CEFA00A14AFD /* Models */,
 				0DD5928E2EC0ACC0004832B8 /* Cibrus */,
 				0DD5928D2EC0ACC0004832B8 /* Products */,
 			);
