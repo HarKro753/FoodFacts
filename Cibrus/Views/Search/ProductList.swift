@@ -8,6 +8,7 @@
 import Combine
 import NetworkImage
 import SwiftUI
+import Models
 
 /// This is the list which is opened from SearchView when pressing on a header.
 /// It displays all the items in a certain Category, Food Group

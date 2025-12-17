@@ -7,6 +7,8 @@
 
 import Combine
 import Foundation
+import Models
+import GraphQl
 
 @MainActor
 class ScannerViewModel: ObservableObject {

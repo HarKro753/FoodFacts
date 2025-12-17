@@ -7,6 +7,7 @@
 
 import SwiftUI
 import NetworkImage
+import Models
 
 // MARK: - Main Ranking View
 struct RankingView: View {

@@ -8,6 +8,7 @@
 
 import SwiftUI
 import NetworkImage
+import Models
 
 struct AlternativeProductsList: View {
     let originalProduct: Product

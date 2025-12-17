@@ -9,6 +9,7 @@
 import SwiftUI
 import NetworkImage
 import Combine
+import Models
 
 struct ProductCard: View {
     let product: Product

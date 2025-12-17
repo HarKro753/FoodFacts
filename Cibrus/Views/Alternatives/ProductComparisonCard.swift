@@ -8,6 +8,7 @@
 
 import SwiftUI
 import NetworkImage
+import Models
 
 struct ProductComparisonCard: View {
     let product: Product

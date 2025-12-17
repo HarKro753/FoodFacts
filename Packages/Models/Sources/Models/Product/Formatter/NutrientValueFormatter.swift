@@ -1,6 +1,6 @@
 import Foundation
-struct NutrientValueFormatter {
-    static func formatValue(_ value: Double, unit: String) -> String {
+public struct NutrientValueFormatter {
+    public static func formatValue(_ value: Double, unit: String) -> String {
         switch unit {
         case "GRAM":
             return String(format: "%.1fg", value)

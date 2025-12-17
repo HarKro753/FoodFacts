@@ -8,6 +8,8 @@
 import Combine
 import NetworkImage
 import SwiftUI
+import Models
+import GraphQl
 
 struct SearchView: View {
     @EnvironmentObject private var viewModel: SearchViewModel

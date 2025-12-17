@@ -8,20 +8,21 @@
 import Foundation
 import SwiftUI
 
-struct RatingSection: Codable, Hashable {
-    let rating: String
-    let minValue: Double
-    let maxValue: Double
-    let description: String
+@available(iOS 13.0, *)
+public struct RatingSection: Codable, Hashable {
+    public let rating: String
+    public let minValue: Double
+    public let maxValue: Double
+    public let description: String
 
     // Derived property
-    let color: Color
+    public let color: Color
 
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case rating, minValue, maxValue, description
     }
 
-    init(
+    public init(
         rating: String,
         minValue: Double,
         maxValue: Double,
@@ -36,7 +37,7 @@ struct RatingSection: Codable, Hashable {
         self.color = RatingColorMapper.color(for: rating)
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.rating = try container.decode(String.self, forKey: .rating)
@@ -48,7 +49,7 @@ struct RatingSection: Codable, Hashable {
         self.color = RatingColorMapper.color(for: rating)
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(rating, forKey: .rating)

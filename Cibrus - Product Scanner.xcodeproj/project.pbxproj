@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D27E6AF2EF2D0DD00A14AFD /* GraphQl in Frameworks */ = {isa = PBXBuildFile; productRef = 0D27E6AE2EF2D0DD00A14AFD /* GraphQl */; };
+		0D27E6B12EF2D0E000A14AFD /* Models in Frameworks */ = {isa = PBXBuildFile; productRef = 0D27E6B02EF2D0E000A14AFD /* Models */; };
 		0DA8CAAE2EC2258000F1988C /* NetworkImage in Frameworks */ = {isa = PBXBuildFile; productRef = 0DA8CAAD2EC2258000F1988C /* NetworkImage */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +31,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D27E6B12EF2D0E000A14AFD /* Models in Frameworks */,
+				0D27E6AF2EF2D0DD00A14AFD /* GraphQl in Frameworks */,
 				0DA8CAAE2EC2258000F1988C /* NetworkImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -36,12 +40,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D27E6AD2EF2D0DD00A14AFD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		0DD592832EC0ACC0004832B8 = {
 			isa = PBXGroup;
 			children = (
 				0D27E66C2EF2CF0E00A14AFD /* GraphQl */,
 				0D27E66B2EF2CEFA00A14AFD /* Models */,
 				0DD5928E2EC0ACC0004832B8 /* Cibrus */,
+				0D27E6AD2EF2D0DD00A14AFD /* Frameworks */,
 				0DD5928D2EC0ACC0004832B8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -75,6 +87,8 @@
 			name = "Cibrus - Product Scanner";
 			packageProductDependencies = (
 				0DA8CAAD2EC2258000F1988C /* NetworkImage */,
+				0D27E6AE2EF2D0DD00A14AFD /* GraphQl */,
+				0D27E6B02EF2D0E000A14AFD /* Models */,
 			);
 			productName = FoodFacts;
 			productReference = 0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */;
@@ -368,6 +382,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0D27E6AE2EF2D0DD00A14AFD /* GraphQl */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GraphQl;
+		};
+		0D27E6B02EF2D0E000A14AFD /* Models */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Models;
+		};
 		0DA8CAAD2EC2258000F1988C /* NetworkImage */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0DA8CAAC2EC2258000F1988C /* XCRemoteSwiftPackageReference "NetworkImage" */;

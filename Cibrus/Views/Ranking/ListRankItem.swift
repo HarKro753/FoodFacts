@@ -8,6 +8,7 @@
 
 import SwiftUI
 import NetworkImage
+import Models
 
 struct ListRankItem: View {
     let rank: Int

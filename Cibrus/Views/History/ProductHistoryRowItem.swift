@@ -6,6 +6,7 @@ import NetworkImage
 //  Created by Harro Krog on 08.11.25.
 //
 import SwiftUI
+import Models
 
 struct ProductHistoryRowItem: View {
     let product: Product

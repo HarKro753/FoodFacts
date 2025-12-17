@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Models
 
 struct HistoryView: View {
     @EnvironmentObject private var viewModel: HistoryViewModel

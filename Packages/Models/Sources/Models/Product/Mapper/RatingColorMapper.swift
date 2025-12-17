@@ -1,7 +1,9 @@
 import SwiftUI
 
-struct RatingColorMapper {
-    static func color(for score: Int?) -> Color {
+@available(iOS 13.0, *)
+public struct RatingColorMapper {
+    @available(iOS 13.0, *)
+    public static func color(for score: Int?) -> Color {
         guard let score = score else {
             return .gray
         }
@@ -18,7 +20,7 @@ struct RatingColorMapper {
         }
     }
 
-    static func color(for rating: String) -> Color {
+    public static func color(for rating: String) -> Color {
         switch rating {
         case "VERY_GOOD":
             return .green

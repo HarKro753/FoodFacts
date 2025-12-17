@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import Models
 
 struct ProductDetailNutritionRowItem: View {
     let icon: String

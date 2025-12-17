@@ -6,35 +6,47 @@
 //
 
 import Foundation
+import Models
 
 // MARK: - Products Query Response Models
 
-struct ProductsQueryResponse: Decodable {
+@available(iOS 15.0, *)
+public struct ProductsQueryResponse: Decodable {
     let products: ProductsData
 }
 
-struct ProductByCodeResponse: Decodable {
+@available(iOS 15.0, *)
+public struct ProductByCodeResponse: Decodable {
     let productByCode: ProductQueryNode?
 }
 
-struct ProductsData: Decodable {
+@available(iOS 15.0, *)
+public struct ProductsData: Decodable {
     let nodes: [ProductQueryNode]
     let pageInfo: PageInfo
 }
 
-struct PageInfo: Decodable {
-    let hasNextPage: Bool
-    let hasPreviousPage: Bool
-    let startCursor: String?
-    let endCursor: String?
+@available(iOS 15.0, *)
+public struct PageInfo: Decodable {
+    public let hasNextPage: Bool
+    public let hasPreviousPage: Bool
+    public let startCursor: String?
+    public let endCursor: String?
 }
 
-struct ProductsResult {
-    let products: [Product]
-    let pageInfo: PageInfo
+@available(iOS 15.0, *)
+public struct ProductsResult {
+    public let products: [Product]
+    public let pageInfo: PageInfo
+
+    public init(products: [Product], pageInfo: PageInfo) {
+        self.products = products
+        self.pageInfo = pageInfo
+    }
 }
 
-struct ProductQueryNode: Decodable {
+@available(iOS 15.0, *)
+public struct ProductQueryNode: Decodable {
     let code: Int
     let productName: String?
     let productBrand: String?
@@ -47,8 +59,9 @@ struct ProductQueryNode: Decodable {
 
 // MARK: - GraphQL Client Extension
 
+@available(iOS 15.0, *)
 extension GraphQLClient {
-    func fetchProducts(
+    public func fetchProducts(
         first: Int = 20,
         after: String? = nil,
         categoryId: Int? = nil,
@@ -204,7 +217,7 @@ extension GraphQLClient {
         )
     }
 
-    func fetchProductByCode(code: String) async throws -> Product? {
+    public func fetchProductByCode(code: String) async throws -> Product? {
         let queryString = """
             query ProductByCode {
                 productByCode(code: "\(code)") {

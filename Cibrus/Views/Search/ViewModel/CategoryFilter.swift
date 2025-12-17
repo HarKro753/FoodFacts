@@ -5,6 +5,8 @@
 //  Created by Harro Krog on 18.11.25.
 //
 
+import GraphQl
+
 enum CategoryFilter: Hashable {
     case label(id: Int)
     case category(id: Int)

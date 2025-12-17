@@ -10,27 +10,28 @@ import SwiftUI
 
 // MARK: - Product Models
 
-struct Product: Codable, Identifiable, Hashable {
-    let id: Int
-    let name: String?
-    let brand: String?
-    let imageUrl: String?
-    let nutriScore: Int?
-    let positiveNutrientRatings: [NutrientRating]
-    let negativeNutrientRatings: [NutrientRating]
-    let additivesRatings: AdditiveRating?
+@available(iOS 13.0, *)
+public struct Product: Codable, Identifiable, Hashable {
+    public let id: Int
+    public let name: String?
+    public let brand: String?
+    public let imageUrl: String?
+    public let nutriScore: Int?
+    public let positiveNutrientRatings: [NutrientRating]
+    public let negativeNutrientRatings: [NutrientRating]
+    public let additivesRatings: AdditiveRating?
 
     // Derived properties
-    let overallRatingText: String
-    let ratingColor: Color
+    public let overallRatingText: String
+    public let ratingColor: Color
 
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case id = "code"
         case name, brand, imageUrl, nutriScore
         case positiveNutrientRatings, negativeNutrientRatings, additivesRatings
     }
 
-    init(
+    public init(
         code: Int,
         name: String?,
         brand: String?,
@@ -54,7 +55,7 @@ struct Product: Codable, Identifiable, Hashable {
         self.ratingColor = RatingColorMapper.color(for: nutriScore)
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.id = try container.decode(Int.self, forKey: .id)
@@ -71,7 +72,7 @@ struct Product: Codable, Identifiable, Hashable {
         self.ratingColor = RatingColorMapper.color(for: nutriScore)
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(id, forKey: .id)
@@ -84,7 +85,7 @@ struct Product: Codable, Identifiable, Hashable {
         try container.encodeIfPresent(additivesRatings, forKey: .additivesRatings)
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(name)
         hasher.combine(brand)
@@ -95,7 +96,7 @@ struct Product: Codable, Identifiable, Hashable {
         hasher.combine(additivesRatings)
     }
 
-    static func == (lhs: Product, rhs: Product) -> Bool {
+    public static func == (lhs: Product, rhs: Product) -> Bool {
         lhs.id == rhs.id &&
         lhs.name == rhs.name &&
         lhs.brand == rhs.brand &&

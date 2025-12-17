@@ -8,6 +8,9 @@
 import Foundation
 import SwiftUI
 import Combine
+import Models
+
+import GraphQl
 
 @MainActor
 class HistoryViewModel: ObservableObject {

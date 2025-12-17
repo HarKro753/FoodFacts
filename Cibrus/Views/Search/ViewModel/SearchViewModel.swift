@@ -8,6 +8,8 @@
 import Combine
 import Foundation
 import SwiftUI
+import Models
+import GraphQl
 
 enum SearchState: Equatable {
     case idle

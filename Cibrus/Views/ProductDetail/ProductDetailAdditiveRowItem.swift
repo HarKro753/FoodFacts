@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Models
 
 struct ProductDetailAdditiveRowItem: View {
     let additivesRating: AdditiveRating

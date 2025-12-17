@@ -1,5 +1,5 @@
-struct RatingNumberMapper {
-    static func score(for rating: String) -> Int {
+public struct RatingNumberMapper {
+    public static func score(for rating: String) -> Int {
         switch rating {
         case "VERY_GOOD":
             return 95

@@ -9,23 +9,24 @@ import Foundation
 
 // MARK: - Food Groups Query Response Models
 
-struct FoodGroupsQueryResponse: Decodable {
-    let foodGroups: FoodGroupsData
+public struct FoodGroupsQueryResponse: Decodable {
+    public let foodGroups: FoodGroupsData
 }
 
-struct FoodGroupsData: Decodable {
-    let nodes: [FoodGroupNode]
+public struct FoodGroupsData: Decodable {
+    public let nodes: [FoodGroupNode]
 }
 
-struct FoodGroupNode: Decodable {
-    let id: Int
-    let name: String
+public struct FoodGroupNode: Decodable {
+    public let id: Int
+    public let name: String
 }
 
 // MARK: - GraphQL Client Extension
 
+@available(iOS 15.0, *)
 extension GraphQLClient {
-    func fetchFoodGroups() async throws -> [FoodGroupNode] {
+    public func fetchFoodGroups() async throws -> [FoodGroupNode] {
         let queryString = """
             query FoodGroups {
                 foodGroups {

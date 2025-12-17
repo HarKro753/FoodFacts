@@ -8,6 +8,8 @@
 import Combine
 import Foundation
 import SwiftUI
+import Models
+import GraphQl
 
 @MainActor
 class ProductDetailViewModel: ObservableObject {

@@ -9,8 +9,9 @@
 import Foundation
 import SwiftUI
 
-extension Product {
-    static let sampleProducts: [Product] = [
+@available(iOS 13.0, *)
+public extension Product {
+    nonisolated(unsafe) static let sampleProducts: [Product] = [
         Product(
             code: 1,
             name: "Organic Almond Milk",

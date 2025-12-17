@@ -1,5 +1,5 @@
-struct NutriTextMapper {
-    static func text(for nutriScore: Int?) -> String {
+public struct NutriTextMapper {
+    public static func text(for nutriScore: Int?) -> String {
         guard let score = nutriScore else {
             return "Keine Bewertung"
         }

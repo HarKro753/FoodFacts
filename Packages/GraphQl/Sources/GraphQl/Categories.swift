@@ -10,23 +10,24 @@ import SwiftUI
 
 // MARK: - Categories Query Response Models
 
-struct CategoriesQueryResponse: Decodable {
-    let categories: CategoriesData
+public struct CategoriesQueryResponse: Decodable {
+    public let categories: CategoriesData
 }
 
-struct CategoriesData: Decodable {
-    let nodes: [CategoryNode]
+public struct CategoriesData: Decodable {
+    public let nodes: [CategoryNode]
 }
 
-struct CategoryNode: Decodable {
-    let id: Int
-    let name: String
+public struct CategoryNode: Decodable {
+    public let id: Int
+    public let name: String
 }
 
 // MARK: - GraphQL Client Extension
 
+@available(iOS 15.0, *)
 extension GraphQLClient {
-    func fetchCategories() async throws -> [CategoryNode] {
+    public func fetchCategories() async throws -> [CategoryNode] {
         let queryString = """
             query Categories {
                 categories(first: 500) {

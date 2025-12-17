@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Models
 
 struct AdditivesListSheet: View {
     let additives: [Additive]

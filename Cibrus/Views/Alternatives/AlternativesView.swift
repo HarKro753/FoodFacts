@@ -7,6 +7,7 @@
 
 import SwiftUI
 import NetworkImage
+import Models
 
 struct AlternativesView: View {
     @EnvironmentObject private var viewModel: AlternativesViewModel

@@ -3,25 +3,26 @@ import SwiftUI
 
 // MARK: - Completion Models
 
-struct CompletionItem: Decodable, Identifiable, Hashable, Equatable {
-    let id: Int
-    let name: String
+public struct CompletionItem: Decodable, Identifiable, Hashable, Equatable {
+    public let id: Int
+    public let name: String
 }
 
-struct CompletionsData: Decodable, Equatable {
-    let productNames: [CompletionItem]
-    let categoryNames: [CompletionItem]
-    let foodGroups: [CompletionItem]
+public struct CompletionsData: Decodable, Equatable {
+    public let productNames: [CompletionItem]
+    public let categoryNames: [CompletionItem]
+    public let foodGroups: [CompletionItem]
 }
 
-struct CompletionsWrapper: Decodable {
-    let completionsForPrefix: CompletionsData
+public struct CompletionsWrapper: Decodable {
+    public let completionsForPrefix: CompletionsData
 }
 
 // MARK: - GraphQL Client Extension
 
+@available(iOS 15.0, *)
 extension GraphQLClient {
-    func fetchCompletions(
+    public func fetchCompletions(
         prefix: String,
         completeness: Double? = 0.7,
         lastImageDatetime: String? = "2025-01-01",

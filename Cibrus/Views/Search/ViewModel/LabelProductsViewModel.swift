@@ -8,6 +8,8 @@
 import Combine
 import NetworkImage
 import SwiftUI
+import Models
+import GraphQl
 
 struct ProductLabel: Identifiable, Hashable {
     let id: Int

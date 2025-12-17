@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Models
 
 struct AdditiveDetailView: View {
     let additive: Additive

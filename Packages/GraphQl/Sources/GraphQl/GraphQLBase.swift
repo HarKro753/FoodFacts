@@ -9,35 +9,36 @@ import Foundation
 
 // MARK: - GraphQL Request/Response
 
-struct GraphQLRequest: Encodable {
+public struct GraphQLRequest: Encodable {
     let query: String
     let variables: [String: String]?
 }
 
-struct GraphQLResponse<T: Decodable>: Decodable {
+public struct GraphQLResponse<T: Decodable>: Decodable {
     let data: T?
     let errors: [GraphQLError]?
 }
 
-struct GraphQLError: Decodable {
+public struct GraphQLError: Decodable {
     let message: String
 }
 
-struct ErrorCheckResponse: Decodable {
+public struct ErrorCheckResponse: Decodable {
     let errors: [GraphQLError]?
 }
 
 // MARK: - GraphQL Client
 
-class GraphQLClient {
-    static let shared = GraphQLClient()
+@available(iOS 15.0, *)
+public final class GraphQLClient: @unchecked Sendable {
+    public static let shared = GraphQLClient()
     let apiURL: URL
 
     private init() {
         self.apiURL = URL(string: "https://cibrus.org/graphql")!
     }
 
-    func execute<T: Decodable>(query: String, variables: [String: String]? = nil, headers: [String: String]? = nil) async throws -> T {
+    public func execute<T: Decodable>(query: String, variables: [String: String]? = nil, headers: [String: String]? = nil) async throws -> T {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -116,13 +117,13 @@ class GraphQLClient {
 
 // MARK: - GraphQL Client Error
 
-enum GraphQLClientError: LocalizedError {
+public enum GraphQLClientError: LocalizedError {
     case queryNotFound
     case invalidResponse
     case noData
     case graphQLErrors([String])
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .queryNotFound:
             return "GraphQL query file not found"

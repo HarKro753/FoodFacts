@@ -7,6 +7,7 @@
 
 import NetworkImage
 import SwiftUI
+import Models
 
 // MARK: - Product Detail View
 struct ProductDetail: View {

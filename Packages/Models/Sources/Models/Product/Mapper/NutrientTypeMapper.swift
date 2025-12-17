@@ -9,8 +9,8 @@
 import Foundation
 import SwiftUI
 
-struct NutrientTypeMapper {
-    static func icon(for nutrientType: String) -> String {
+public struct NutrientTypeMapper {
+    public static func icon(for nutrientType: String) -> String {
         switch nutrientType {
         // Basic Nutrients - Energy
         case "ENERGY_KCAL", "ENERGY":

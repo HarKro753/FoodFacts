@@ -1,28 +1,29 @@
 import SwiftUI
 
-struct NutrientRating: Codable, Identifiable, Hashable {
-    let id = UUID()
-    let nutrientType: String
-    let name: String
-    let value: Double
-    let unit: String
-    let rating: String
-    let text: String
-    let ratingSections: [RatingSection]?
+@available(iOS 13.0, *)
+public struct NutrientRating: Codable, Identifiable, Hashable {
+    public let id = UUID()
+    public let nutrientType: String
+    public let name: String
+    public let value: Double
+    public let unit: String
+    public let rating: String
+    public let text: String
+    public let ratingSections: [RatingSection]?
 
     // Derived properties
-    let ratingScore: Int
-    let ratingColor: Color
-    let formattedValue: String
-    var icon: String {
+    public let ratingScore: Int
+    public let ratingColor: Color
+    public let formattedValue: String
+    public var icon: String {
         NutrientTypeMapper.icon(for: nutrientType)
     }
 
-    enum CodingKeys: String, CodingKey {
+    public enum CodingKeys: String, CodingKey {
         case nutrientType, name, value, unit, rating, text, ratingSections
     }
 
-    init(
+    public init(
         nutrientType: String,
         name: String,
         value: Double,
@@ -45,7 +46,7 @@ struct NutrientRating: Codable, Identifiable, Hashable {
         self.formattedValue = NutrientValueFormatter.formatValue(value, unit: unit)
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.nutrientType = try container.decode(String.self, forKey: .nutrientType)
@@ -62,7 +63,7 @@ struct NutrientRating: Codable, Identifiable, Hashable {
         self.formattedValue = NutrientValueFormatter.formatValue(value, unit: unit)
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(nutrientType, forKey: .nutrientType)
@@ -74,7 +75,7 @@ struct NutrientRating: Codable, Identifiable, Hashable {
         try container.encodeIfPresent(ratingSections, forKey: .ratingSections)
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(nutrientType)
         hasher.combine(name)
         hasher.combine(value)
@@ -84,7 +85,7 @@ struct NutrientRating: Codable, Identifiable, Hashable {
         hasher.combine(ratingSections)
     }
 
-    static func == (lhs: NutrientRating, rhs: NutrientRating) -> Bool {
+    public static func == (lhs: NutrientRating, rhs: NutrientRating) -> Bool {
         lhs.nutrientType == rhs.nutrientType &&
         lhs.name == rhs.name &&
         lhs.value == rhs.value &&
