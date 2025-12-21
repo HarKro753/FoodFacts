@@ -1,6 +1,6 @@
 //
-//  SearchViewModel.swift
-//  FoodFacts
+//  SearchManager.swift
+//  Env
 //
 //  Created by Harro Krog on 10.11.25.
 //
@@ -11,7 +11,7 @@ import SwiftUI
 import Models
 import GraphQl
 
-enum SearchState: Equatable {
+public enum SearchState: Equatable {
     case idle
     case searching
     case searchResults
@@ -20,30 +20,26 @@ enum SearchState: Equatable {
 }
 
 @MainActor
-class SearchViewModel: ObservableObject {
-    static let shared = SearchViewModel()
+@Observable
+public class SearchManager {
+    public var products: [Product] = []
+    public var searchText = ""
+    public var searchState: SearchState = .idle
+    public var hasNextPage = false
 
-    @Published var products: [Product] = []
-    @Published var searchText = ""
-    @Published var searchState: SearchState = .idle
-    @Published var hasNextPage = false
+    public let filterManager = FilterManager.shared
+    public let networkMonitor = NetworkMonitor.shared
 
-    let filterManager = FilterManager.shared
-    let networkMonitor = NetworkMonitor.shared
+    public var filterStateId: String = ""
+    public var activeFilters: Set<ProductFilter> = []
 
-    @Published var filterStateId: String = ""
+    public var categoryProducts: [Int: [Product]] = [:]
+    public var loadingCategories: Set<Int> = []
+    public var fetchedCategories: Set<Int> = []
+    public var categories: [ProductCategoryData] = []
+    public var completions: CompletionsData? = nil
 
-    var activeFilters: Set<ProductFilter> {
-        filterManager.activeFilters
-    }
-
-    @Published var categoryProducts: [Int: [Product]] = [:]
-    @Published var loadingCategories: Set<Int> = []
-    @Published var fetchedCategories: Set<Int> = []
-    @Published var categories: [ProductCategoryData] = []
-    @Published var completions: CompletionsData? = nil
-
-    var shouldShowCompletions: Bool {
+    public var shouldShowCompletions: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
             && searchState != .searching && searchState != .searchResults
             && searchState != .loadingMore
@@ -52,33 +48,15 @@ class SearchViewModel: ObservableObject {
     private var endCursor: String?
     private var searchTask: Task<Void, Never>?
     private var completionTask: Task<Void, Never>?
+    private var cancellables = Set<AnyCancellable>()
 
-    init() {
+    public init() {
         categories = ProductCategoryData.categories.shuffled()
 
-        $searchText
-            .removeDuplicates()
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .sink { [weak self] text in
+        filterManager.$activeFilters
+            .sink { [weak self] newFilters in
                 guard let self = self else { return }
-
-                let trimmedText = text.trimmingCharacters(in: .whitespaces)
-
-                if trimmedText.isEmpty {
-                    self.completions = nil
-                    if self.searchState != .idle
-                        && self.searchState != .searchResults
-                        && self.searchState != .loadingMore
-                    {
-                        self.searchState = .idle
-                    }
-                } else {
-                    if self.searchState == .idle {
-                        Task {
-                            await self.fetchCompletions(for: trimmedText)
-                        }
-                    }
-                }
+                self.activeFilters = newFilters
             }
             .store(in: &cancellables)
 
@@ -95,11 +73,9 @@ class SearchViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    private var cancellables = Set<AnyCancellable>()
-
     // MARK: - Autocomplete
 
-    func fetchCompletions(for text: String) async {
+    public func fetchCompletions(for text: String) async {
         completionTask?.cancel()
 
         guard !text.trimmingCharacters(in: .whitespaces).isEmpty else {
@@ -127,7 +103,7 @@ class SearchViewModel: ObservableObject {
         await completionTask?.value
     }
 
-    func clearCompletions() {
+    public func clearCompletions() {
         completionTask?.cancel()
         completions = nil
         searchText = ""
@@ -135,7 +111,7 @@ class SearchViewModel: ObservableObject {
 
     // MARK: - Search
 
-    func loadMore() async {
+    public func loadMore() async {
         guard case .searchResults = searchState,
             hasNextPage,
             let cursor = endCursor,
@@ -166,7 +142,6 @@ class SearchViewModel: ObservableObject {
             endCursor = result.pageInfo.endCursor
             searchState = .searchResults
         } catch {
-            // Provide better error messages based on network state
             let errorMessage: String
             if !networkMonitor.isConnected {
                 errorMessage =
@@ -179,7 +154,7 @@ class SearchViewModel: ObservableObject {
         }
     }
 
-    func clearSearch() {
+    public func clearSearch() {
         searchText = ""
         products = []
         searchState = .idle
@@ -187,7 +162,7 @@ class SearchViewModel: ObservableObject {
         endCursor = nil
     }
 
-    func resetToIdle() {
+    public func resetToIdle() {
         searchTask?.cancel()
         completionTask?.cancel()
         searchText = ""
@@ -200,17 +175,17 @@ class SearchViewModel: ObservableObject {
 
     // MARK: - Filter Management
 
-    func toggleFilter(_ filter: ProductFilter) {
+    public func toggleFilter(_ filter: ProductFilter) {
         filterManager.toggleFilter(filter)
     }
 
-    func clearFilters() {
+    public func clearFilters() {
         filterManager.clearFilters()
     }
 
     // MARK: - Category Products
 
-    func fetchProductsForCategory(_ category: ProductCategoryData) async {
+    public func fetchProductsForCategory(_ category: ProductCategoryData) async {
         guard loadingCategories.insert(category.id).inserted else { return }
 
         defer {
@@ -271,11 +246,11 @@ class SearchViewModel: ObservableObject {
         }
     }
 
-    func isLoadingCategory(_ categoryId: Int) -> Bool {
+    public func isLoadingCategory(_ categoryId: Int) -> Bool {
         loadingCategories.contains(categoryId)
     }
 
-    func shouldShowCategory(_ categoryId: Int) -> Bool {
+    public func shouldShowCategory(_ categoryId: Int) -> Bool {
         if let products = categoryProducts[categoryId], !products.isEmpty {
             return true
         }

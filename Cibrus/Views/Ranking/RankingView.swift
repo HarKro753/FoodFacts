@@ -8,10 +8,11 @@
 import SwiftUI
 import NetworkImage
 import Models
+import Env
 
 // MARK: - Main Ranking View
 struct RankingView: View {
-    @EnvironmentObject private var viewModel: RankingViewModel
+    @Environment(RankingManager.self) private var viewModel
     @State private var selectedCategory: ProductCategory = .lebensmittel
 
     enum ProductCategory: String, CaseIterable {
@@ -60,9 +61,6 @@ struct RankingView: View {
                 await viewModel.refresh()
             }
             .navigationTitle("Ranking")
-            .task {
-                await viewModel.fetchFoodGroups()
-            }
         }
     }
 }
@@ -111,12 +109,12 @@ struct ProductRankingList: View {
     let foodGroupId: Int
     let foodGroupName: String
 
-    @StateObject private var viewModel: ProductRankingViewModel
+    @State private var viewModel: ProductRankingManager
 
     init(foodGroupId: Int, foodGroupName: String) {
         self.foodGroupId = foodGroupId
         self.foodGroupName = foodGroupName
-        self._viewModel = StateObject(wrappedValue: ProductRankingViewModel(foodGroupId: foodGroupId))
+        self._viewModel = State(wrappedValue: ProductRankingManager(foodGroupId: foodGroupId))
     }
 
     var body: some View {
@@ -193,5 +191,5 @@ struct ProductRankingList: View {
 
 #Preview {
     RankingView()
-        .environmentObject(RankingViewModel())
+        .environment(RankingManager())
 }

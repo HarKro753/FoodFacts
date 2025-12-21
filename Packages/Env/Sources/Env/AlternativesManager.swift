@@ -1,6 +1,6 @@
 //
-//  AlternativesViewModel.swift
-//  FoodFacts
+//  AlternativesManager.swift
+//  Env
 //
 //  Created by Harro Krog on 11.11.25.
 //
@@ -11,38 +11,44 @@ import SwiftUI
 import Models
 import GraphQl
 
-// MARK: - Product Comparison Model
+public struct ProductComparison: Identifiable, Hashable {
+    public let id = UUID()
+    public let historyId: Int
+    public let originalProduct: Product
+    public let alternativeProducts: [Product]
+    public let scannedAt: String
 
-struct ProductComparison: Identifiable, Hashable {
-    let id = UUID()
-    let historyId: Int
-    let originalProduct: Product
-    let alternativeProducts: [Product]
-    let scannedAt: String
+    public init(historyId: Int, originalProduct: Product, alternativeProducts: [Product], scannedAt: String) {
+        self.historyId = historyId
+        self.originalProduct = originalProduct
+        self.alternativeProducts = alternativeProducts
+        self.scannedAt = scannedAt
+    }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 
-    static func == (lhs: ProductComparison, rhs: ProductComparison) -> Bool {
+    public static func == (lhs: ProductComparison, rhs: ProductComparison) -> Bool {
         lhs.id == rhs.id
     }
 }
 
-// MARK: - Alternatives ViewModel
-
 @MainActor
-class AlternativesViewModel: ObservableObject {
-    @Published var comparisons: [ProductComparison] = []
-    @Published var isInitialLoading = false
-    @Published var isLoadingMore = false
-    @Published var errorMessage: String?
-    @Published var hasNextPage = false
+@Observable
+public class AlternativesManager {
+    public var comparisons: [ProductComparison] = []
+    public var isInitialLoading = false
+    public var isLoadingMore = false
+    public var errorMessage: String?
+    public var hasNextPage = false
 
     private var endCursor: String?
     private var hasLoadedInitially = false
 
-    func fetchAlternatives() async {
+    public init() {}
+
+    public func fetchAlternatives() async {
         guard !hasLoadedInitially else { return }
 
         isInitialLoading = true
@@ -99,7 +105,7 @@ class AlternativesViewModel: ObservableObject {
         isInitialLoading = false
     }
 
-    func loadMore() async {
+    public func loadMore() async {
         guard !isLoadingMore, hasNextPage, let cursor = endCursor else {
             return
         }
@@ -153,7 +159,7 @@ class AlternativesViewModel: ObservableObject {
         isLoadingMore = false
     }
 
-    func refresh() async {
+    public func refresh() async {
         errorMessage = nil
 
         do {

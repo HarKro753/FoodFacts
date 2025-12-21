@@ -10,52 +10,80 @@ import NetworkImage
 import SwiftUI
 import Models
 import GraphQl
+import Env
 
 struct SearchView: View {
-    @EnvironmentObject private var viewModel: SearchViewModel
+    @Environment(SearchManager.self) private var manager
     @State private var navigationPath = NavigationPath()
     @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
+        @Bindable var searchManager = manager
+
         NavigationStack(path: $navigationPath) {
             Group {
-                if viewModel.shouldShowCompletions {
+                if manager.shouldShowCompletions {
                     CompletionView(
-                        viewModel: viewModel,
+                        manager: manager,
                         navigationPath: $navigationPath
                     )
                 } else {
-                    switch viewModel.searchState {
+                    switch manager.searchState {
                     case .idle:
                         ExploreView(
-                            viewModel: viewModel,
+                            manager: manager,
                             navigationPath: $navigationPath
                         )
 
                     case .searching, .searchResults, .loadingMore, .error:
-                        SearchResultsView(viewModel: viewModel)
+                        SearchResultsView(manager: manager)
                     }
                 }
             }
             .navigationTitle("Suche")
             .navigationBarTitleDisplayMode(.large)
             .searchable(
-                text: $viewModel.searchText,
+                text: $searchManager.searchText,
                 isPresented: $isSearching,
                 placement: .automatic,
                 prompt: "Search products..."
             )
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
+            .onChange(of: searchManager.searchText) { oldValue, newValue in
+                // Debounced search text observation
+                searchTask?.cancel()
+                let trimmedText = newValue.trimmingCharacters(in: .whitespaces)
+
+                if trimmedText.isEmpty {
+                    manager.completions = nil
+                    if manager.searchState != .idle
+                        && manager.searchState != .searchResults
+                        && manager.searchState != .loadingMore
+                    {
+                        manager.searchState = .idle
+                    }
+                } else {
+                    if manager.searchState == .idle {
+                        searchTask = Task {
+                            try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
+                            if !Task.isCancelled {
+                                await manager.fetchCompletions(for: trimmedText)
+                            }
+                        }
+                    }
+                }
+            }
             .onChange(of: isSearching) { oldValue, newValue in
                 // When search is dismissed (cancel button pressed)
                 if !newValue && oldValue {
-                    viewModel.resetToIdle()
+                    manager.resetToIdle()
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    FilterMenuButton(viewModel: viewModel)
+                    FilterMenuButton()
                 }
             }
             .navigationDestination(for: Product.self) { product in
@@ -71,7 +99,7 @@ struct SearchView: View {
                 ProductList(label: label)
             }
             .onDisappear {
-                viewModel.resetToIdle()
+                manager.resetToIdle()
             }
         }
     }
@@ -80,11 +108,11 @@ struct SearchView: View {
 // MARK: - Search Results View
 
 struct SearchResultsView: View {
-    @ObservedObject var viewModel: SearchViewModel
+    var manager: SearchManager
 
     var body: some View {
         Group {
-            switch viewModel.searchState {
+            switch manager.searchState {
             case .searching:
                 List {
                     ForEach(0..<8, id: \.self) { _ in
@@ -118,7 +146,7 @@ struct SearchResultsView: View {
                 }
 
             case .searchResults, .loadingMore:
-                if viewModel.products.isEmpty {
+                if manager.products.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
@@ -134,13 +162,13 @@ struct SearchResultsView: View {
                 } else {
                     List {
                         ForEach(
-                            Array(viewModel.products.enumerated()),
+                            Array(manager.products.enumerated()),
                             id: \.element.id
                         ) { index, product in
                             NavigationLink {
                                 ProductDetail(product: product)
                             } label: {
-                                ProductHistoryRowItem(product: product)
+                                ProductSearchProductItem(product: product)
                             }
                             .listRowInsets(
                                 EdgeInsets(
@@ -151,15 +179,15 @@ struct SearchResultsView: View {
                                 )
                             )
                             .onAppear {
-                                if index == viewModel.products.count - 5 {
+                                if index == manager.products.count - 5 {
                                     Task {
-                                        await viewModel.loadMore()
+                                        await manager.loadMore()
                                     }
                                 }
                             }
                         }
 
-                        if case .loadingMore = viewModel.searchState {
+                        if case .loadingMore = manager.searchState {
                             HStack {
                                 Spacer()
                                 ProgressView()
@@ -183,23 +211,23 @@ struct SearchResultsView: View {
 // MARK: - TextCompletionView
 
 struct CompletionView: View {
-    @ObservedObject var viewModel: SearchViewModel
+    var manager: SearchManager
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
         List {
-            if let completions = viewModel.completions {
+            if let completions = manager.completions {
 
                 ForEach(completions.productNames) { product in
                     CompletionRow(
                         icon: "cube.box.fill",
                         iconColor: .gray,
                         name: product.name,
-                        searchText: viewModel.searchText
+                        searchText: manager.searchText
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        viewModel.clearCompletions()
+                        manager.clearCompletions()
                         navigationPath.append(product.id)
                     }
                     .listRowInsets(
@@ -212,11 +240,11 @@ struct CompletionView: View {
                         icon: "tag.fill",
                         iconColor: .gray,
                         name: category.name,
-                        searchText: viewModel.searchText
+                        searchText: manager.searchText
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        viewModel.clearCompletions()
+                        manager.clearCompletions()
 
                         let categoryData = ProductCategoryData(
                             id: category.id,
@@ -236,11 +264,11 @@ struct CompletionView: View {
                         icon: "leaf.fill",
                         iconColor: .gray,
                         name: foodGroup.name,
-                        searchText: viewModel.searchText
+                        searchText: manager.searchText
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        viewModel.clearCompletions()
+                        manager.clearCompletions()
 
                         let label = ProductLabel(
                             id: foodGroup.id,
@@ -276,20 +304,20 @@ struct CompletionView: View {
 //MARK: ExploreView
 
 struct ExploreView: View {
-    @ObservedObject var viewModel: SearchViewModel
+    var manager: SearchManager
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(
-                    viewModel.categories.filter {
-                        viewModel.shouldShowCategory($0.id)
+                    manager.categories.filter {
+                        manager.shouldShowCategory($0.id)
                     }
                 ) { category in
                     VStack(spacing: 0) {
                         Button(action: {
-                            if let products = viewModel.categoryProducts[
+                            if let products = manager.categoryProducts[
                                 category.id
                             ],
                                 !products.isEmpty
@@ -313,13 +341,13 @@ struct ExploreView: View {
                         .buttonStyle(.plain)
                         .buttonStyle(PressScaleButtonStyle())
                         .disabled(
-                            viewModel.categoryProducts[category.id]?.isEmpty
+                            manager.categoryProducts[category.id]?.isEmpty
                                 ?? true
                         )
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(alignment: .top, spacing: 12) {
-                                if let products = viewModel.categoryProducts[
+                                if let products = manager.categoryProducts[
                                     category.id
                                 ], !products.isEmpty {
                                     ForEach(products) { product in
@@ -341,9 +369,9 @@ struct ExploreView: View {
                         }
                     }
                     .background(Color(.systemBackground))
-                    .id("\(category.id)-\(viewModel.filterStateId)")
-                    .task(id: viewModel.filterStateId) {
-                        await viewModel.fetchProductsForCategory(category)
+                    .id("\(category.id)-\(manager.filterStateId)")
+                    .task(id: manager.filterStateId) {
+                        await manager.fetchProductsForCategory(category)
                     }
                 }
             }
@@ -367,47 +395,7 @@ struct PressScaleButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Filter Menu Button
-
-struct FilterMenuButton: View {
-    @ObservedObject var viewModel: SearchViewModel
-
-    var body: some View {
-        Menu {
-            ForEach(ProductFilter.allCases) { filter in
-                Button {
-                    viewModel.toggleFilter(filter)
-                } label: {
-                    Label {
-                        Text(filter.displayName)
-                    } icon: {
-                        if viewModel.activeFilters.contains(filter) {
-                            Image(systemName: "checkmark")
-                        }
-                        Image(systemName: filter.icon)
-                    }
-                }
-            }
-
-            if !viewModel.activeFilters.isEmpty {
-                Divider()
-
-                Button(role: .destructive) {
-                    viewModel.clearFilters()
-                } label: {
-                    Label("Clear All Filters", systemImage: "xmark.circle.fill")
-                }
-            }
-        } label: {
-            Image(systemName: "line.3.horizontal.decrease")
-                .font(.system(size: 22))
-                .foregroundStyle(.primary)
-
-        }
-    }
-}
-
 #Preview {
     SearchView()
-        .environmentObject(SearchViewModel.shared)
+        .environment(SearchManager())
 }

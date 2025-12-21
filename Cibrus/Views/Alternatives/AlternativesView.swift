@@ -8,9 +8,10 @@
 import SwiftUI
 import NetworkImage
 import Models
+import Env
 
 struct AlternativesView: View {
-    @EnvironmentObject private var viewModel: AlternativesViewModel
+    @Environment(AlternativesManager.self) private var viewModel
     @State private var navigationPath = NavigationPath()
 
     var body: some View {
@@ -212,5 +213,5 @@ struct AlternativesView: View {
 
 #Preview {
     AlternativesView()
-        .environmentObject(AlternativesViewModel())
+        .environment(AlternativesManager())
 }

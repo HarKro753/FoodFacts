@@ -1,6 +1,6 @@
 //
 //  NetworkMonitor.swift
-//  FoodFacts
+//  Env
 //
 //  Created by Harro Krog on 20.11.25.
 //
@@ -8,15 +8,17 @@
 import Foundation
 import Network
 import Combine
+import SwiftUI
 
 @MainActor
-class NetworkMonitor: ObservableObject {
-    static let shared = NetworkMonitor()
+@Observable
+public class NetworkMonitor {
+    public static let shared = NetworkMonitor()
 
-    @Published var isConnected: Bool = true
-    @Published var connectionType: ConnectionType = .unknown
+    public var isConnected: Bool = true
+    public var connectionType: ConnectionType = .unknown
 
-    enum ConnectionType {
+    public enum ConnectionType {
         case wifi
         case cellular
         case ethernet
@@ -52,11 +54,11 @@ class NetworkMonitor: ObservableObject {
         return .unknown
     }
 
-    func stopMonitoring() {
+    public func stopMonitoring() {
         monitor.cancel()
     }
 
-    var connectionDescription: String {
+    public var connectionDescription: String {
         if !isConnected {
             return "No Internet Connection"
         }

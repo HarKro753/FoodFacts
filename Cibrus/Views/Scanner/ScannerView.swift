@@ -8,10 +8,11 @@
 import AVFoundation
 import Combine
 import SwiftUI
+import Env
 
 // MARK: - Scanner View
 struct ScannerView: View {
-    @StateObject private var viewModel = ScannerViewModel()
+    @Environment(ScannerManager.self) private var viewModel
     @StateObject private var cameraManager = CameraManager()
     @State private var detectedBarcode: String?
     @State private var isFlashOn = false
@@ -117,4 +118,5 @@ struct ScannerView: View {
 
 #Preview("Scanner") {
     ScannerView()
+        .environment(ScannerManager())
 }

@@ -8,10 +8,11 @@
 import NetworkImage
 import SwiftUI
 import Models
+import Env
 
 // MARK: - Product Detail View
 struct ProductDetail: View {
-    @StateObject private var viewModel: ProductDetailViewModel
+    @State private var viewModel: ProductDetailManager
     @State private var showRatingDetails = false
     @State private var showFullscreenImage = false
 
@@ -21,8 +22,8 @@ struct ProductDetail: View {
     }
 
     init(product: Product) {
-        _viewModel = StateObject(
-            wrappedValue: ProductDetailViewModel(
+        _viewModel = State(
+            wrappedValue: ProductDetailManager(
                 productCode: product.id,
                 product: product
             )
@@ -30,8 +31,8 @@ struct ProductDetail: View {
     }
 
     init(productCode: Int) {
-        _viewModel = StateObject(
-            wrappedValue: ProductDetailViewModel(productCode: productCode)
+        _viewModel = State(
+            wrappedValue: ProductDetailManager(productCode: productCode)
         )
     }
 

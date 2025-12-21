@@ -10,12 +10,14 @@
 		0D27E6AF2EF2D0DD00A14AFD /* GraphQl in Frameworks */ = {isa = PBXBuildFile; productRef = 0D27E6AE2EF2D0DD00A14AFD /* GraphQl */; };
 		0D27E6B12EF2D0E000A14AFD /* Models in Frameworks */ = {isa = PBXBuildFile; productRef = 0D27E6B02EF2D0E000A14AFD /* Models */; };
 		0DA8CAAE2EC2258000F1988C /* NetworkImage in Frameworks */ = {isa = PBXBuildFile; productRef = 0DA8CAAD2EC2258000F1988C /* NetworkImage */; };
+		0DFBD14E2EF85C69002F6EE2 /* Env in Frameworks */ = {isa = PBXBuildFile; productRef = 0DFBD14D2EF85C69002F6EE2 /* Env */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0D27E66B2EF2CEFA00A14AFD /* Models */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Models; path = Packages/Models; sourceTree = "<group>"; };
 		0D27E66C2EF2CF0E00A14AFD /* GraphQl */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = GraphQl; path = Packages/GraphQl; sourceTree = "<group>"; };
 		0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cibrus - Product Scanner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DFBD1462EF82D72002F6EE2 /* Env */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Env; path = Packages/Env; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -31,6 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0DFBD14E2EF85C69002F6EE2 /* Env in Frameworks */,
 				0D27E6B12EF2D0E000A14AFD /* Models in Frameworks */,
 				0D27E6AF2EF2D0DD00A14AFD /* GraphQl in Frameworks */,
 				0DA8CAAE2EC2258000F1988C /* NetworkImage in Frameworks */,
@@ -50,6 +53,7 @@
 		0DD592832EC0ACC0004832B8 = {
 			isa = PBXGroup;
 			children = (
+				0DFBD1462EF82D72002F6EE2 /* Env */,
 				0D27E66C2EF2CF0E00A14AFD /* GraphQl */,
 				0D27E66B2EF2CEFA00A14AFD /* Models */,
 				0DD5928E2EC0ACC0004832B8 /* Cibrus */,
@@ -89,6 +93,7 @@
 				0DA8CAAD2EC2258000F1988C /* NetworkImage */,
 				0D27E6AE2EF2D0DD00A14AFD /* GraphQl */,
 				0D27E6B02EF2D0E000A14AFD /* Models */,
+				0DFBD14D2EF85C69002F6EE2 /* Env */,
 			);
 			productName = FoodFacts;
 			productReference = 0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */;
@@ -394,6 +399,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0DA8CAAC2EC2258000F1988C /* XCRemoteSwiftPackageReference "NetworkImage" */;
 			productName = NetworkImage;
+		};
+		0DFBD14D2EF85C69002F6EE2 /* Env */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Env;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

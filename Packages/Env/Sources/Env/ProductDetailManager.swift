@@ -1,6 +1,6 @@
 //
-//  ProductDetailViewModel.swift
-//  FoodFacts
+//  ProductDetailManager.swift
+//  Env
 //
 //  Created by Harro Krog on 10.11.25.
 //
@@ -12,21 +12,22 @@ import Models
 import GraphQl
 
 @MainActor
-class ProductDetailViewModel: ObservableObject {
-    @Published var product: Product?
-    @Published var alternatives: [Product] = []
-    @Published var isLoadingProduct = false
-    @Published var isLoadingAlternatives = false
-    @Published var errorMessage: String?
+@Observable
+public class ProductDetailManager {
+    public var product: Product?
+    public var alternatives: [Product] = []
+    public var isLoadingProduct = false
+    public var isLoadingAlternatives = false
+    public var errorMessage: String?
 
     private let productCode: Int
 
-    init(productCode: Int, product: Product? = nil) {
+    public init(productCode: Int, product: Product? = nil) {
         self.productCode = productCode
         self.product = product
     }
 
-    func fetchProduct() async {
+    public func fetchProduct() async {
         guard product == nil else { return }
 
         isLoadingProduct = true
@@ -45,7 +46,7 @@ class ProductDetailViewModel: ObservableObject {
         isLoadingProduct = false
     }
 
-    func fetchAlternatives() async {
+    public func fetchAlternatives() async {
         isLoadingAlternatives = true
         errorMessage = nil
 

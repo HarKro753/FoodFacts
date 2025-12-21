@@ -1,6 +1,6 @@
 //
-//  ScannerViewModel.swift
-//  FoodFacts
+//  ScannerManager.swift
+//  Env
 //
 //  Created by Harro Krog on 11.11.25.
 //
@@ -11,13 +11,16 @@ import Models
 import GraphQl
 
 @MainActor
-class ScannerViewModel: ObservableObject {
-    @Published var scannedProduct: Product?
-    @Published var errorMessage: String?
+@Observable
+public class ScannerManager {
+    public var scannedProduct: Product?
+    public var errorMessage: String?
 
-    let networkMonitor = NetworkMonitor.shared
+    public let networkMonitor = NetworkMonitor.shared
 
-    func handleScannedBarcode(productCode: String) async {
+    public init() {}
+
+    public func handleScannedBarcode(productCode: String) async {
         errorMessage = nil
         scannedProduct = nil
 
@@ -26,7 +29,6 @@ class ScannerViewModel: ObservableObject {
             return
         }
 
-        // Check network connectivity before attempting to fetch
         guard networkMonitor.isConnected else {
             errorMessage = "No internet connection. Please check your network and try scanning again."
             return
@@ -53,7 +55,6 @@ class ScannerViewModel: ObservableObject {
                 errorMessage = "Product not found"
             }
         } catch {
-            // Provide better error messages based on network state
             if !networkMonitor.isConnected {
                 errorMessage = "Lost internet connection. Please check your network and try scanning again."
             } else {
@@ -63,7 +64,7 @@ class ScannerViewModel: ObservableObject {
         }
     }
 
-    func clearScannedProduct() {
+    public func clearScannedProduct() {
         scannedProduct = nil
         errorMessage = nil
     }

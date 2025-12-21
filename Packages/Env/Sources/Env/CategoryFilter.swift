@@ -1,21 +1,20 @@
 //
 //  CategoryFilter.swift
-//  FoodFacts
+//  Env
 //
 //  Created by Harro Krog on 18.11.25.
 //
 
 import GraphQl
 
-enum CategoryFilter: Hashable {
+public enum CategoryFilter: Hashable, Sendable {
     case label(id: Int)
     case category(id: Int)
     case foodGroup(id: Int)
     case nutrientMin(fieldName: String, minValue: Double)
     case nutrientMax(fieldName: String, maxValue: Double)
 
-    // Generic method to fetch products for any filter type
-    func fetchProducts(
+    public func fetchProducts(
         first: Int = 20,
         after: String? = nil,
         labelIds: [Int]? = nil,
@@ -78,14 +77,14 @@ enum CategoryFilter: Hashable {
     }
 }
 
-enum ProductFilter: Hashable, Identifiable, CaseIterable {
+public enum ProductFilter: Hashable, Identifiable, CaseIterable {
     case lowCalorie
     case highProtein
     case highNutriScore
     case vegan
     case vegetarian
 
-    var id: String {
+    public var id: String {
         switch self {
         case .lowCalorie: return "lowCalorie"
         case .highProtein: return "highProtein"
@@ -95,7 +94,7 @@ enum ProductFilter: Hashable, Identifiable, CaseIterable {
         }
     }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .lowCalorie: return "Low Calorie"
         case .highProtein: return "High Protein"
@@ -105,7 +104,7 @@ enum ProductFilter: Hashable, Identifiable, CaseIterable {
         }
     }
 
-    var icon: String {
+    public var icon: String {
         switch self {
         case .lowCalorie: return "flame.fill"
         case .highProtein: return "figure.strengthtraining.traditional"

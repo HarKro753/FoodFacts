@@ -1,33 +1,40 @@
 //
-//  LabelProductsViewModel.swift
-//  FoodFacts
+//  LabelProductsManager.swift
+//  Env
 //
 //  Created by Harro Krog on 17.11.25.
 //
 
 import Combine
-import NetworkImage
+import Foundation
 import SwiftUI
 import Models
 import GraphQl
 
-struct ProductLabel: Identifiable, Hashable {
-    let id: Int
-    let name: String
-    let filter: CategoryFilter
+public struct ProductLabel: Identifiable, Hashable {
+    public let id: Int
+    public let name: String
+    public let filter: CategoryFilter
+
+    public init(id: Int, name: String, filter: CategoryFilter) {
+        self.id = id
+        self.name = name
+        self.filter = filter
+    }
 }
 
 @MainActor
-class LabelProductsViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var isLoading = false
-    @Published var isLoadingMore = false
-    @Published var errorMessage: String?
-    @Published var hasNextPage = false
+@Observable
+public class LabelProductsManager {
+    public var products: [Product] = []
+    public var isLoading = false
+    public var isLoadingMore = false
+    public var errorMessage: String?
+    public var hasNextPage = false
 
-    let filterManager = FilterManager.shared
+    public let filterManager = FilterManager.shared
 
-    var activeFilters: Set<ProductFilter> {
+    public var activeFilters: Set<ProductFilter> {
         filterManager.activeFilters
     }
 
@@ -35,10 +42,9 @@ class LabelProductsViewModel: ObservableObject {
     private var currentFilter: CategoryFilter?
     private var cancellables = Set<AnyCancellable>()
 
-    init() {
-        // Observe filter changes and refetch products
+    public init() {
         filterManager.$activeFilters
-            .dropFirst() // Skip initial value
+            .dropFirst()
             .sink { [weak self] _ in
                 guard let self = self, let filter = self.currentFilter else { return }
                 Task {
@@ -48,7 +54,7 @@ class LabelProductsViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    func fetchProducts(for filter: CategoryFilter) async {
+    public func fetchProducts(for filter: CategoryFilter) async {
         guard !isLoading else { return }
 
         currentFilter = filter
@@ -79,7 +85,7 @@ class LabelProductsViewModel: ObservableObject {
         isLoading = false
     }
 
-    func loadMore() async {
+    public func loadMore() async {
         guard !isLoadingMore,
             hasNextPage,
             let cursor = endCursor,
@@ -111,13 +117,11 @@ class LabelProductsViewModel: ObservableObject {
         isLoadingMore = false
     }
 
-    // MARK: - Filter Management
-
-    func toggleFilter(_ filter: ProductFilter) {
+    public func toggleFilter(_ filter: ProductFilter) {
         filterManager.toggleFilter(filter)
     }
 
-    func clearFilters() {
+    public func clearFilters() {
         filterManager.clearFilters()
     }
 }

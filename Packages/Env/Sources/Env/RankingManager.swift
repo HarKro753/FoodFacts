@@ -1,6 +1,6 @@
 //
-//  RankingViewModel.swift
-//  YukaMock
+//  RankingManager.swift
+//  Env
 //
 //  Created by Harro Krog on 10.11.25.
 //
@@ -12,18 +12,19 @@ import Models
 import GraphQl
 
 @MainActor
-class RankingViewModel: ObservableObject {
-    @Published var foodGroups: [FoodGroup] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+@Observable
+public class RankingManager {
+    public var foodGroups: [FoodGroup] = []
+    public var isLoading = false
+    public var errorMessage: String?
 
-    let networkMonitor = NetworkMonitor.shared
+    public let networkMonitor = NetworkMonitor.shared
 
     private var hasLoadedInitially = false
 
-    struct FoodGroupStyle {
-        let imageName: String
-        let color: Color
+    public struct FoodGroupStyle {
+        public let imageName: String
+        public let color: Color
     }
 
     private let foodGroupStyleMap: [String: FoodGroupStyle] = [
@@ -79,14 +80,15 @@ class RankingViewModel: ObservableObject {
         "Dairy desserts": FoodGroupStyle(imageName: "Banana Split Color Hand Drawn", color: .pink),
     ]
 
+    public init() {}
+
     private func getStyle(for name: String) -> FoodGroupStyle {
         foodGroupStyleMap[name] ?? FoodGroupStyle(imageName: "Food Color Hand Drawn", color: .gray)
     }
 
-    func fetchFoodGroups() async {
+    public func fetchFoodGroups() async {
         guard !hasLoadedInitially else { return }
 
-        // Check network connectivity before attempting to fetch
         guard networkMonitor.isConnected else {
             errorMessage = "No internet connection. Pull down to refresh when connected."
             foodGroups = []
@@ -111,7 +113,6 @@ class RankingViewModel: ObservableObject {
             errorMessage = nil
             hasLoadedInitially = true
         } catch {
-            // Provide better error messages based on network state
             if !networkMonitor.isConnected {
                 errorMessage = "Lost internet connection. Pull down to refresh when connected."
             } else {
@@ -124,10 +125,9 @@ class RankingViewModel: ObservableObject {
         isLoading = false
     }
 
-    func refresh() async {
+    public func refresh() async {
         errorMessage = nil
 
-        // Check network connectivity before attempting to refresh
         guard networkMonitor.isConnected else {
             errorMessage = "No internet connection. Please check your network and try again."
             return
@@ -146,7 +146,6 @@ class RankingViewModel: ObservableObject {
             }
             errorMessage = nil
         } catch {
-            // Provide better error messages based on network state
             if !networkMonitor.isConnected {
                 errorMessage = "Lost internet connection. Please check your network and try again."
             } else {
@@ -155,7 +154,7 @@ class RankingViewModel: ObservableObject {
         }
     }
 
-    func fetchProducts(for foodGroupId: Int, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
+    public func fetchProducts(for foodGroupId: Int, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
         return try await GraphQLClient.shared.fetchProducts(
             first: first,
             after: after,

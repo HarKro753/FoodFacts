@@ -1,19 +1,22 @@
 //
 //  FilterManager.swift
-//  FoodFacts
+//  Env
 //
 //  Created by Harro Krog on 20.11.25.
 //
 
 import Combine
 import Foundation
+import SwiftUI
 
 @MainActor
-class FilterManager: ObservableObject {
-    static let shared = FilterManager()
+public class FilterManager: ObservableObject {
+    public static let shared = FilterManager()
 
-    @Published var activeFilters: Set<ProductFilter> = []
-    @Published private(set) var filterStateId: String = ""
+    @Published public var activeFilters: Set<ProductFilter> = []
+    @Published public private(set) var filterStateId: String = ""
+
+    private init() {}
 
     private func updateFilterStateId() {
         filterStateId = activeFilters.sorted(by: { $0.id < $1.id })
@@ -21,7 +24,7 @@ class FilterManager: ObservableObject {
             .joined(separator: "-")
     }
 
-    func toggleFilter(_ filter: ProductFilter) {
+    public func toggleFilter(_ filter: ProductFilter) {
         if activeFilters.contains(filter) {
             activeFilters.remove(filter)
         } else {
@@ -30,12 +33,12 @@ class FilterManager: ObservableObject {
         updateFilterStateId()
     }
 
-    func clearFilters() {
+    public func clearFilters() {
         activeFilters.removeAll()
         updateFilterStateId()
     }
 
-    func buildFilterParameters() -> (
+    public func buildFilterParameters() -> (
         labelIds: [Int]?, nutrientConditions: [(String, Double?, Double?)]?,
         sortAscending: Bool?
     ) {

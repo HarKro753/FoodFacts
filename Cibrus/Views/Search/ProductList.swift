@@ -9,12 +9,13 @@ import Combine
 import NetworkImage
 import SwiftUI
 import Models
+import Env
 
 /// This is the list which is opened from SearchView when pressing on a header.
 /// It displays all the items in a certain Category, Food Group
 struct ProductList: View {
     let label: ProductLabel
-    @StateObject private var viewModel = LabelProductsViewModel()
+    @State private var viewModel = LabelProductsManager()
 
     var body: some View {
         Group {
@@ -67,7 +68,7 @@ struct ProductList: View {
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
-                            ProductHistoryRowItem(product: product)
+                            ProductSearchProductItem(product: product)
                         }
                         .listRowInsets(
                             EdgeInsets(
@@ -110,7 +111,7 @@ struct ProductList: View {
 
 struct CategoryProductsList: View {
     let category: ProductCategoryData
-    @StateObject private var viewModel = LabelProductsViewModel()
+    @State private var viewModel = LabelProductsManager()
 
     var body: some View {
         Group {
@@ -207,7 +208,7 @@ struct CategoryProductsList: View {
 // MARK: - Filter Menu Button for ProductList
 
 struct ProductListFilterMenuButton: View {
-    @ObservedObject var viewModel: LabelProductsViewModel
+    var viewModel: LabelProductsManager
 
     var body: some View {
         Menu {

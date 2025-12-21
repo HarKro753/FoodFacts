@@ -1,6 +1,6 @@
 //
-//  ProductRankingViewModel.swift
-//  YukaMock
+//  ProductRankingManager.swift
+//  Env
 //
 //  Created by Harro Krog on 10.11.25.
 //
@@ -12,19 +12,20 @@ import Models
 import GraphQl
 
 @MainActor
-class ProductRankingViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var isInitialLoading = true
-    @Published var errorMessage: String?
+@Observable
+public class ProductRankingManager {
+    public var products: [Product] = []
+    public var isInitialLoading = true
+    public var errorMessage: String?
 
     private var hasLoadedInitially = false
     private let foodGroupId: Int
 
-    init(foodGroupId: Int) {
+    public init(foodGroupId: Int) {
         self.foodGroupId = foodGroupId
     }
 
-    func fetchProducts() async {
+    public func fetchProducts() async {
         guard !hasLoadedInitially else { return }
 
         isInitialLoading = true
@@ -49,7 +50,7 @@ class ProductRankingViewModel: ObservableObject {
         isInitialLoading = false
     }
 
-    func refresh() async {
+    public func refresh() async {
         errorMessage = nil
 
         do {
