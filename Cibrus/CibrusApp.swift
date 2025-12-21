@@ -32,22 +32,40 @@ struct FoodFactsApp: App {
 }
 
 struct ContentView: View {
-    @State private var selectedTab = 2
+    @State private var selectedTab: Int = 2
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            Tab("Ranking", systemImage: "list.number", value: 1) {
+        if #available(iOS 18.0, *) {
+            TabView(selection: $selectedTab) {
+                Tab("Ranking", systemImage: "list.number", value: 1) {
+                    RankingView()
+                }
+                Tab("Scanner", systemImage: "barcode.viewfinder", value: 2) {
+                    ScannerView()
+                }
+                Tab(value: 3, role: .search) {
+                    SearchView()
+                }
+                .customizationID("search")
+            }
+        } else {
+            TabView(selection: $selectedTab) {
                 RankingView()
-            }
-
-            Tab("Scanner", systemImage: "barcode.viewfinder", value: 2) {
+                    .tabItem {
+                        Label("Ranking", systemImage: "list.number")
+                    }
+                    .tag(1)
                 ScannerView()
-            }
-
-            Tab(value: 3, role: .search) {
+                    .tabItem {
+                        Label("Scanner", systemImage: "barcode.viewfinder")
+                    }
+                    .tag(2)
                 SearchView()
+                    .tabItem {
+                        Label("Search", systemImage: "magnifyingglass")
+                    }
+                    .tag(3)
             }
-            .customizationID("search")
         }
     }
 }
