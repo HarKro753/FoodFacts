@@ -5,16 +5,28 @@ import PackageDescription
 
 let package = Package(
     name: "Models",
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v10_15),
+    ],
     products: [
         .library(
             name: "Models",
             targets: ["Models"]
-        ),
+        )
+    ],
+    dependencies: [
+        .package(
+            url: "https://github.com/RevenueCat/purchases-ios.git",
+            from: "5.16.0"
+        )
     ],
     targets: [
         .target(
-            name: "Models"
-        ),
-
+            name: "Models",
+            dependencies: [
+                .product(name: "RevenueCat", package: "purchases-ios")
+            ]
+        )
     ]
 )
