@@ -339,7 +339,6 @@ struct ExploreView: View {
                             .background(Color(.systemBackground))
                         }
                         .buttonStyle(.plain)
-                        .buttonStyle(PressScaleButtonStyle())
                         .disabled(
                             manager.categoryProducts[category.id]?.isEmpty
                                 ?? true
@@ -377,21 +376,6 @@ struct ExploreView: View {
             }
         }
         .background(Color(.systemBackground))
-    }
-}
-
-// MARK: - Press Scale Button
-
-struct PressScaleButtonStyle: ButtonStyle {
-    var scale: CGFloat = 0.7
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .animation(
-                .spring(response: 0.2, dampingFraction: 0.7),
-                value: configuration.isPressed
-            )
     }
 }
 
