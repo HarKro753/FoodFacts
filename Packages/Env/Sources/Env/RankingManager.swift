@@ -13,7 +13,7 @@ import GraphQl
 
 @MainActor
 @Observable
-public class RankingManager {
+public class RankingManager: NetworkAwareFetching {
     public var foodGroups: [FoodGroup] = []
     public var isLoading = false
     public var errorMessage: String?
@@ -89,18 +89,11 @@ public class RankingManager {
     public func fetchFoodGroups() async {
         guard !hasLoadedInitially else { return }
 
-        guard networkMonitor.isConnected else {
-            errorMessage = "No internet connection. Pull down to refresh when connected."
-            foodGroups = []
-            hasLoadedInitially = true
-            return
+        let foodGroupNodes = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchFoodGroups()
         }
 
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let foodGroupNodes = try await GraphQLClient.shared.fetchFoodGroups()
+        if let foodGroupNodes = foodGroupNodes {
             foodGroups = foodGroupNodes.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
@@ -110,31 +103,19 @@ public class RankingManager {
                     color: style.color
                 )
             }
-            errorMessage = nil
-            hasLoadedInitially = true
-        } catch {
-            if !networkMonitor.isConnected {
-                errorMessage = "Lost internet connection. Pull down to refresh when connected."
-            } else {
-                errorMessage = error.localizedDescription
-            }
+        } else {
             foodGroups = []
-            hasLoadedInitially = true
         }
 
-        isLoading = false
+        hasLoadedInitially = true
     }
 
     public func refresh() async {
-        errorMessage = nil
-
-        guard networkMonitor.isConnected else {
-            errorMessage = "No internet connection. Please check your network and try again."
-            return
+        let foodGroupNodes = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchFoodGroups()
         }
 
-        do {
-            let foodGroupNodes = try await GraphQLClient.shared.fetchFoodGroups()
+        if let foodGroupNodes = foodGroupNodes {
             foodGroups = foodGroupNodes.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
@@ -143,13 +124,6 @@ public class RankingManager {
                     icon: style.imageName,
                     color: style.color
                 )
-            }
-            errorMessage = nil
-        } catch {
-            if !networkMonitor.isConnected {
-                errorMessage = "Lost internet connection. Please check your network and try again."
-            } else {
-                errorMessage = error.localizedDescription
             }
         }
     }

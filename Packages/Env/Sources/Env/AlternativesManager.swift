@@ -36,14 +36,17 @@ public struct ProductComparison: Identifiable, Hashable {
 
 @MainActor
 @Observable
-public class AlternativesManager {
+public class AlternativesManager: NetworkAwareFetching, PaginatedFetching {
     public var comparisons: [ProductComparison] = []
     public var isInitialLoading = false
     public var isLoadingMore = false
     public var errorMessage: String?
     public var hasNextPage = false
+    public var endCursor: String?
+    public var isLoading: Bool = false
 
-    private var endCursor: String?
+    public let networkMonitor = NetworkMonitor.shared
+
     private var hasLoadedInitially = false
 
     public init() {}
@@ -52,12 +55,12 @@ public class AlternativesManager {
         guard !hasLoadedInitially else { return }
 
         isInitialLoading = true
-        errorMessage = nil
 
-        do {
-            let historyResult = try await GraphQLClient.shared
-                .fetchProductHistory(first: 20)
+        let historyResult = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProductHistory(first: 20)
+        }
 
+        if let historyResult = historyResult {
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
@@ -87,21 +90,16 @@ public class AlternativesManager {
             }
 
             comparisons = newComparisons
-            hasNextPage = historyResult.pageInfo.hasNextPage
-            endCursor = historyResult.pageInfo.endCursor
-            hasLoadedInitially = true
-            errorMessage = nil
-        } catch {
-            if error is CancellationError {
-                return
-            }
-            errorMessage = error.localizedDescription
+            updatePagination(
+                hasNextPage: historyResult.pageInfo.hasNextPage,
+                endCursor: historyResult.pageInfo.endCursor
+            )
+        } else {
             comparisons = []
-            hasNextPage = false
-            endCursor = nil
-            hasLoadedInitially = true
+            resetPagination()
         }
 
+        hasLoadedInitially = true
         isInitialLoading = false
     }
 
@@ -110,15 +108,16 @@ public class AlternativesManager {
             return
         }
 
-        isLoadingMore = true
+        startLoadingMore()
 
-        do {
-            let historyResult = try await GraphQLClient.shared
-                .fetchProductHistory(
-                    first: 20,
-                    after: cursor
-                )
+        let historyResult = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProductHistory(
+                first: 20,
+                after: cursor
+            )
+        }
 
+        if let historyResult = historyResult {
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
@@ -149,23 +148,23 @@ public class AlternativesManager {
             }
 
             comparisons.append(contentsOf: newComparisons)
-            hasNextPage = historyResult.pageInfo.hasNextPage
-            endCursor = historyResult.pageInfo.endCursor
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
+            updatePagination(
+                hasNextPage: historyResult.pageInfo.hasNextPage,
+                endCursor: historyResult.pageInfo.endCursor
+            )
         }
 
-        isLoadingMore = false
+        stopLoadingMore()
     }
 
     public func refresh() async {
-        errorMessage = nil
+        clearError()
 
-        do {
-            let historyResult = try await GraphQLClient.shared
-                .fetchProductHistory(first: 20)
+        let historyResult = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProductHistory(first: 20)
+        }
 
+        if let historyResult = historyResult {
             var newComparisons: [ProductComparison] = []
 
             for historyItem in historyResult.historyItems {
@@ -195,11 +194,10 @@ public class AlternativesManager {
             }
 
             comparisons = newComparisons
-            hasNextPage = historyResult.pageInfo.hasNextPage
-            endCursor = historyResult.pageInfo.endCursor
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
+            updatePagination(
+                hasNextPage: historyResult.pageInfo.hasNextPage,
+                endCursor: historyResult.pageInfo.endCursor
+            )
         }
     }
 }

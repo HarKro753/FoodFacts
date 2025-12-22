@@ -13,13 +13,15 @@ import GraphQl
 
 @MainActor
 @Observable
-public class ProductDetailManager {
+public class ProductDetailManager: NetworkAwareFetching {
     public var product: Product?
     public var alternatives: [Product] = []
     public var isLoadingProduct = false
     public var isLoadingAlternatives = false
     public var errorMessage: String?
+    public var isLoading: Bool = false
 
+    public let networkMonitor = NetworkMonitor.shared
     private let productCode: Int
 
     public init(productCode: Int, product: Product? = nil) {
@@ -31,16 +33,13 @@ public class ProductDetailManager {
         guard product == nil else { return }
 
         isLoadingProduct = true
-        errorMessage = nil
 
-        do {
-            let fetchedProduct = try await GraphQLClient.shared.fetchProductByCode(
+        if let fetchedProduct = await fetchWithNetworkCheck({
+            try await GraphQLClient.shared.fetchProductByCode(
                 code: String(productCode)
             )
+        }) {
             product = fetchedProduct
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
         }
 
         isLoadingProduct = false
@@ -48,20 +47,15 @@ public class ProductDetailManager {
 
     public func fetchAlternatives() async {
         isLoadingAlternatives = true
-        errorMessage = nil
 
-        do {
-            let result = try await GraphQLClient.shared.fetchProducts(
+        let result = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProducts(
                 countryId: 2,
                 productCodeForAlternatives: productCode
             )
-            alternatives = result.products
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
-            alternatives = []
         }
 
+        alternatives = result?.products ?? []
         isLoadingAlternatives = false
     }
 }

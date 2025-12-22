@@ -25,64 +25,57 @@ public struct ProductLabel: Identifiable, Hashable {
 
 @MainActor
 @Observable
-public class LabelProductsManager {
+public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
     public var products: [Product] = []
     public var isLoading = false
     public var isLoadingMore = false
     public var errorMessage: String?
     public var hasNextPage = false
+    public var endCursor: String?
 
-    public let filterManager = FilterManager.shared
+    public let networkMonitor = NetworkMonitor.shared
+    private let filterManager = FilterManager.shared
+    private var filterSync: FilterSyncService?
 
     public var activeFilters: Set<ProductFilter> {
-        filterManager.activeFilters
+        filterSync?.activeFilters ?? []
     }
 
-    private var endCursor: String?
     private var currentFilter: CategoryFilter?
-    private var cancellables = Set<AnyCancellable>()
 
     public init() {
-        filterManager.$activeFilters
-            .dropFirst()
-            .sink { [weak self] _ in
-                guard let self = self, let filter = self.currentFilter else { return }
-                Task {
-                    await self.fetchProducts(for: filter)
-                }
-            }
-            .store(in: &cancellables)
+        filterSync = FilterSyncService { [weak self] in
+            guard let self = self, let filter = self.currentFilter else { return }
+            await self.fetchProducts(for: filter)
+        }
     }
 
     public func fetchProducts(for filter: CategoryFilter) async {
         guard !isLoading else { return }
 
         currentFilter = filter
-        isLoading = true
-        errorMessage = nil
-        endCursor = nil
-        hasNextPage = false
+        resetPagination()
 
-        do {
-            let filterParams = filterManager.buildFilterParameters()
+        let result = await fetchWithNetworkCheck {
+            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
-            let result = try await filter.fetchProducts(
+            return try await filter.fetchProducts(
                 first: 20,
-                labelIds: filterParams.labelIds,
-                nutrientConditions: filterParams.nutrientConditions,
-                sortAscending: filterParams.sortAscending
+                labelIds: labelIds,
+                nutrientConditions: nutrientConditions,
+                sortAscending: sortAscending
             )
-
-            products = result.products
-            hasNextPage = result.pageInfo.hasNextPage
-            endCursor = result.pageInfo.endCursor
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
-            products = []
         }
 
-        isLoading = false
+        if let result = result {
+            products = result.products
+            updatePagination(
+                hasNextPage: result.pageInfo.hasNextPage,
+                endCursor: result.pageInfo.endCursor
+            )
+        } else {
+            products = []
+        }
     }
 
     public func loadMore() async {
@@ -92,29 +85,29 @@ public class LabelProductsManager {
             let filter = currentFilter
         else { return }
 
-        isLoadingMore = true
-        errorMessage = nil
+        startLoadingMore()
 
-        do {
-            let filterParams = filterManager.buildFilterParameters()
+        let result = await fetchWithNetworkCheck {
+            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
-            let result = try await filter.fetchProducts(
+            return try await filter.fetchProducts(
                 first: 20,
                 after: cursor,
-                labelIds: filterParams.labelIds,
-                nutrientConditions: filterParams.nutrientConditions,
-                sortAscending: filterParams.sortAscending
+                labelIds: labelIds,
+                nutrientConditions: nutrientConditions,
+                sortAscending: sortAscending
             )
-
-            products.append(contentsOf: result.products)
-            hasNextPage = result.pageInfo.hasNextPage
-            endCursor = result.pageInfo.endCursor
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
         }
 
-        isLoadingMore = false
+        if let result = result {
+            products.append(contentsOf: result.products)
+            updatePagination(
+                hasNextPage: result.pageInfo.hasNextPage,
+                endCursor: result.pageInfo.endCursor
+            )
+        }
+
+        stopLoadingMore()
     }
 
     public func toggleFilter(_ filter: ProductFilter) {

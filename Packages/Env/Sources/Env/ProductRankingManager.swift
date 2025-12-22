@@ -13,10 +13,13 @@ import GraphQl
 
 @MainActor
 @Observable
-public class ProductRankingManager {
+public class ProductRankingManager: NetworkAwareFetching {
     public var products: [Product] = []
     public var isInitialLoading = true
     public var errorMessage: String?
+    public var isLoading: Bool = false
+
+    public let networkMonitor = NetworkMonitor.shared
 
     private var hasLoadedInitially = false
     private let foodGroupId: Int
@@ -29,41 +32,33 @@ public class ProductRankingManager {
         guard !hasLoadedInitially else { return }
 
         isInitialLoading = true
-        errorMessage = nil
 
-        do {
-            let result = try await GraphQLClient.shared.fetchProducts(
+        let result = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProducts(
                 first: 20,
                 countryId: 2,
                 foodGroup: foodGroupId,
                 sortAscending: true
             )
-            products = result.products
-            errorMessage = nil
-            hasLoadedInitially = true
-        } catch {
-            errorMessage = error.localizedDescription
-            products = []
-            hasLoadedInitially = true
         }
 
+        products = result?.products ?? []
+        hasLoadedInitially = true
         isInitialLoading = false
     }
 
     public func refresh() async {
-        errorMessage = nil
-
-        do {
-            let result = try await GraphQLClient.shared.fetchProducts(
+        let result = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProducts(
                 first: 20,
                 countryId: 2,
                 foodGroup: foodGroupId,
                 sortAscending: true
             )
+        }
+
+        if let result = result {
             products = result.products
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

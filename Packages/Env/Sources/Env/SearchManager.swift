@@ -21,17 +21,26 @@ public enum SearchState: Equatable {
 
 @MainActor
 @Observable
-public class SearchManager {
+public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     public var products: [Product] = []
     public var searchText = ""
     public var searchState: SearchState = .idle
     public var hasNextPage = false
+    public var endCursor: String?
+    public var isLoading: Bool = false
+    public var isLoadingMore: Bool = false
+    public var errorMessage: String?
 
-    public let filterManager = FilterManager.shared
     public let networkMonitor = NetworkMonitor.shared
+    private var filterSync: FilterSyncService?
 
-    public var filterStateId: String = ""
-    public var activeFilters: Set<ProductFilter> = []
+    public var filterStateId: String {
+        filterSync?.filterStateId ?? ""
+    }
+
+    public var activeFilters: Set<ProductFilter> {
+        filterSync?.activeFilters ?? []
+    }
 
     public var categoryProducts: [Int: [Product]] = [:]
     public var loadingCategories: Set<Int> = []
@@ -45,32 +54,18 @@ public class SearchManager {
             && searchState != .loadingMore
     }
 
-    private var endCursor: String?
     private var searchTask: Task<Void, Never>?
     private var completionTask: Task<Void, Never>?
-    private var cancellables = Set<AnyCancellable>()
 
     public init() {
         categories = ProductCategoryData.categories.shuffled()
 
-        filterManager.$activeFilters
-            .sink { [weak self] newFilters in
-                guard let self = self else { return }
-                self.activeFilters = newFilters
-            }
-            .store(in: &cancellables)
-
-        filterManager.$filterStateId
-            .sink { [weak self] newFilterStateId in
-                guard let self = self else { return }
-
-                self.filterStateId = newFilterStateId
-
-                self.categoryProducts.removeAll()
-                self.fetchedCategories.removeAll()
-                self.loadingCategories.removeAll()
-            }
-            .store(in: &cancellables)
+        filterSync = FilterSyncService { [weak self] in
+            guard let self = self else { return }
+            self.categoryProducts.removeAll()
+            self.fetchedCategories.removeAll()
+            self.loadingCategories.removeAll()
+        }
     }
 
     // MARK: - Autocomplete
@@ -118,39 +113,29 @@ public class SearchManager {
             !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
 
-        guard networkMonitor.isConnected else {
-            searchState = .error(
-                "No internet connection. Please check your network and try again."
-            )
-            return
-        }
-
         searchState = .loadingMore
 
-        do {
-            let filterParams = filterManager.buildFilterParameters()
+        let result = await fetchWithNetworkCheck {
+            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
-            let result = try await GraphQLClient.shared.fetchProducts(
+            return try await GraphQLClient.shared.fetchProducts(
                 after: cursor,
-                labelIds: filterParams.labelIds,
-                sortAscending: filterParams.sortAscending,
-                searchQuery: searchText,
-                nutrientConditions: filterParams.nutrientConditions
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                searchQuery: self.searchText,
+                nutrientConditions: nutrientConditions
             )
-            products.append(contentsOf: result.products)
-            hasNextPage = result.pageInfo.hasNextPage
-            endCursor = result.pageInfo.endCursor
-            searchState = .searchResults
-        } catch {
-            let errorMessage: String
-            if !networkMonitor.isConnected {
-                errorMessage =
-                    "Lost internet connection. Please check your network and try again."
-            } else {
-                errorMessage = error.localizedDescription
-            }
+        }
 
-            searchState = .error(errorMessage)
+        if let result = result {
+            products.append(contentsOf: result.products)
+            updatePagination(
+                hasNextPage: result.pageInfo.hasNextPage,
+                endCursor: result.pageInfo.endCursor
+            )
+            searchState = .searchResults
+        } else {
+            searchState = .error(errorMessage ?? "An error occurred")
         }
     }
 
@@ -176,11 +161,11 @@ public class SearchManager {
     // MARK: - Filter Management
 
     public func toggleFilter(_ filter: ProductFilter) {
-        filterManager.toggleFilter(filter)
+        FilterManager.shared.toggleFilter(filter)
     }
 
     public func clearFilters() {
-        filterManager.clearFilters()
+        FilterManager.shared.clearFilters()
     }
 
     // MARK: - Category Products
@@ -201,16 +186,18 @@ public class SearchManager {
             return
         }
 
-        do {
-            let filterParams = filterManager.buildFilterParameters()
+        let result = await fetchWithNetworkCheck {
+            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
-            let result = try await category.filter.fetchProducts(
+            return try await category.filter.fetchProducts(
                 first: 10,
-                labelIds: filterParams.labelIds,
-                nutrientConditions: filterParams.nutrientConditions,
-                sortAscending: filterParams.sortAscending
+                labelIds: labelIds,
+                nutrientConditions: nutrientConditions,
+                sortAscending: sortAscending
             )
+        }
 
+        if let result = result {
             let validProducts = result.products.filter { product in
                 product.name != nil && product.nutriScore != nil
             }
@@ -229,20 +216,9 @@ public class SearchManager {
                     "Successfully fetched \(sortedProducts.count) valid products for category \(category.name)"
                 )
             }
-        } catch {
-            if (error as NSError).code != NSURLErrorCancelled {
-                print(
-                    "Error fetching products for category \(category.name): \(error.localizedDescription)"
-                )
-                if let decodingError = error as? DecodingError {
-                    print("Decoding error details: \(decodingError)")
-                }
-            }
-
-            if networkMonitor.isConnected && (error as NSError).code != NSURLErrorCancelled {
-                categoryProducts[category.id] = []
-                fetchedCategories.insert(category.id)
-            }
+        } else if networkMonitor.isConnected {
+            categoryProducts[category.id] = []
+            fetchedCategories.insert(category.id)
         }
     }
 
