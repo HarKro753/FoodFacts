@@ -1,19 +1,14 @@
 //
-//  CategoryFilter.swift
+//  CategoryFilter+GraphQL.swift
 //  Env
 //
 //  Created by Harro Krog on 18.11.25.
 //
 
 import GraphQl
+import Models
 
-public enum CategoryFilter: Hashable, Sendable {
-    case label(id: Int)
-    case category(id: Int)
-    case foodGroup(id: Int)
-    case nutrientMin(fieldName: String, minValue: Double)
-    case nutrientMax(fieldName: String, maxValue: Double)
-
+extension CategoryFilter {
     public func fetchProducts(
         first: Int = 20,
         after: String? = nil,
@@ -73,44 +68,6 @@ public enum CategoryFilter: Hashable, Sendable {
                 nutrientMaxValue: maxValue,
                 nutrientConditions: nutrientConditions
             )
-        }
-    }
-}
-
-public enum ProductFilter: Hashable, Identifiable, CaseIterable {
-    case lowCalorie
-    case highProtein
-    case highNutriScore
-    case vegan
-    case vegetarian
-
-    public var id: String {
-        switch self {
-        case .lowCalorie: return "lowCalorie"
-        case .highProtein: return "highProtein"
-        case .highNutriScore: return "highNutriScore"
-        case .vegan: return "vegan"
-        case .vegetarian: return "vegetarian"
-        }
-    }
-
-    public var displayName: String {
-        switch self {
-        case .lowCalorie: return "Low Calorie"
-        case .highProtein: return "High Protein"
-        case .highNutriScore: return "High Nutri Score"
-        case .vegan: return "Vegan"
-        case .vegetarian: return "Vegetarian"
-        }
-    }
-
-    public var icon: String {
-        switch self {
-        case .lowCalorie: return "flame.fill"
-        case .highProtein: return "figure.strengthtraining.traditional"
-        case .highNutriScore: return "star.fill"
-        case .vegan: return "leaf.fill"
-        case .vegetarian: return "carrot.fill"
         }
     }
 }
