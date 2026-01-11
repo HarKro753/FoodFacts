@@ -8,59 +8,41 @@
 import Foundation
 import Models
 
-// MARK: - Products Query Response Models
-
-@available(iOS 15.0, *)
-public struct ProductsQueryResponse: Decodable {
-    let products: ProductsData
-}
-
-@available(iOS 15.0, *)
-public struct ProductByCodeResponse: Decodable {
-    let productByCode: ProductQueryNode?
-}
-
-@available(iOS 15.0, *)
-public struct ProductsData: Decodable {
-    let nodes: [ProductQueryNode]
-    let pageInfo: PageInfo
-}
-
-@available(iOS 15.0, *)
-public struct PageInfo: Decodable {
-    public let hasNextPage: Bool
-    public let hasPreviousPage: Bool
-    public let startCursor: String?
-    public let endCursor: String?
-}
-
-@available(iOS 15.0, *)
-public struct ProductsResult {
-    public let products: [Product]
-    public let pageInfo: PageInfo
-
-    public init(products: [Product], pageInfo: PageInfo) {
-        self.products = products
-        self.pageInfo = pageInfo
-    }
-}
-
-@available(iOS 15.0, *)
-public struct ProductQueryNode: Decodable {
-    let code: Int
-    let productName: String?
-    let productBrand: String?
-    let imageUrl: String?
-    let normalizedNutriScore: Int?
-    let positiveNutrientRatings: [NutrientRating]
-    let negativeNutrientRatings: [NutrientRating]
-    let additivesRatings: AdditiveRating?
-}
-
 // MARK: - GraphQL Client Extension
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
+    private struct ProductsQueryResponse: Decodable {
+        struct Products: Decodable {
+            struct Node: Decodable {
+                let code: Int
+                let productName: String?
+                let productBrand: String?
+                let imageUrl: String?
+                let normalizedNutriScore: Int?
+                let positiveNutrientRatings: [NutrientRating]
+                let negativeNutrientRatings: [NutrientRating]
+            }
+            let nodes: [Node]
+            let pageInfo: PageInfo
+        }
+        let products: Products
+    }
+
+    private struct ProductByCodeResponse: Decodable {
+        struct Node: Decodable {
+            let code: Int
+            let productName: String?
+            let productBrand: String?
+            let imageUrl: String?
+            let normalizedNutriScore: Int?
+            let positiveNutrientRatings: [NutrientRating]
+            let negativeNutrientRatings: [NutrientRating]
+            let additivesRatings: AdditiveRating?
+        }
+        let productByCode: Node?
+    }
+
     public func fetchProducts(
         first: Int = 20,
         after: String? = nil,
@@ -76,7 +58,7 @@ extension GraphQLClient {
         nutrientMinValue: Double? = nil,
         nutrientMaxValue: Double? = nil,
         nutrientConditions: [(fieldName: String, minValue: Double?, maxValue: Double?)]? = nil
-    ) async throws -> ProductsResult {
+    ) async throws -> PaginatedResult<Product> {
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
@@ -211,8 +193,8 @@ extension GraphQLClient {
             )
         }
 
-        return ProductsResult(
-            products: products,
+        return PaginatedResult(
+            items: products,
             pageInfo: response.products.pageInfo
         )
     }

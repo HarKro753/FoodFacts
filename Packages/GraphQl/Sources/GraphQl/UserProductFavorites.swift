@@ -8,64 +8,7 @@
 import Foundation
 import Models
 
-// MARK: - Favorite Products Models
-
-@available(iOS 15.0, *)
-public struct FavoriteProductNode: Decodable {
-    public let code: Int
-    public let productName: String?
-    public let productBrand: String?
-    public let imageUrl: String?
-    public let normalizedNutriScore: Int?
-    public let positiveNutrientRatings: [NutrientRating]
-    public let negativeNutrientRatings: [NutrientRating]
-}
-
-@available(iOS 15.0, *)
-public struct FavoriteProductsData: Decodable {
-    public let nodes: [FavoriteProductNode]
-    public let pageInfo: PageInfo
-}
-
-@available(iOS 15.0, *)
-public struct FavoriteProductsQueryResponse: Decodable {
-    public let myFavoriteProducts: FavoriteProductsData
-}
-
-@available(iOS 15.0, *)
-public struct FavoriteProductsResult {
-    public let products: [Product]
-    public let pageInfo: PageInfo
-
-    public init(products: [Product], pageInfo: PageInfo) {
-        self.products = products
-        self.pageInfo = pageInfo
-    }
-}
-
-// MARK: - Is Product Favorited Models
-
-public struct IsProductFavoritedResponse: Decodable {
-    public let isProductFavoritedByMe: Bool
-}
-
-// MARK: - Favorite Mutation Response Models
-
-public struct FavoriteProductResponse: Decodable {
-    public let payload: FavoriteProductPayload
-
-    enum CodingKeys: String, CodingKey {
-        case payload = "addFavoriteProduct"
-    }
-}
-
-public struct RemoveFavoriteProductResponse: Decodable {
-    public let payload: FavoriteProductPayload
-
-    enum CodingKeys: String, CodingKey {
-        case payload = "removeFavoriteProduct"
-    }
-}
+// MARK: - Public Payload Model
 
 public struct FavoriteProductPayload: Decodable {
     public let success: Bool
@@ -76,13 +19,49 @@ public struct FavoriteProductPayload: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
+    private struct FavoriteProductsQueryResponse: Decodable {
+        struct MyFavoriteProducts: Decodable {
+            struct Node: Decodable {
+                let code: Int
+                let productName: String?
+                let productBrand: String?
+                let imageUrl: String?
+                let normalizedNutriScore: Int?
+                let positiveNutrientRatings: [NutrientRating]
+                let negativeNutrientRatings: [NutrientRating]
+            }
+            let nodes: [Node]
+            let pageInfo: PageInfo
+        }
+        let myFavoriteProducts: MyFavoriteProducts
+    }
+
+    private struct IsProductFavoritedResponse: Decodable {
+        let isProductFavoritedByMe: Bool
+    }
+
+    private struct FavoriteProductResponse: Decodable {
+        let payload: FavoriteProductPayload
+
+        enum CodingKeys: String, CodingKey {
+            case payload = "addFavoriteProduct"
+        }
+    }
+
+    private struct RemoveFavoriteProductResponse: Decodable {
+        let payload: FavoriteProductPayload
+
+        enum CodingKeys: String, CodingKey {
+            case payload = "removeFavoriteProduct"
+        }
+    }
 
     // MARK: - Favorite Queries
 
     public func fetchFavoriteProducts(
         first: Int = 20,
         after: String? = nil
-    ) async throws -> FavoriteProductsResult {
+    ) async throws -> PaginatedResult<Product> {
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
@@ -153,8 +132,8 @@ extension GraphQLClient {
             )
         }
 
-        return FavoriteProductsResult(
-            products: products,
+        return PaginatedResult(
+            items: products,
             pageInfo: response.myFavoriteProducts.pageInfo
         )
     }

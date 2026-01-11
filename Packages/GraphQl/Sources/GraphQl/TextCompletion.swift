@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-// MARK: - Completion Models
+// MARK: - Public Completion Models
 
 public struct CompletionItem: Decodable, Identifiable, Hashable, Equatable {
     public let id: Int
@@ -14,14 +14,14 @@ public struct CompletionsData: Decodable, Equatable {
     public let foodGroups: [CompletionItem]
 }
 
-public struct CompletionsWrapper: Decodable {
-    public let completionsForPrefix: CompletionsData
-}
-
 // MARK: - GraphQL Client Extension
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
+    private struct CompletionsWrapper: Decodable {
+        let completionsForPrefix: CompletionsData
+    }
+
     public func fetchCompletions(
         prefix: String,
         completeness: Double? = 0.7,

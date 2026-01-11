@@ -72,7 +72,7 @@ public class ProductDetailManager: NetworkAwareFetching {
             )
         }
 
-        alternatives = result?.products ?? []
+        alternatives = result?.items ?? []
         isLoadingAlternatives = false
     }
 }

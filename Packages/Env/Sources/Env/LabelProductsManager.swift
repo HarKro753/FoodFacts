@@ -110,7 +110,7 @@ public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
         }
 
         if let result = result {
-            products = result.products
+            products = result.items
             updatePagination(
                 hasNextPage: result.pageInfo.hasNextPage,
                 endCursor: result.pageInfo.endCursor
@@ -142,7 +142,7 @@ public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
         }
 
         if let result = result {
-            products.append(contentsOf: result.products)
+            products.append(contentsOf: result.items)
             updatePagination(
                 hasNextPage: result.pageInfo.hasNextPage,
                 endCursor: result.pageInfo.endCursor
@@ -169,7 +169,7 @@ extension CategoryFilter {
         labelIds: [Int]? = nil,
         nutrientConditions: [(String, Double?, Double?)]? = nil,
         sortAscending: Bool? = nil
-    ) async throws -> ProductsResult {
+    ) async throws -> PaginatedResult<Product> {
         switch self {
         case .label(let id):
             return try await GraphQLClient.shared.fetchProducts(

@@ -7,16 +7,9 @@
 
 import Foundation
 import SwiftUI
+import Models
 
-// MARK: - Categories Query Response Models
-
-public struct CategoriesQueryResponse: Decodable {
-    public let categories: CategoriesData
-}
-
-public struct CategoriesData: Decodable {
-    public let nodes: [CategoryNode]
-}
+// MARK: - Public Category Model
 
 public struct CategoryNode: Decodable {
     public let id: Int
@@ -27,7 +20,15 @@ public struct CategoryNode: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
-    public func fetchCategories() async throws -> [CategoryNode] {
+    private struct CategoriesQueryResponse: Decodable {
+        struct Categories: Decodable {
+            let nodes: [CategoryNode]
+            let pageInfo: PageInfo
+        }
+        let categories: Categories
+    }
+
+    public func fetchCategories() async throws -> PaginatedResult<CategoryNode> {
         let queryString = """
             query Categories {
                 categories(first: 500) {
@@ -35,12 +36,21 @@ extension GraphQLClient {
                         name
                         id
                     }
+                    pageInfo {
+                        hasNextPage
+                        hasPreviousPage
+                        startCursor
+                        endCursor
+                    }
                 }
             }
             """
 
         let response: CategoriesQueryResponse = try await execute(query: queryString)
 
-        return response.categories.nodes
+        return PaginatedResult(
+            items: response.categories.nodes,
+            pageInfo: response.categories.pageInfo
+        )
     }
 }

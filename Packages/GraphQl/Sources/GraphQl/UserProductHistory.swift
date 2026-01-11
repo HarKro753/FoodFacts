@@ -22,124 +22,13 @@ public struct UserHeaders {
     }
 }
 
-// MARK: - Product History Models
-@available(iOS 15.0, *)
-public struct ProductHistoryNode: Decodable {
-    public let id: Int
-    public let productCode: Int
-    public let scannedAt: String
-    public let product: ProductNode?
-}
-
-@available(iOS 15.0, *)
-public struct ProductNode: Decodable {
-    public let code: Int
-    public let productName: String?
-    public let productBrand: String?
-    public let imageUrl: String?
-    public let normalizedNutriScore: Int?
-    public let positiveNutrientRatings: [NutrientRatingNode]
-    public let negativeNutrientRatings: [NutrientRatingNode]
-    public let additivesRatings: AdditiveRatingNode?
-}
-
-@available(iOS 15.0, *)
-public struct NutrientRatingNode: Decodable {
-    public let nutrientType: String
-    public let name: String
-    public let value: Double
-    public let unit: String
-    public let rating: String
-    public let text: String
-    public let ratingSections: [RatingSectionNode]?
-}
-
-@available(iOS 15.0, *)
-public struct RatingSectionNode: Decodable {
-    public let rating: String
-    public let minValue: Double
-    public let maxValue: Double
-    public let description: String
-}
-
-@available(iOS 15.0, *)
-public struct AdditiveRatingNode: Decodable {
-    public let rating: String
-    public let description: String
-    public let numberOfAdditives: Int
-    public let additives: [AdditiveNode]
-}
-
-@available(iOS 15.0, *)
-public struct AdditiveNode: Decodable {
-    public let id: Int
-    public let name: String
-    public let description: String?
-    public let risk: String?
-    public let additiveTypeId: Int?
-    public let additiveType: AdditiveTypeNode?
-    public let additiveHealthRisks: [AdditiveHealthRiskRelationNode]?
-}
-
-@available(iOS 15.0, *)
-public struct AdditiveTypeNode: Decodable {
-    public let id: Int
-    public let name: String
-    public let description: String?
-}
-
-@available(iOS 15.0, *)
-public struct AdditiveHealthRiskRelationNode: Decodable {
-    public let additiveId: Int
-    public let healthRiskId: Int
-    public let healthRisk: HealthRiskNode
-}
-
-@available(iOS 15.0, *)
-public struct HealthRiskNode: Decodable {
-    public let id: Int
-    public let name: String
-}
-
-@available(iOS 15.0, *)
-public struct ProductHistoryData: Decodable {
-    public let nodes: [ProductHistoryNode]
-    public let pageInfo: PageInfo
-}
-
-@available(iOS 15.0, *)
-public struct ProductHistoryQueryResponse: Decodable {
-    public let myProductHistory: ProductHistoryData
-}
-
-@available(iOS 15.0, *)
-public struct ProductHistoryResult {
-    public let historyItems: [ProductHistory]
-    public let pageInfo: PageInfo
-
-    public init(historyItems: [ProductHistory], pageInfo: PageInfo) {
-        self.historyItems = historyItems
-        self.pageInfo = pageInfo
-    }
-}
-
-// MARK: - History Mutation Response Models
-
-@available(iOS 15.0, *)
-public struct AddProductHistoryItemResponse: Decodable {
-    public let addProductHistoryItem: AddProductHistoryItemPayload
-}
+// MARK: - Public Payload Models
 
 @available(iOS 15.0, *)
 public struct AddProductHistoryItemPayload: Decodable {
     public let id: Int
     public let productCode: Int
     public let scannedAt: String
-}
-
-@available(iOS 15.0, *)
-public struct RemoveProductHistoryItemResponse: Decodable {
-    public let removeProductHistoryItem: RemoveProductHistoryItemPayload
 }
 
 @available(iOS 15.0, *)
@@ -152,10 +41,85 @@ public struct RemoveProductHistoryItemPayload: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
+    private struct ProductHistoryQueryResponse: Decodable {
+        struct MyProductHistory: Decodable {
+            struct Node: Decodable {
+                struct Product: Decodable {
+                    struct NutrientRating: Decodable {
+                        struct RatingSection: Decodable {
+                            let rating: String
+                            let minValue: Double
+                            let maxValue: Double
+                            let description: String
+                        }
+                        let nutrientType: String
+                        let name: String
+                        let value: Double
+                        let unit: String
+                        let rating: String
+                        let text: String
+                        let ratingSections: [RatingSection]?
+                    }
+                    struct AdditiveRating: Decodable {
+                        struct Additive: Decodable {
+                            struct AdditiveType: Decodable {
+                                let id: Int
+                                let name: String
+                                let description: String?
+                            }
+                            struct AdditiveHealthRiskRelation: Decodable {
+                                struct HealthRisk: Decodable {
+                                    let id: Int
+                                    let name: String
+                                }
+                                let additiveId: Int
+                                let healthRiskId: Int
+                                let healthRisk: HealthRisk
+                            }
+                            let id: Int
+                            let name: String
+                            let description: String?
+                            let risk: String?
+                            let additiveTypeId: Int?
+                            let additiveType: AdditiveType?
+                            let additiveHealthRisks: [AdditiveHealthRiskRelation]?
+                        }
+                        let rating: String
+                        let description: String
+                        let numberOfAdditives: Int
+                        let additives: [Additive]
+                    }
+                    let code: Int
+                    let productName: String?
+                    let productBrand: String?
+                    let imageUrl: String?
+                    let normalizedNutriScore: Int?
+                    let positiveNutrientRatings: [NutrientRating]
+                    let negativeNutrientRatings: [NutrientRating]
+                    let additivesRatings: AdditiveRating?
+                }
+                let id: Int
+                let productCode: Int
+                let scannedAt: String
+                let product: Product?
+            }
+            let nodes: [Node]
+            let pageInfo: PageInfo
+        }
+        let myProductHistory: MyProductHistory
+    }
+
+    private struct AddProductHistoryItemResponse: Decodable {
+        let addProductHistoryItem: AddProductHistoryItemPayload
+    }
+
+    private struct RemoveProductHistoryItemResponse: Decodable {
+        let removeProductHistoryItem: RemoveProductHistoryItemPayload
+    }
 
     // MARK: - Mapping Helpers
 
-    private func mapNutrientRating(_ rating: NutrientRatingNode) -> NutrientRating {
+    private func mapNutrientRating(_ rating: ProductHistoryQueryResponse.MyProductHistory.Node.Product.NutrientRating) -> NutrientRating {
         NutrientRating(
             nutrientType: rating.nutrientType,
             name: rating.name,
@@ -174,7 +138,7 @@ extension GraphQLClient {
         )
     }
 
-    private func mapAdditive(_ additive: AdditiveNode) -> Additive {
+    private func mapAdditive(_ additive: ProductHistoryQueryResponse.MyProductHistory.Node.Product.AdditiveRating.Additive) -> Additive {
         Additive(
             id: additive.id,
             name: additive.name,
@@ -201,7 +165,7 @@ extension GraphQLClient {
         )
     }
 
-    private func mapAdditiveRating(_ additivesRating: AdditiveRatingNode) -> AdditiveRating {
+    private func mapAdditiveRating(_ additivesRating: ProductHistoryQueryResponse.MyProductHistory.Node.Product.AdditiveRating) -> AdditiveRating {
         AdditiveRating(
             rating: additivesRating.rating,
             description: additivesRating.description,
@@ -210,7 +174,7 @@ extension GraphQLClient {
         )
     }
 
-    private func mapProduct(_ productNode: ProductNode) -> Product {
+    private func mapProduct(_ productNode: ProductHistoryQueryResponse.MyProductHistory.Node.Product) -> Product {
         Product(
             code: productNode.code,
             name: productNode.productName,
@@ -228,7 +192,7 @@ extension GraphQLClient {
     public func fetchProductHistory(
         first: Int = 20,
         after: String? = nil
-    ) async throws -> ProductHistoryResult {
+    ) async throws -> PaginatedResult<ProductHistory> {
         var paginationParams = "first: \(first)"
         if let after = after {
             paginationParams += ", after: \"\(after)\""
@@ -326,8 +290,8 @@ extension GraphQLClient {
             )
         }
 
-        return ProductHistoryResult(
-            historyItems: historyItems,
+        return PaginatedResult(
+            items: historyItems,
             pageInfo: response.myProductHistory.pageInfo
         )
     }

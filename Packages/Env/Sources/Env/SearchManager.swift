@@ -234,7 +234,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         }
 
         if let result = result {
-            products.append(contentsOf: result.products)
+            products.append(contentsOf: result.items)
             updatePagination(
                 hasNextPage: result.pageInfo.hasNextPage,
                 endCursor: result.pageInfo.endCursor
@@ -304,7 +304,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         }
 
         if let result = result {
-            let validProducts = result.products.filter { product in
+            let validProducts = result.items.filter { product in
                 product.name != nil && product.nutriScore != nil
             }
 

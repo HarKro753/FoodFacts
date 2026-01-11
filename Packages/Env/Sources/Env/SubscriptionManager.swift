@@ -157,4 +157,39 @@ public class SubscriptionManager {
             storeProduct: storeProduct
         )
     }
+    
+    private func formatSubscriptionPeriod(_ period: SubscriptionPeriod)
+           -> String
+       {
+           let value = period.value
+           let unit = period.unit
+
+           switch unit {
+           case .day:
+               return value == 1 ? "day" : "\(value) days"
+           case .week:
+               return value == 1 ? "week" : "\(value) weeks"
+           case .month:
+               return value == 1 ? "month" : "\(value) months"
+           case .year:
+               return value == 1 ? "year" : "\(value) years"
+           @unknown default:
+               return "\(value) periods"
+           }
+       }
+
+       private func formatPeriodUnit(_ unit: SubscriptionPeriod.Unit) -> String {
+           switch unit {
+           case .day:
+               return "day"
+           case .week:
+               return "week"
+           case .month:
+               return "month"
+           case .year:
+               return "year"
+           @unknown default:
+               return "period"
+           }
+       }
 }

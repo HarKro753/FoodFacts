@@ -6,16 +6,9 @@
 //
 
 import Foundation
+import Models
 
-// MARK: - Food Groups Query Response Models
-
-public struct FoodGroupsQueryResponse: Decodable {
-    public let foodGroups: FoodGroupsData
-}
-
-public struct FoodGroupsData: Decodable {
-    public let nodes: [FoodGroupNode]
-}
+// MARK: - Public Food Group Model
 
 public struct FoodGroupNode: Decodable {
     public let id: Int
@@ -26,13 +19,27 @@ public struct FoodGroupNode: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
-    public func fetchFoodGroups() async throws -> [FoodGroupNode] {
+    private struct FoodGroupsQueryResponse: Decodable {
+        struct FoodGroups: Decodable {
+            let nodes: [FoodGroupNode]
+            let pageInfo: PageInfo
+        }
+        let foodGroups: FoodGroups
+    }
+
+    public func fetchFoodGroups() async throws -> PaginatedResult<FoodGroupNode> {
         let queryString = """
             query FoodGroups {
                 foodGroups {
                     nodes {
                         id
                         name
+                    }
+                    pageInfo {
+                        hasNextPage
+                        hasPreviousPage
+                        startCursor
+                        endCursor
                     }
                 }
             }
@@ -41,6 +48,10 @@ extension GraphQLClient {
         let response: FoodGroupsQueryResponse = try await execute(
             query: queryString
         )
-        return response.foodGroups.nodes
+
+        return PaginatedResult(
+            items: response.foodGroups.nodes,
+            pageInfo: response.foodGroups.pageInfo
+        )
     }
 }

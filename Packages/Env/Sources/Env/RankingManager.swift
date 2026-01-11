@@ -144,7 +144,7 @@ public class RankingManager: NetworkAwareFetching {
         }
 
         if let foodGroupNodes = foodGroupNodes {
-            setFoodGroups(foodGroupNodes.map { node in
+            setFoodGroups(foodGroupNodes.items.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
                     id: node.id,
@@ -166,7 +166,7 @@ public class RankingManager: NetworkAwareFetching {
         }
 
         if let foodGroupNodes = foodGroupNodes {
-            setFoodGroups(foodGroupNodes.map { node in
+            setFoodGroups(foodGroupNodes.items.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
                     id: node.id,
@@ -203,7 +203,7 @@ public class RankingManager: NetworkAwareFetching {
             )
         }
 
-        setProducts(result?.products ?? [])
+        setProducts(result?.items ?? [])
         hasLoadedProductsInitially = true
         setIsInitialLoading(false)
     }
@@ -221,7 +221,7 @@ public class RankingManager: NetworkAwareFetching {
         }
 
         if let result = result {
-            setProducts(result.products)
+            setProducts(result.items)
         }
     }
 }
