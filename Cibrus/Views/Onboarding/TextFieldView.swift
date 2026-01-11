@@ -34,14 +34,14 @@ struct TextFieldContent: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(headerTitle)
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if !headerSubtitle.isEmpty {
                         Text(headerSubtitle)
                             .font(.system(size: 15, weight: .regular))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.leading)
                     }
                 }
@@ -55,7 +55,7 @@ struct TextFieldContent: View {
                     if text.isEmpty {
                         Text(placeholder)
                             .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 16)
                             .allowsHitTesting(false)
@@ -65,19 +65,19 @@ struct TextFieldContent: View {
                         .focused($isFocused)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .font(.system(size: 16, weight: .regular))
                         .padding(12)
                 }
                 .frame(height: 140)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.08))
+                        .fill(Color.gray.opacity(0.08))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(
-                            isFocused ? Color.blue : Color.white.opacity(0.15),
+                            isFocused ? Color.blue : Color.gray.opacity(0.2),
                             lineWidth: isFocused ? 1.5 : 1
                         )
                 )
@@ -97,5 +97,5 @@ struct TextFieldContent: View {
 
 #Preview {
     TextFieldContent()
-        .background(Color.black)
+        .background(Color.white)
 }

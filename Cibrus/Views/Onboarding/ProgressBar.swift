@@ -8,14 +8,12 @@ struct ProgressBar: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                // Background track
                 Capsule()
-                    .fill(Color.white.opacity(0.15))
+                    .fill(Color.gray.opacity(0.2))
                     .frame(height: 4)
 
-                // Progress fill
                 Capsule()
-                    .fill(Color.white)
+                    .fill(Color.blue)
                     .frame(
                         width: geometry.size.width * animatedProgress,
                         height: 4
@@ -38,7 +36,7 @@ struct ProgressBar: View {
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        Color.white.ignoresSafeArea()
 
         ProgressBar(progress: 0.5)
             .padding(.horizontal, 24)

@@ -92,7 +92,7 @@ public struct OnboardingFlowView: View {
             }
             .animation(.easeInOut(duration: 0.3), value: currentStep)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black)
+            .background(Color.white)
             .overlay(alignment: .bottom) {
                 continueButton
                     .background(Color.blue)
@@ -117,27 +117,15 @@ public struct OnboardingFlowView: View {
             Double(currentIndex + 1) / Double(stepsWithProgress.count)
 
         return HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Circle().stroke(
-                            Color.blue.opacity(0.5),
-                            lineWidth: 1
-                        )
-                    )
-
-                Image(systemName: "star.fill")
-                    .foregroundColor(.blue)
-                    .font(.system(size: 16, weight: .bold))
-            }
+            Image(systemName: "chevron.left")
+                .foregroundColor(.secondary)
+                .font(.system(size: 16))
 
             ProgressBar(progress: progress)
         }
         .padding(.horizontal, 24)
         .padding(.top, 20)
-        .padding(.bottom, 0)
+        .padding(.bottom, 12)
     }
 
     private var isLastStep: Bool {

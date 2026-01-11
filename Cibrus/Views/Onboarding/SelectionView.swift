@@ -14,7 +14,7 @@ struct GoalSelectionContent: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(headerTitle)
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -69,7 +69,7 @@ struct GoalRow: View {
             HStack {
                 Text(item.title)
                     .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
 
                 Spacer()
 
@@ -83,13 +83,13 @@ struct GoalRow: View {
             .padding(.horizontal, 20)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(isSelected ? 0.12 : 0.06))
+                    .fill(Color.gray.opacity(isSelected ? 0.15 : 0.08))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(
-                        isSelected ? Color.blue : Color.clear,
-                        lineWidth: 1.5
+                        isSelected ? Color.blue : Color.gray.opacity(0.2),
+                        lineWidth: isSelected ? 1.5 : 1
                     )
             )
         }
