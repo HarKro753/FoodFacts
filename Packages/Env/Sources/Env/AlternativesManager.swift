@@ -39,15 +39,59 @@ public struct ProductComparison: Identifiable, Hashable {
 public class AlternativesManager: NetworkAwareFetching, PaginatedFetching {
     public var comparisons: [ProductComparison] = []
     public var isInitialLoading = false
-    public var isLoadingMore = false
-    public var errorMessage: String?
-    public var hasNextPage = false
-    public var endCursor: String?
-    public var isLoading: Bool = false
+    private var isLoadingMore = false
+    private var errorMessage: String?
+    private var hasNextPage = false
+    private var endCursor: String?
+    private var isLoading: Bool = false
 
     public let networkMonitor = NetworkMonitor.shared
 
     private var hasLoadedInitially = false
+
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
+
+    // MARK: - Protocol Conformance (PaginatedFetching)
+
+    public func getHasNextPage() -> Bool {
+        return hasNextPage
+    }
+
+    public func setHasNextPage(_ nextPage: Bool) {
+        hasNextPage = nextPage
+    }
+
+    public func getEndCursor() -> String? {
+        return endCursor
+    }
+
+    public func setEndCursor(_ cursor: String?) {
+        endCursor = cursor
+    }
+
+    public func getIsLoadingMore() -> Bool {
+        return isLoadingMore
+    }
+
+    public func setIsLoadingMore(_ loading: Bool) {
+        isLoadingMore = loading
+    }
 
     public init() {}
 
@@ -104,7 +148,7 @@ public class AlternativesManager: NetworkAwareFetching, PaginatedFetching {
     }
 
     public func loadMore() async {
-        guard !isLoadingMore, hasNextPage, let cursor = endCursor else {
+        guard !getIsLoadingMore(), getHasNextPage(), let cursor = getEndCursor() else {
             return
         }
 

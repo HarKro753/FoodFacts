@@ -14,10 +14,28 @@ import GraphQl
 @Observable
 public class ScannerManager: NetworkAwareFetching {
     public var scannedProduct: Product?
-    public var errorMessage: String?
-    public var isLoading: Bool = false
+    private var errorMessage: String?
+    private var isLoading: Bool = false
 
     public let networkMonitor = NetworkMonitor.shared
+
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
 
     public init() {}
 
@@ -46,7 +64,7 @@ public class ScannerManager: NetworkAwareFetching {
             }
 
             scannedProduct = product
-        } else if errorMessage == nil {
+        } else if getErrorMessage() == nil {
             setError("Product not found")
         }
     }

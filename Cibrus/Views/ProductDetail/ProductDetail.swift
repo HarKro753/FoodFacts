@@ -45,7 +45,7 @@ struct ProductDetail: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage,
+            } else if let errorMessage = viewModel.getErrorMessage(),
                 viewModel.product == nil
             {
                 VStack(spacing: 16) {

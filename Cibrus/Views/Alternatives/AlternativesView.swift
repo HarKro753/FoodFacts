@@ -37,7 +37,7 @@ struct AlternativesView: View {
     private var contentView: some View {
         if viewModel.isInitialLoading {
             loadingView
-        } else if let errorMessage = viewModel.errorMessage, viewModel.comparisons.isEmpty {
+        } else if let errorMessage = viewModel.getErrorMessage(), viewModel.comparisons.isEmpty {
             errorView(message: errorMessage)
         } else if viewModel.comparisons.isEmpty {
             emptyStateView
@@ -105,7 +105,7 @@ struct AlternativesView: View {
                 comparisonRow(comparison: comparison, index: index)
             }
 
-            if viewModel.isLoadingMore {
+            if viewModel.getIsLoadingMore() {
                 loadingMoreView
             }
         }

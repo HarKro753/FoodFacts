@@ -25,13 +25,57 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     public var products: [Product] = []
     public var searchText = ""
     public var searchState: SearchState = .idle
-    public var hasNextPage = false
-    public var endCursor: String?
-    public var isLoading: Bool = false
-    public var isLoadingMore: Bool = false
-    public var errorMessage: String?
+    private var hasNextPage = false
+    private var endCursor: String?
+    private var isLoading: Bool = false
+    private var isLoadingMore: Bool = false
+    private var errorMessage: String?
 
     public let networkMonitor = NetworkMonitor.shared
+
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
+
+    // MARK: - Protocol Conformance (PaginatedFetching)
+
+    public func getHasNextPage() -> Bool {
+        return hasNextPage
+    }
+
+    public func setHasNextPage(_ nextPage: Bool) {
+        hasNextPage = nextPage
+    }
+
+    public func getEndCursor() -> String? {
+        return endCursor
+    }
+
+    public func setEndCursor(_ cursor: String?) {
+        endCursor = cursor
+    }
+
+    public func getIsLoadingMore() -> Bool {
+        return isLoadingMore
+    }
+
+    public func setIsLoadingMore(_ loading: Bool) {
+        isLoadingMore = loading
+    }
     private var filterSync: FilterSyncService?
 
     public var filterStateId: String {
@@ -108,8 +152,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
 
     public func loadMore() async {
         guard case .searchResults = searchState,
-            hasNextPage,
-            let cursor = endCursor,
+            getHasNextPage(),
+            let cursor = getEndCursor(),
             !searchText.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
 
@@ -135,7 +179,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
             )
             searchState = .searchResults
         } else {
-            searchState = .error(errorMessage ?? "An error occurred")
+            searchState = .error(getErrorMessage() ?? "An error occurred")
         }
     }
 
@@ -143,8 +187,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         searchText = ""
         products = []
         searchState = .idle
-        hasNextPage = false
-        endCursor = nil
+        setHasNextPage(false)
+        setEndCursor(nil)
     }
 
     public func resetToIdle() {
@@ -154,8 +198,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         products = []
         completions = nil
         searchState = .idle
-        hasNextPage = false
-        endCursor = nil
+        setHasNextPage(false)
+        setEndCursor(nil)
     }
 
     // MARK: - Filter Management

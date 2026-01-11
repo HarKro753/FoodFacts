@@ -27,13 +27,57 @@ public struct ProductLabel: Identifiable, Hashable {
 @Observable
 public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
     public var products: [Product] = []
-    public var isLoading = false
-    public var isLoadingMore = false
-    public var errorMessage: String?
-    public var hasNextPage = false
-    public var endCursor: String?
+    private var isLoading = false
+    private var isLoadingMore = false
+    private var errorMessage: String?
+    private var hasNextPage = false
+    private var endCursor: String?
 
     public let networkMonitor = NetworkMonitor.shared
+
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
+
+    // MARK: - Protocol Conformance (PaginatedFetching)
+
+    public func getHasNextPage() -> Bool {
+        return hasNextPage
+    }
+
+    public func setHasNextPage(_ nextPage: Bool) {
+        hasNextPage = nextPage
+    }
+
+    public func getEndCursor() -> String? {
+        return endCursor
+    }
+
+    public func setEndCursor(_ cursor: String?) {
+        endCursor = cursor
+    }
+
+    public func getIsLoadingMore() -> Bool {
+        return isLoadingMore
+    }
+
+    public func setIsLoadingMore(_ loading: Bool) {
+        isLoadingMore = loading
+    }
     private let filterManager = FilterManager.shared
     private var filterSync: FilterSyncService?
 
@@ -79,9 +123,9 @@ public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
     }
 
     public func loadMore() async {
-        guard !isLoadingMore,
-            hasNextPage,
-            let cursor = endCursor,
+        guard !getIsLoadingMore(),
+            getHasNextPage(),
+            let cursor = getEndCursor(),
             let filter = currentFilter
         else { return }
 

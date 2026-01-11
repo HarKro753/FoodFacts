@@ -14,13 +14,61 @@ import GraphQl
 @MainActor
 @Observable
 public class RankingManager: NetworkAwareFetching {
-    public var foodGroups: [FoodGroup] = []
-    public var isLoading = false
-    public var errorMessage: String?
+    // MARK: - Private Fields
+    private var hasLoadedInitially = false
+    private var hasLoadedProductsInitially = false
+    private var currentFoodGroupId: Int?
+    private var isLoading = false
+    private var errorMessage: String?
+    private var foodGroups: [FoodGroup] = []
+    private var products: [Product] = []
+    private var isInitialLoading = true
 
     public let networkMonitor = NetworkMonitor.shared
 
-    private var hasLoadedInitially = false
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
+
+    // MARK: - Public Getter/Setter Methods
+
+    public func getFoodGroups() -> [FoodGroup] {
+        return foodGroups
+    }
+
+    private func setFoodGroups(_ groups: [FoodGroup]) {
+        foodGroups = groups
+    }
+
+    public func getProducts() -> [Product] {
+        return products
+    }
+
+    private func setProducts(_ productList: [Product]) {
+        products = productList
+    }
+
+    public func getIsInitialLoading() -> Bool {
+        return isInitialLoading
+    }
+
+    private func setIsInitialLoading(_ loading: Bool) {
+        isInitialLoading = loading
+    }
 
     public struct FoodGroupStyle {
         public let imageName: String
@@ -80,7 +128,11 @@ public class RankingManager: NetworkAwareFetching {
         "Dairy desserts": FoodGroupStyle(imageName: "Banana Split Color Hand Drawn", color: .pink),
     ]
 
-    public init() {}
+    public init() {
+        Task {
+            await self.fetchProducts()
+        }
+    }
 
     private func getStyle(for name: String) -> FoodGroupStyle {
         foodGroupStyleMap[name] ?? FoodGroupStyle(imageName: "Food Color Hand Drawn", color: .gray)
@@ -94,7 +146,7 @@ public class RankingManager: NetworkAwareFetching {
         }
 
         if let foodGroupNodes = foodGroupNodes {
-            foodGroups = foodGroupNodes.map { node in
+            setFoodGroups(foodGroupNodes.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
                     id: node.id,
@@ -102,21 +154,21 @@ public class RankingManager: NetworkAwareFetching {
                     icon: style.imageName,
                     color: style.color
                 )
-            }
+            })
         } else {
-            foodGroups = []
+            setFoodGroups([])
         }
 
         hasLoadedInitially = true
     }
 
-    public func refresh() async {
+    public func refreshFoodGroups() async {
         let foodGroupNodes = await fetchWithNetworkCheck {
             try await GraphQLClient.shared.fetchFoodGroups()
         }
 
         if let foodGroupNodes = foodGroupNodes {
-            foodGroups = foodGroupNodes.map { node in
+            setFoodGroups(foodGroupNodes.map { node in
                 let style = getStyle(for: node.name)
                 return FoodGroup(
                     id: node.id,
@@ -124,15 +176,54 @@ public class RankingManager: NetworkAwareFetching {
                     icon: style.imageName,
                     color: style.color
                 )
-            }
+            })
         }
     }
 
-    public func fetchProducts(for foodGroupId: Int, first: Int = 20, after: String? = nil) async throws -> ProductsResult {
-        return try await GraphQLClient.shared.fetchProducts(
-            first: first,
-            after: after,
-            foodGroup: foodGroupId
-        )
+    // MARK: - Product Management
+
+    public func setCurrentFoodGroup(_ foodGroupId: Int) {
+        if currentFoodGroupId != foodGroupId {
+            currentFoodGroupId = foodGroupId
+            setProducts([])
+            hasLoadedProductsInitially = false
+        }
+    }
+
+    public func fetchProducts() async {
+        guard let foodGroupId = currentFoodGroupId else { return }
+        guard !hasLoadedProductsInitially else { return }
+
+        setIsInitialLoading(true)
+
+        let result = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProducts(
+                first: 20,
+                countryId: 2,
+                foodGroup: foodGroupId,
+                sortAscending: true
+            )
+        }
+
+        setProducts(result?.products ?? [])
+        hasLoadedProductsInitially = true
+        setIsInitialLoading(false)
+    }
+
+    public func refreshProducts() async {
+        guard let foodGroupId = currentFoodGroupId else { return }
+
+        let result = await fetchWithNetworkCheck {
+            try await GraphQLClient.shared.fetchProducts(
+                first: 20,
+                countryId: 2,
+                foodGroup: foodGroupId,
+                sortAscending: true
+            )
+        }
+
+        if let result = result {
+            setProducts(result.products)
+        }
     }
 }

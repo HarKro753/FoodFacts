@@ -18,11 +18,29 @@ public class ProductDetailManager: NetworkAwareFetching {
     public var alternatives: [Product] = []
     public var isLoadingProduct = false
     public var isLoadingAlternatives = false
-    public var errorMessage: String?
-    public var isLoading: Bool = false
+    private var errorMessage: String?
+    private var isLoading: Bool = false
 
     public let networkMonitor = NetworkMonitor.shared
     private let productCode: Int
+
+    // MARK: - Protocol Conformance (ProductFetchingState)
+
+    public func getErrorMessage() -> String? {
+        return errorMessage
+    }
+
+    public func setErrorMessage(_ message: String?) {
+        errorMessage = message
+    }
+
+    public func getIsLoading() -> Bool {
+        return isLoading
+    }
+
+    public func setIsLoading(_ loading: Bool) {
+        isLoading = loading
+    }
 
     public init(productCode: Int, product: Product? = nil) {
         self.productCode = productCode

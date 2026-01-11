@@ -19,14 +19,14 @@ struct ProductList: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading && viewModel.products.isEmpty {
+            if viewModel.getIsLoading() && viewModel.products.isEmpty {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading products...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage,
+            } else if let errorMessage = viewModel.getErrorMessage(),
                 viewModel.products.isEmpty
             {
                 VStack(spacing: 16) {
@@ -87,7 +87,7 @@ struct ProductList: View {
                         }
                     }
 
-                    if viewModel.isLoadingMore {
+                    if viewModel.getIsLoadingMore() {
                         HStack {
                             Spacer()
                             ProgressView()
@@ -115,14 +115,14 @@ struct CategoryProductsList: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading && viewModel.products.isEmpty {
+            if viewModel.getIsLoading() && viewModel.products.isEmpty {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading products...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage,
+            } else if let errorMessage = viewModel.getErrorMessage(),
                 viewModel.products.isEmpty
             {
                 VStack(spacing: 16) {
@@ -183,7 +183,7 @@ struct CategoryProductsList: View {
                         }
                     }
 
-                    if viewModel.isLoadingMore {
+                    if viewModel.getIsLoadingMore() {
                         HStack {
                             Spacer()
                             ProgressView()

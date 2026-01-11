@@ -9,26 +9,28 @@ import Foundation
 
 @MainActor
 public protocol ProductFetchingState: AnyObject {
-    var errorMessage: String? { get set }
-    var isLoading: Bool { get set }
+    func getErrorMessage() -> String?
+    func setErrorMessage(_ message: String?)
+    func getIsLoading() -> Bool
+    func setIsLoading(_ loading: Bool)
 }
 
 extension ProductFetchingState {
     public func setError(_ message: String) {
-        errorMessage = message
-        isLoading = false
+        setErrorMessage(message)
+        setIsLoading(false)
     }
 
     public func clearError() {
-        errorMessage = nil
+        setErrorMessage(nil)
     }
 
     public func startLoading() {
-        isLoading = true
-        errorMessage = nil
+        setIsLoading(true)
+        setErrorMessage(nil)
     }
 
     public func stopLoading() {
-        isLoading = false
+        setIsLoading(false)
     }
 }

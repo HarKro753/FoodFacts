@@ -12,7 +12,7 @@ import Env
 
 // MARK: - Main Ranking View
 struct RankingView: View {
-    @Environment(RankingManager.self) private var viewModel
+    @Environment(RankingManager.self) private var manager
     @State private var selectedCategory: ProductCategory = .lebensmittel
 
     enum ProductCategory: String, CaseIterable {
@@ -26,12 +26,12 @@ struct RankingView: View {
                 // Food Groups List
                 Section {
                     if selectedCategory == .lebensmittel {
-                        if viewModel.isLoading || (viewModel.foodGroups.isEmpty && viewModel.errorMessage != nil) {
+                        if manager.getIsLoading() || (manager.getFoodGroups().isEmpty && manager.getErrorMessage() != nil) {
                             // Show placeholders while loading or on error
                             ForEach(0..<8, id: \.self) { index in
                                 FoodGroupRowItemPlaceholder()
                             }
-                        } else if viewModel.foodGroups.isEmpty {
+                        } else if manager.getFoodGroups().isEmpty {
                             HStack {
                                 Spacer()
                                 Text("No food groups found")
@@ -39,7 +39,7 @@ struct RankingView: View {
                                 Spacer()
                             }
                         } else {
-                            ForEach(viewModel.foodGroups) { foodGroup in
+                            ForEach(manager.getFoodGroups()) { foodGroup in
                                 NavigationLink {
                                     ProductRankingList(
                                         foodGroupId: foodGroup.id,
@@ -58,7 +58,7 @@ struct RankingView: View {
                 }
             }
             .refreshable {
-                await viewModel.refresh()
+                await manager.refreshFoodGroups()
             }
             .navigationTitle("Ranking")
         }
@@ -109,25 +109,19 @@ struct ProductRankingList: View {
     let foodGroupId: Int
     let foodGroupName: String
 
-    @State private var viewModel: ProductRankingManager
-
-    init(foodGroupId: Int, foodGroupName: String) {
-        self.foodGroupId = foodGroupId
-        self.foodGroupName = foodGroupName
-        self._viewModel = State(wrappedValue: ProductRankingManager(foodGroupId: foodGroupId))
-    }
+    @Environment(RankingManager.self) private var manager
 
     var body: some View {
         Group {
-            if viewModel.isInitialLoading {
+            if manager.getIsInitialLoading() {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading products...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.errorMessage,
-                viewModel.products.isEmpty
+            } else if let errorMessage = manager.getErrorMessage(),
+                manager.getProducts().isEmpty
             {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
@@ -145,12 +139,12 @@ struct ProductRankingList: View {
 
                     Button("Try Again") {
                         Task {
-                            await viewModel.fetchProducts()
+                            await manager.fetchProducts()
                         }
                     }
                     .buttonStyle(.bordered)
                 }
-            } else if viewModel.products.isEmpty {
+            } else if manager.getProducts().isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "tray")
                         .font(.system(size: 48))
@@ -161,7 +155,7 @@ struct ProductRankingList: View {
                 }
             } else {
                 List {
-                    ForEach(Array(viewModel.products.enumerated()), id: \.element.id) { index, product in
+                    ForEach(Array(manager.getProducts().enumerated()), id: \.element.id) { index, product in
                         NavigationLink {
                             ProductDetail(product: product)
                         } label: {
@@ -177,14 +171,15 @@ struct ProductRankingList: View {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    await viewModel.refresh()
+                    await manager.refreshProducts()
                 }
             }
         }
         .navigationTitle(foodGroupName)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.fetchProducts()
+            manager.setCurrentFoodGroup(foodGroupId)
+            await manager.fetchProducts()
         }
     }
 }

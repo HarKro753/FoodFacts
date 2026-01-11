@@ -75,7 +75,7 @@ struct ScannerView: View {
                             )
 
                             await MainActor.run {
-                                if viewModel?.scannedProduct != nil && viewModel?.errorMessage == nil {
+                                if viewModel?.scannedProduct != nil && viewModel?.getErrorMessage() == nil {
                                     self.navigateToProduct = true
                                 } else {
                                     self.detectedBarcode = nil
@@ -98,17 +98,17 @@ struct ScannerView: View {
             .alert(
                 "Error",
                 isPresented: Binding(
-                    get: { viewModel.errorMessage != nil && !navigateToProduct },
-                    set: { if !$0 { viewModel.errorMessage = nil } }
+                    get: { viewModel.getErrorMessage() != nil && !navigateToProduct },
+                    set: { if !$0 { viewModel.setErrorMessage(nil) } }
                 )
             ) {
                 Button("OK") {
-                    viewModel.errorMessage = nil
+                    viewModel.setErrorMessage(nil)
                     detectedBarcode = nil
                     isProcessingScan = false
                 }
             } message: {
-                if let error = viewModel.errorMessage {
+                if let error = viewModel.getErrorMessage() {
                     Text(error)
                 }
             }

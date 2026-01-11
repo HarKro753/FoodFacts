@@ -9,29 +9,32 @@ import Foundation
 
 @MainActor
 public protocol PaginatedFetching: ProductFetchingState {
-    var hasNextPage: Bool { get set }
-    var endCursor: String? { get set }
-    var isLoadingMore: Bool { get set }
+    func getHasNextPage() -> Bool
+    func setHasNextPage(_ hasNextPage: Bool)
+    func getEndCursor() -> String?
+    func setEndCursor(_ cursor: String?)
+    func getIsLoadingMore() -> Bool
+    func setIsLoadingMore(_ loading: Bool)
 }
 
 extension PaginatedFetching {
     public func updatePagination(hasNextPage: Bool, endCursor: String?) {
-        self.hasNextPage = hasNextPage
-        self.endCursor = endCursor
+        setHasNextPage(hasNextPage)
+        setEndCursor(endCursor)
     }
 
     public func resetPagination() {
-        hasNextPage = false
-        endCursor = nil
-        isLoadingMore = false
+        setHasNextPage(false)
+        setEndCursor(nil)
+        setIsLoadingMore(false)
     }
 
     public func startLoadingMore() {
-        isLoadingMore = true
-        errorMessage = nil
+        setIsLoadingMore(true)
+        setErrorMessage(nil)
     }
 
     public func stopLoadingMore() {
-        isLoadingMore = false
+        setIsLoadingMore(false)
     }
 }
