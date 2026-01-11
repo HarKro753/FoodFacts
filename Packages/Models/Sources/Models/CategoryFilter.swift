@@ -7,6 +7,18 @@
 
 import Foundation
 
+public struct ProductLabel: Identifiable, Hashable {
+    public let id: Int
+    public let name: String
+    public let filter: CategoryFilter
+
+    public init(id: Int, name: String, filter: CategoryFilter) {
+        self.id = id
+        self.name = name
+        self.filter = filter
+    }
+}
+
 public enum CategoryFilter: Hashable, Sendable {
     case label(id: Int)
     case category(id: Int)

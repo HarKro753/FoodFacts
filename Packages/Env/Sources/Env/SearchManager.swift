@@ -7,9 +7,9 @@
 
 import Combine
 import Foundation
-import SwiftUI
-import Models
 import GraphQl
+import Models
+import SwiftUI
 
 public enum SearchState: Equatable {
     case idle
@@ -109,6 +109,16 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     private var categories: [ProductCategoryData] = []
     private var completions: CompletionsData? = nil
 
+    // MARK: - Detail View State (for ProductList navigation)
+
+    private var detailProducts: [Product] = []
+    private var detailIsLoading = false
+    private var detailIsLoadingMore = false
+    private var detailErrorMessage: String?
+    private var detailHasNextPage = false
+    private var detailEndCursor: String?
+    private var currentDetailFilter: CategoryFilter?
+
     // Public getter/setter methods for categoryProducts
     public func getCategoryProducts() -> [Int: [Product]] {
         return categoryProducts
@@ -158,6 +168,27 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         return !searchText.trimmingCharacters(in: .whitespaces).isEmpty
             && searchState != .searching && searchState != .searchResults
             && searchState != .loadingMore
+    }
+
+    // Public getter/setter methods for detail view
+    public func getDetailProducts() -> [Product] {
+        return detailProducts
+    }
+
+    public func getDetailIsLoading() -> Bool {
+        return detailIsLoading
+    }
+
+    public func getDetailIsLoadingMore() -> Bool {
+        return detailIsLoadingMore
+    }
+
+    public func getDetailErrorMessage() -> String? {
+        return detailErrorMessage
+    }
+
+    public func getDetailHasNextPage() -> Bool {
+        return detailHasNextPage
     }
 
     private var searchTask: Task<Void, Never>?
@@ -222,7 +253,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         searchState = .loadingMore
 
         let result = await fetchWithNetworkCheck {
-            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
+            let (labelIds, nutrientConditions, sortAscending) =
+                self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
             return try await GraphQLClient.shared.fetchProducts(
                 after: cursor,
@@ -276,7 +308,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
 
     // MARK: - Category Products
 
-    public func fetchProductsForCategory(_ category: ProductCategoryData) async {
+    public func fetchProductsForCategory(_ category: ProductCategoryData) async
+    {
         guard loadingCategories.insert(category.id).inserted else { return }
 
         defer {
@@ -293,7 +326,8 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         }
 
         let result = await fetchWithNetworkCheck {
-            let (labelIds, nutrientConditions, sortAscending) = self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
+            let (labelIds, nutrientConditions, sortAscending) =
+                self.filterSync?.buildFilterParameters() ?? (nil, nil, nil)
 
             return try await category.filter.fetchProducts(
                 first: 10,
@@ -348,4 +382,156 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         return false
     }
 
+    // MARK: - Detail View Methods (for ProductList)
+
+    public func fetchDetailProducts(for filter: CategoryFilter) async {
+        guard !detailIsLoading else { return }
+
+        currentDetailFilter = filter
+        detailProducts = []
+        detailHasNextPage = false
+        detailEndCursor = nil
+        detailIsLoading = true
+        detailErrorMessage = nil
+
+        guard NetworkMonitor.shared.getIsConnected() else {
+            detailErrorMessage = "No internet connection. Please check your network."
+            detailIsLoading = false
+            return
+        }
+
+        do {
+            let (labelIds, nutrientConditions, sortAscending) =
+                filterSync?.buildFilterParameters() ?? (nil, nil, nil)
+
+            let result = try await filter.fetchProducts(
+                first: 20,
+                labelIds: labelIds,
+                nutrientConditions: nutrientConditions,
+                sortAscending: sortAscending
+            )
+
+            detailProducts = result.items
+            detailHasNextPage = result.pageInfo.hasNextPage
+            detailEndCursor = result.pageInfo.endCursor
+            detailIsLoading = false
+        } catch {
+            detailErrorMessage = error.localizedDescription
+            detailIsLoading = false
+        }
+    }
+
+    public func loadMoreDetailProducts() async {
+        guard !detailIsLoadingMore,
+            detailHasNextPage,
+            let cursor = detailEndCursor,
+            let filter = currentDetailFilter
+        else { return }
+
+        detailIsLoadingMore = true
+
+        guard NetworkMonitor.shared.getIsConnected() else {
+            detailErrorMessage = "No internet connection. Please check your network."
+            detailIsLoadingMore = false
+            return
+        }
+
+        do {
+            let (labelIds, nutrientConditions, sortAscending) =
+                filterSync?.buildFilterParameters() ?? (nil, nil, nil)
+
+            let result = try await filter.fetchProducts(
+                first: 20,
+                after: cursor,
+                labelIds: labelIds,
+                nutrientConditions: nutrientConditions,
+                sortAscending: sortAscending
+            )
+
+            detailProducts.append(contentsOf: result.items)
+            detailHasNextPage = result.pageInfo.hasNextPage
+            detailEndCursor = result.pageInfo.endCursor
+            detailIsLoadingMore = false
+        } catch {
+            detailErrorMessage = error.localizedDescription
+            detailIsLoadingMore = false
+        }
+    }
+
+    public func getActiveFiltersForDetail() -> Set<ProductFilter> {
+        return filterSync?.activeFilters ?? []
+    }
+
+    public func toggleFilterForDetail(_ filter: ProductFilter) {
+        FilterManager.shared.toggleFilter(filter)
+    }
+
+    public func clearFiltersForDetail() {
+        FilterManager.shared.clearFilters()
+    }
+
+}
+
+extension CategoryFilter {
+    public func fetchProducts(
+        first: Int = 20,
+        after: String? = nil,
+        labelIds: [Int]? = nil,
+        nutrientConditions: [(String, Double?, Double?)]? = nil,
+        sortAscending: Bool? = nil
+    ) async throws -> PaginatedResult<Product> {
+        switch self {
+        case .label(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                labelId: id,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
+            )
+
+        case .category(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                categoryId: id,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
+            )
+
+        case .foodGroup(let id):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                labelIds: labelIds,
+                foodGroup: id,
+                sortAscending: sortAscending,
+                nutrientConditions: nutrientConditions
+            )
+
+        case .nutrientMin(let fieldName, let minValue):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientFieldName: fieldName,
+                nutrientMinValue: minValue,
+                nutrientConditions: nutrientConditions
+            )
+
+        case .nutrientMax(let fieldName, let maxValue):
+            return try await GraphQLClient.shared.fetchProducts(
+                first: first,
+                after: after,
+                labelIds: labelIds,
+                sortAscending: sortAscending,
+                nutrientFieldName: fieldName,
+                nutrientMaxValue: maxValue,
+                nutrientConditions: nutrientConditions
+            )
+        }
+    }
 }

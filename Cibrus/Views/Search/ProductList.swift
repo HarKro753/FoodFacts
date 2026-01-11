@@ -15,19 +15,19 @@ import Env
 /// It displays all the items in a certain Category, Food Group
 struct ProductList: View {
     let label: ProductLabel
-    @State private var viewModel = LabelProductsManager()
+    @Environment(SearchManager.self) private var searchManager
 
     var body: some View {
         Group {
-            if viewModel.getIsLoading() && viewModel.products.isEmpty {
+            if searchManager.getDetailIsLoading() && searchManager.getDetailProducts().isEmpty {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading products...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.getErrorMessage(),
-                viewModel.products.isEmpty
+            } else if let errorMessage = searchManager.getDetailErrorMessage(),
+                searchManager.getDetailProducts().isEmpty
             {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
@@ -45,12 +45,12 @@ struct ProductList: View {
 
                     Button("Try Again") {
                         Task {
-                            await viewModel.fetchProducts(for: label.filter)
+                            await searchManager.fetchDetailProducts(for: label.filter)
                         }
                     }
                     .buttonStyle(.bordered)
                 }
-            } else if viewModel.products.isEmpty {
+            } else if searchManager.getDetailProducts().isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "tray")
                         .font(.system(size: 48))
@@ -62,7 +62,7 @@ struct ProductList: View {
             } else {
                 List {
                     ForEach(
-                        Array(viewModel.products.enumerated()),
+                        Array(searchManager.getDetailProducts().enumerated()),
                         id: \.element.id
                     ) { index, product in
                         NavigationLink {
@@ -79,15 +79,15 @@ struct ProductList: View {
                             )
                         )
                         .onAppear {
-                            if index == viewModel.products.count - 5 {
+                            if index == searchManager.getDetailProducts().count - 5 {
                                 Task {
-                                    await viewModel.loadMore()
+                                    await searchManager.loadMoreDetailProducts()
                                 }
                             }
                         }
                     }
 
-                    if viewModel.getIsLoadingMore() {
+                    if searchManager.getDetailIsLoadingMore() {
                         HStack {
                             Spacer()
                             ProgressView()
@@ -104,26 +104,26 @@ struct ProductList: View {
         .navigationTitle(label.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.fetchProducts(for: label.filter)
+            await searchManager.fetchDetailProducts(for: label.filter)
         }
     }
 }
 
 struct CategoryProductsList: View {
     let category: ProductCategoryData
-    @State private var viewModel = LabelProductsManager()
+    @Environment(SearchManager.self) private var searchManager
 
     var body: some View {
         Group {
-            if viewModel.getIsLoading() && viewModel.products.isEmpty {
+            if searchManager.getDetailIsLoading() && searchManager.getDetailProducts().isEmpty {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading products...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            } else if let errorMessage = viewModel.getErrorMessage(),
-                viewModel.products.isEmpty
+            } else if let errorMessage = searchManager.getDetailErrorMessage(),
+                searchManager.getDetailProducts().isEmpty
             {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
@@ -141,12 +141,12 @@ struct CategoryProductsList: View {
 
                     Button("Try Again") {
                         Task {
-                            await viewModel.fetchProducts(for: category.filter)
+                            await searchManager.fetchDetailProducts(for: category.filter)
                         }
                     }
                     .buttonStyle(.bordered)
                 }
-            } else if viewModel.products.isEmpty {
+            } else if searchManager.getDetailProducts().isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "tray")
                         .font(.system(size: 48))
@@ -158,7 +158,7 @@ struct CategoryProductsList: View {
             } else {
                 List {
                     ForEach(
-                        Array(viewModel.products.enumerated()),
+                        Array(searchManager.getDetailProducts().enumerated()),
                         id: \.element.id
                     ) { index, product in
                         NavigationLink {
@@ -175,15 +175,15 @@ struct CategoryProductsList: View {
                             )
                         )
                         .onAppear {
-                            if index == viewModel.products.count - 5 {
+                            if index == searchManager.getDetailProducts().count - 5 {
                                 Task {
-                                    await viewModel.loadMore()
+                                    await searchManager.loadMoreDetailProducts()
                                 }
                             }
                         }
                     }
 
-                    if viewModel.getIsLoadingMore() {
+                    if searchManager.getDetailIsLoadingMore() {
                         HStack {
                             Spacer()
                             ProgressView()
@@ -200,7 +200,7 @@ struct CategoryProductsList: View {
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.fetchProducts(for: category.filter)
+            await searchManager.fetchDetailProducts(for: category.filter)
         }
     }
 }
@@ -208,18 +208,18 @@ struct CategoryProductsList: View {
 // MARK: - Filter Menu Button for ProductList
 
 struct ProductListFilterMenuButton: View {
-    var viewModel: LabelProductsManager
+    var searchManager: SearchManager
 
     var body: some View {
         Menu {
             ForEach(ProductFilter.allCases) { filter in
                 Button {
-                    viewModel.toggleFilter(filter)
+                    searchManager.toggleFilterForDetail(filter)
                 } label: {
                     Label {
                         Text(filter.displayName)
                     } icon: {
-                        if viewModel.activeFilters.contains(filter) {
+                        if searchManager.getActiveFiltersForDetail().contains(filter) {
                             Image(systemName: "checkmark")
                         }
                         Image(systemName: filter.icon)
@@ -227,11 +227,11 @@ struct ProductListFilterMenuButton: View {
                 }
             }
 
-            if !viewModel.activeFilters.isEmpty {
+            if !searchManager.getActiveFiltersForDetail().isEmpty {
                 Divider()
 
                 Button(role: .destructive) {
-                    viewModel.clearFilters()
+                    searchManager.clearFiltersForDetail()
                 } label: {
                     Label("Clear All Filters", systemImage: "xmark.circle.fill")
                 }

@@ -7,8 +7,8 @@
 
 import Combine
 import Foundation
-import Models
 import GraphQl
+import Models
 
 @MainActor
 @Observable
