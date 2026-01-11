@@ -14,7 +14,6 @@ struct FoodFactsApp: App {
     @State private var searchManager = SearchManager()
     @State private var scannerManager = ScannerManager()
     @State private var labelProductsManager = LabelProductsManager()
-    @State private var alternativesManager = AlternativesManager()
 
     var body: some Scene {
         WindowGroup {
@@ -23,7 +22,6 @@ struct FoodFactsApp: App {
                 .environment(searchManager)
                 .environment(scannerManager)
                 .environment(labelProductsManager)
-                .environment(alternativesManager)
                 .task {
                     await rankingManager.fetchFoodGroups()
                 }
@@ -76,5 +74,4 @@ struct ContentView: View {
         .environment(SearchManager())
         .environment(ScannerManager())
         .environment(LabelProductsManager())
-        .environment(AlternativesManager())
 }
