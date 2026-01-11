@@ -37,8 +37,10 @@ extension GraphQLClient {
                 }
             }
             """
-        
-        let response: FoodGroupsQueryResponse = try await execute(query: queryString)
+
+        let response: FoodGroupsQueryResponse = try await execute(
+            query: queryString
+        )
         return response.foodGroups.nodes
     }
 }

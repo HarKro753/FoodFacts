@@ -38,7 +38,11 @@ public final class GraphQLClient: @unchecked Sendable {
         self.apiURL = URL(string: "https://cibrus.org/graphql")!
     }
 
-    public func execute<T: Decodable>(query: String, variables: [String: String]? = nil, headers: [String: String]? = nil) async throws -> T {
+    public func execute<T: Decodable>(
+        query: String,
+        variables: [String: String]? = nil,
+        headers: [String: String]? = nil
+    ) async throws -> T {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -54,7 +58,9 @@ public final class GraphQLClient: @unchecked Sendable {
         request.httpBody = try JSONEncoder().encode(body)
 
         // Debug: Print raw request
-        if let requestBody = request.httpBody, let jsonString = String(data: requestBody, encoding: .utf8) {
+        if let requestBody = request.httpBody,
+            let jsonString = String(data: requestBody, encoding: .utf8)
+        {
             print("📤 GraphQL Request: \(jsonString)")
         }
 
@@ -77,7 +83,9 @@ public final class GraphQLClient: @unchecked Sendable {
         // This prevents decoding errors when the server returns errors with null data
         let errorCheck = try decoder.decode(ErrorCheckResponse.self, from: data)
         if let errors = errorCheck.errors {
-            print("❌ GraphQL Errors: \(errors.map { $0.message }.joined(separator: ", "))")
+            print(
+                "❌ GraphQL Errors: \(errors.map { $0.message }.joined(separator: ", "))"
+            )
             throw GraphQLClientError.graphQLErrors(errors.map { $0.message })
         }
 
@@ -93,11 +101,17 @@ public final class GraphQLClient: @unchecked Sendable {
             if let decodingError = error as? DecodingError {
                 switch decodingError {
                 case .keyNotFound(let key, let context):
-                    print("   Missing key '\(key.stringValue)' - \(context.debugDescription)")
+                    print(
+                        "   Missing key '\(key.stringValue)' - \(context.debugDescription)"
+                    )
                 case .typeMismatch(let type, let context):
-                    print("   Type mismatch for type '\(type)' - \(context.debugDescription)")
+                    print(
+                        "   Type mismatch for type '\(type)' - \(context.debugDescription)"
+                    )
                 case .valueNotFound(let type, let context):
-                    print("   Value not found for type '\(type)' - \(context.debugDescription)")
+                    print(
+                        "   Value not found for type '\(type)' - \(context.debugDescription)"
+                    )
                 case .dataCorrupted(let context):
                     print("   Data corrupted - \(context.debugDescription)")
                 @unknown default:

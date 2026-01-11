@@ -7,9 +7,9 @@
 
 import Combine
 import Foundation
-import SwiftUI
-import Models
 import GraphQl
+import Models
+import SwiftUI
 
 @MainActor
 @Observable

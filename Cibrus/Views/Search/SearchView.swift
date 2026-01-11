@@ -6,11 +6,11 @@
 //
 
 import Combine
+import Env
+import GraphQl
+import Models
 import NetworkImage
 import SwiftUI
-import Models
-import GraphQl
-import Env
 
 struct SearchView: View {
     @Environment(SearchManager.self) private var manager
@@ -67,7 +67,7 @@ struct SearchView: View {
                 } else {
                     if manager.searchState == .idle {
                         searchTask = Task {
-                            try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
+                            try? await Task.sleep(nanoseconds: 300_000_000)  
                             if !Task.isCancelled {
                                 await manager.fetchCompletions(for: trimmedText)
                             }

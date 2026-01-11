@@ -1,7 +1,7 @@
 import Foundation
+import Models
 import RevenueCat
 import SwiftUI
-import Models
 
 @available(macOS 14.0, *)
 @MainActor
@@ -21,7 +21,7 @@ public class SubscriptionManager {
 
     public func configure() {
         Purchases.logLevel = .error
-        Purchases.configure(withAPIKey: "appl_FyesdYqbyoQsvbrJMCxQGKHIeAO") 
+        Purchases.configure(withAPIKey: "appl_FyesdYqbyoQsvbrJMCxQGKHIeAO")
 
         Task {
             await refreshSubscriptionStatus()
