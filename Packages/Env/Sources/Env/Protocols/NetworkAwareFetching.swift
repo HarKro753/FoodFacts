@@ -8,15 +8,13 @@
 import Foundation
 
 @MainActor
-public protocol NetworkAwareFetching: ProductFetchingState {
-    var networkMonitor: NetworkMonitor { get }
-}
+public protocol NetworkAwareFetching: ProductFetchingState {}
 
 extension NetworkAwareFetching {
     public func fetchWithNetworkCheck<T>(
         _ operation: () async throws -> T
     ) async -> T? {
-        guard networkMonitor.isConnected else {
+        guard NetworkMonitor.shared.getIsConnected() else {
             setError("No internet connection. Please check your network and try again.")
             return nil
         }
@@ -29,7 +27,7 @@ extension NetworkAwareFetching {
             clearError()
             return result
         } catch {
-            if !networkMonitor.isConnected {
+            if !NetworkMonitor.shared.getIsConnected() {
                 setError("Lost internet connection. Please check your network and try again.")
             } else {
                 setError(error.localizedDescription)
@@ -41,7 +39,7 @@ extension NetworkAwareFetching {
     public func fetchWithNetworkCheckVoid(
         _ operation: () async throws -> Void
     ) async -> Bool {
-        guard networkMonitor.isConnected else {
+        guard NetworkMonitor.shared.getIsConnected() else {
             setError("No internet connection. Please check your network and try again.")
             return false
         }
@@ -54,7 +52,7 @@ extension NetworkAwareFetching {
             clearError()
             return true
         } catch {
-            if !networkMonitor.isConnected {
+            if !NetworkMonitor.shared.getIsConnected() {
                 setError("Lost internet connection. Please check your network and try again.")
             } else {
                 setError(error.localizedDescription)

@@ -31,8 +31,6 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     private var isLoadingMore: Bool = false
     private var errorMessage: String?
 
-    public let networkMonitor = NetworkMonitor.shared
-
     // MARK: - Protocol Conformance (ProductFetchingState)
 
     public func getErrorMessage() -> String? {
@@ -225,7 +223,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
             return
         }
 
-        guard networkMonitor.isConnected else {
+        guard NetworkMonitor.shared.getIsConnected() else {
             print("No network connection - skipping category \(category.name)")
             return
         }
@@ -260,7 +258,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
                     "Successfully fetched \(sortedProducts.count) valid products for category \(category.name)"
                 )
             }
-        } else if networkMonitor.isConnected {
+        } else if NetworkMonitor.shared.getIsConnected() {
             categoryProducts[category.id] = []
             fetchedCategories.insert(category.id)
         }

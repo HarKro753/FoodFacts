@@ -21,7 +21,6 @@ public class ProductDetailManager: NetworkAwareFetching {
     private var errorMessage: String?
     private var isLoading: Bool = false
 
-    public let networkMonitor = NetworkMonitor.shared
     private let productCode: Int
 
     // MARK: - Protocol Conformance (ProductFetchingState)

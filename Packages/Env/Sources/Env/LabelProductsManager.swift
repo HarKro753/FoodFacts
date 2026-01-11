@@ -33,8 +33,6 @@ public class LabelProductsManager: NetworkAwareFetching, PaginatedFetching {
     private var hasNextPage = false
     private var endCursor: String?
 
-    public let networkMonitor = NetworkMonitor.shared
-
     // MARK: - Protocol Conformance (ProductFetchingState)
 
     public func getErrorMessage() -> String? {

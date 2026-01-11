@@ -24,8 +24,6 @@ public class RankingManager: NetworkAwareFetching {
     private var products: [Product] = []
     private var isInitialLoading = true
 
-    public let networkMonitor = NetworkMonitor.shared
-
     // MARK: - Protocol Conformance (ProductFetchingState)
 
     public func getErrorMessage() -> String? {

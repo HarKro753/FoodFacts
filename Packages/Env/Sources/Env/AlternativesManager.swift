@@ -45,8 +45,6 @@ public class AlternativesManager: NetworkAwareFetching, PaginatedFetching {
     private var endCursor: String?
     private var isLoading: Bool = false
 
-    public let networkMonitor = NetworkMonitor.shared
-
     private var hasLoadedInitially = false
 
     // MARK: - Protocol Conformance (ProductFetchingState)
