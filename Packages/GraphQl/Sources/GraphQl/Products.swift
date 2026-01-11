@@ -18,7 +18,7 @@ extension GraphQLClient {
                 let code: Int
                 let productName: String?
                 let productBrand: String?
-                let imageUrl: String?
+                let s3ImageUrl: String?
                 let normalizedNutriScore: Int?
                 let positiveNutrientRatings: [NutrientRating]
                 let negativeNutrientRatings: [NutrientRating]
@@ -34,7 +34,7 @@ extension GraphQLClient {
             let code: Int
             let productName: String?
             let productBrand: String?
-            let imageUrl: String?
+            let s3ImageUrl: String?
             let normalizedNutriScore: Int?
             let positiveNutrientRatings: [NutrientRating]
             let negativeNutrientRatings: [NutrientRating]
@@ -138,7 +138,7 @@ extension GraphQLClient {
                 code
                 productName
                 productBrand
-                imageUrl
+                s3ImageUrl
                 normalizedNutriScore
                 positiveNutrientRatings {
                     nutrientType
@@ -186,7 +186,7 @@ extension GraphQLClient {
                 code: node.code,
                 name: node.productName,
                 brand: node.productBrand,
-                imageUrl: node.imageUrl,
+                imageUrl: node.s3ImageUrl,
                 nutriScore: node.normalizedNutriScore,
                 positiveNutrientRatings: node.positiveNutrientRatings,
                 negativeNutrientRatings: node.negativeNutrientRatings
@@ -206,7 +206,7 @@ extension GraphQLClient {
                     code
                     productName
                     productBrand
-                    imageUrl
+                    s3ImageUrl
                     normalizedNutriScore
                     positiveNutrientRatings {
                         nutrientType
@@ -275,7 +275,7 @@ extension GraphQLClient {
             code: node.code,
             name: node.productName,
             brand: node.productBrand,
-            imageUrl: node.imageUrl,
+            imageUrl: node.s3ImageUrl,
             nutriScore: node.normalizedNutriScore,
             positiveNutrientRatings: node.positiveNutrientRatings,
             negativeNutrientRatings: node.negativeNutrientRatings,
