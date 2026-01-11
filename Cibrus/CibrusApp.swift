@@ -12,13 +12,40 @@ import SwiftUI
 struct FoodFactsApp: App {
     @State private var searchManager = SearchManager()
     @State private var scannerManager = ScannerManager()
+    @State private var authManager = AuthenticationManager.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            OnboardingOrMainDecider()
                 .environment(searchManager)
                 .environment(scannerManager)
+                .environment(authManager)
         }
+    }
+}
+
+struct OnboardingOrMainDecider: View {
+    @Environment(AuthenticationManager.self) private var authManager
+
+    var body: some View {
+        ZStack {
+            if !authManager.getSessionRestored() {
+                ProgressView()
+                    .tint(.blue)
+            } else if !authManager.getHasCompletedOnboarding() {
+                    OnboardingFlowView()
+                        .transition(.opacity)
+            } else if !authManager.getIsAuthenticated() {
+                AuthView()
+                    .transition(.opacity)
+            } else {
+                ContentView()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut, value: authManager.getSessionRestored())
+        .animation(.easeInOut, value: authManager.getHasCompletedOnboarding())
+        .animation(.easeInOut, value: authManager.getIsAuthenticated())
     }
 }
 

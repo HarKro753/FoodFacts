@@ -34,6 +34,13 @@ public final class GraphQLClient: @unchecked Sendable {
     public static let shared = GraphQLClient()
     let apiURL: URL
 
+    private static let accessTokenKey = "accessToken"
+    private nonisolated(unsafe) static let sharedDefaults = UserDefaults(suiteName: "group.elevenstoicapp")
+
+    private var currentToken: String? {
+        Self.sharedDefaults?.string(forKey: Self.accessTokenKey)
+    }
+
     private init() {
         self.apiURL = URL(string: "https://cibrus.org/graphql")!
     }
@@ -46,6 +53,11 @@ public final class GraphQLClient: @unchecked Sendable {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // Add authorization header if token exists
+        if let token = currentToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
         // Add custom headers if provided
         if let headers = headers {

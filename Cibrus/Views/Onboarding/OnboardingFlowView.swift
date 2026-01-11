@@ -1,3 +1,4 @@
+import Env
 import Models
 import SwiftUI
 
@@ -12,6 +13,7 @@ enum OnboardingStep: Int, CaseIterable {
 @available(iOS 18.0, *)
 public struct OnboardingFlowView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthenticationManager.self) private var authManager
 
     @State private var currentStep: OnboardingStep = .getStarted
 
@@ -154,7 +156,9 @@ public struct OnboardingFlowView: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
-        if !isLastStep {
+        if isLastStep {
+            authManager.completeOnboarding()
+        } else {
             if let nextStep = OnboardingStep(rawValue: currentStep.rawValue + 1)
             {
                 currentStep = nextStep
