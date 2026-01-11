@@ -22,14 +22,32 @@ public enum SearchState: Equatable {
 @MainActor
 @Observable
 public class SearchManager: NetworkAwareFetching, PaginatedFetching {
-    public var products: [Product] = []
-    public var searchText = ""
-    public var searchState: SearchState = .idle
+    private var products: [Product] = []
+    public var searchText = ""  // Must remain public var for @Bindable in SwiftUI
+    private var searchState: SearchState = .idle
     private var hasNextPage = false
     private var endCursor: String?
     private var isLoading: Bool = false
     private var isLoadingMore: Bool = false
     private var errorMessage: String?
+
+    // Public getter/setter methods for products
+    public func getProducts() -> [Product] {
+        return products
+    }
+
+    public func setProducts(_ products: [Product]) {
+        self.products = products
+    }
+
+    // Public getter/setter methods for searchState
+    public func getSearchState() -> SearchState {
+        return searchState
+    }
+
+    public func setSearchState(_ state: SearchState) {
+        self.searchState = state
+    }
 
     // MARK: - Protocol Conformance (ProductFetchingState)
 
@@ -74,24 +92,70 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     public func setIsLoadingMore(_ loading: Bool) {
         isLoadingMore = loading
     }
+
     private var filterSync: FilterSyncService?
 
-    public var filterStateId: String {
-        filterSync?.filterStateId ?? ""
+    public func getFilterStateId() -> String {
+        return filterSync?.filterStateId ?? ""
     }
 
-    public var activeFilters: Set<ProductFilter> {
-        filterSync?.activeFilters ?? []
+    public func getActiveFilters() -> Set<ProductFilter> {
+        return filterSync?.activeFilters ?? []
     }
 
-    public var categoryProducts: [Int: [Product]] = [:]
-    public var loadingCategories: Set<Int> = []
-    public var fetchedCategories: Set<Int> = []
-    public var categories: [ProductCategoryData] = []
-    public var completions: CompletionsData? = nil
+    private var categoryProducts: [Int: [Product]] = [:]
+    private var loadingCategories: Set<Int> = []
+    private var fetchedCategories: Set<Int> = []
+    private var categories: [ProductCategoryData] = []
+    private var completions: CompletionsData? = nil
 
-    public var shouldShowCompletions: Bool {
-        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+    // Public getter/setter methods for categoryProducts
+    public func getCategoryProducts() -> [Int: [Product]] {
+        return categoryProducts
+    }
+
+    public func setCategoryProducts(_ products: [Int: [Product]]) {
+        self.categoryProducts = products
+    }
+
+    // Public getter/setter methods for loadingCategories
+    public func getLoadingCategories() -> Set<Int> {
+        return loadingCategories
+    }
+
+    public func setLoadingCategories(_ categories: Set<Int>) {
+        self.loadingCategories = categories
+    }
+
+    // Public getter/setter methods for fetchedCategories
+    public func getFetchedCategories() -> Set<Int> {
+        return fetchedCategories
+    }
+
+    public func setFetchedCategories(_ categories: Set<Int>) {
+        self.fetchedCategories = categories
+    }
+
+    // Public getter/setter methods for categories
+    public func getCategories() -> [ProductCategoryData] {
+        return categories
+    }
+
+    public func setCategories(_ categories: [ProductCategoryData]) {
+        self.categories = categories
+    }
+
+    // Public getter/setter methods for completions
+    public func getCompletions() -> CompletionsData? {
+        return completions
+    }
+
+    public func setCompletions(_ completions: CompletionsData?) {
+        self.completions = completions
+    }
+
+    public func getShouldShowCompletions() -> Bool {
+        return !searchText.trimmingCharacters(in: .whitespaces).isEmpty
             && searchState != .searching && searchState != .searchResults
             && searchState != .loadingMore
     }

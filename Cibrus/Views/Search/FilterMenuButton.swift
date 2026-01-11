@@ -15,7 +15,7 @@ struct FilterMenuButton: View {
                     Label {
                         Text(filter.displayName)
                     } icon: {
-                        if manager.activeFilters.contains(filter) {
+                        if manager.getActiveFilters().contains(filter) {
                             Image(systemName: "checkmark")
                         }
                         Image(systemName: filter.icon)
@@ -23,7 +23,7 @@ struct FilterMenuButton: View {
                 }
             }
 
-            if !manager.activeFilters.isEmpty {
+            if !manager.getActiveFilters().isEmpty {
                 Divider()
 
                 Button(role: .destructive) {
@@ -32,8 +32,7 @@ struct FilterMenuButton: View {
                     Label("Clear All Filters", systemImage: "xmark.circle.fill")
                 }
             }
-        }
-        label: {
+        } label: {
             Image(systemName: "line.3.horizontal.decrease")
                 .font(.system(size: 22))
                 .foregroundStyle(.primary)

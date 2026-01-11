@@ -23,21 +23,19 @@ struct SearchView: View {
 
         NavigationStack(path: $navigationPath) {
             Group {
-                if manager.shouldShowCompletions {
+                if manager.getShouldShowCompletions() {
                     CompletionView(
-                        manager: manager,
                         navigationPath: $navigationPath
                     )
                 } else {
-                    switch manager.searchState {
+                    switch manager.getSearchState() {
                     case .idle:
                         ExploreView(
-                            manager: manager,
                             navigationPath: $navigationPath
                         )
 
                     case .searching, .searchResults, .loadingMore, .error:
-                        SearchResultsView(manager: manager)
+                        SearchResultsView()
                     }
                 }
             }
@@ -57,17 +55,17 @@ struct SearchView: View {
                 let trimmedText = newValue.trimmingCharacters(in: .whitespaces)
 
                 if trimmedText.isEmpty {
-                    manager.completions = nil
-                    if manager.searchState != .idle
-                        && manager.searchState != .searchResults
-                        && manager.searchState != .loadingMore
+                    manager.setCompletions(nil)
+                    if manager.getSearchState() != .idle
+                        && manager.getSearchState() != .searchResults
+                        && manager.getSearchState() != .loadingMore
                     {
-                        manager.searchState = .idle
+                        manager.setSearchState(.idle)
                     }
                 } else {
-                    if manager.searchState == .idle {
+                    if manager.getSearchState() == .idle {
                         searchTask = Task {
-                            try? await Task.sleep(nanoseconds: 300_000_000)  
+                            try? await Task.sleep(nanoseconds: 300_000_000)
                             if !Task.isCancelled {
                                 await manager.fetchCompletions(for: trimmedText)
                             }
@@ -108,11 +106,11 @@ struct SearchView: View {
 // MARK: - Search Results View
 
 struct SearchResultsView: View {
-    var manager: SearchManager
+    @Environment(SearchManager.self) private var manager
 
     var body: some View {
         Group {
-            switch manager.searchState {
+            switch manager.getSearchState() {
             case .searching:
                 List {
                     ForEach(0..<8, id: \.self) { _ in
@@ -146,7 +144,7 @@ struct SearchResultsView: View {
                 }
 
             case .searchResults, .loadingMore:
-                if manager.products.isEmpty {
+                if manager.getProducts().isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
@@ -162,7 +160,7 @@ struct SearchResultsView: View {
                 } else {
                     List {
                         ForEach(
-                            Array(manager.products.enumerated()),
+                            Array(manager.getProducts().enumerated()),
                             id: \.element.id
                         ) { index, product in
                             NavigationLink {
@@ -179,7 +177,7 @@ struct SearchResultsView: View {
                                 )
                             )
                             .onAppear {
-                                if index == manager.products.count - 5 {
+                                if index == manager.getProducts().count - 5 {
                                     Task {
                                         await manager.loadMore()
                                     }
@@ -187,7 +185,7 @@ struct SearchResultsView: View {
                             }
                         }
 
-                        if case .loadingMore = manager.searchState {
+                        if case .loadingMore = manager.getSearchState() {
                             HStack {
                                 Spacer()
                                 ProgressView()
@@ -211,12 +209,12 @@ struct SearchResultsView: View {
 // MARK: - TextCompletionView
 
 struct CompletionView: View {
-    var manager: SearchManager
+    @Environment(SearchManager.self) private var manager
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
         List {
-            if let completions = manager.completions {
+            if let completions = manager.getCompletions() {
 
                 ForEach(completions.productNames) { product in
                     CompletionRow(
@@ -304,20 +302,20 @@ struct CompletionView: View {
 //MARK: ExploreView
 
 struct ExploreView: View {
-    var manager: SearchManager
+    @Environment(SearchManager.self) private var manager
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(
-                    manager.categories.filter {
+                    manager.getCategories().filter {
                         manager.shouldShowCategory($0.id)
                     }
                 ) { category in
                     VStack(spacing: 0) {
                         Button(action: {
-                            if let products = manager.categoryProducts[
+                            if let products = manager.getCategoryProducts()[
                                 category.id
                             ],
                                 !products.isEmpty
@@ -340,13 +338,13 @@ struct ExploreView: View {
                         }
                         .buttonStyle(.plain)
                         .disabled(
-                            manager.categoryProducts[category.id]?.isEmpty
+                            manager.getCategoryProducts()[category.id]?.isEmpty
                                 ?? true
                         )
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(alignment: .top, spacing: 12) {
-                                if let products = manager.categoryProducts[
+                                if let products = manager.getCategoryProducts()[
                                     category.id
                                 ], !products.isEmpty {
                                     ForEach(products) { product in
@@ -368,8 +366,8 @@ struct ExploreView: View {
                         }
                     }
                     .background(Color(.systemBackground))
-                    .id("\(category.id)-\(manager.filterStateId)")
-                    .task(id: manager.filterStateId) {
+                    .id("\(category.id)-\(manager.getFilterStateId())")
+                    .task(id: manager.getFilterStateId()) {
                         await manager.fetchProductsForCategory(category)
                     }
                 }
