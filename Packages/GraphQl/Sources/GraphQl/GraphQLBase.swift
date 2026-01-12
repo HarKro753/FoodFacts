@@ -42,7 +42,7 @@ public final class GraphQLClient: @unchecked Sendable {
     }
 
     private init() {
-        self.apiURL = URL(string: "https://cibrus.org/graphql")!
+        self.apiURL = URL(string: "http://192.168.178.152:8080/graphql/")!
     }
 
     public func execute<T: Decodable>(

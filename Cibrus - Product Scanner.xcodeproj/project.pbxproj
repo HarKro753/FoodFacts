@@ -19,6 +19,7 @@
 		0D27E66C2EF2CF0E00A14AFD /* GraphQl */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = GraphQl; path = Packages/GraphQl; sourceTree = "<group>"; };
 		0D554F672F13B472007B03C4 /* AppTheme */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = AppTheme; path = Packages/AppTheme; sourceTree = "<group>"; };
 		0DD5928C2EC0ACC0004832B8 /* Cibrus - Product Scanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cibrus - Product Scanner.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DF977AF2F154EDE00DC365F /* Cibrus - Product Scanner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Cibrus - Product Scanner.entitlements"; sourceTree = "<group>"; };
 		0DFBD1462EF82D72002F6EE2 /* Env */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Env; path = Packages/Env; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -56,6 +57,7 @@
 		0DD592832EC0ACC0004832B8 = {
 			isa = PBXGroup;
 			children = (
+				0DF977AF2F154EDE00DC365F /* Cibrus - Product Scanner.entitlements */,
 				0D554F672F13B472007B03C4 /* AppTheme */,
 				0DFBD1462EF82D72002F6EE2 /* Env */,
 				0D27E66C2EF2CF0E00A14AFD /* GraphQl */,
@@ -288,6 +290,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Cibrus - Product Scanner.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7A5XKYSLAC;
@@ -326,6 +329,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Cibrus - Product Scanner.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7A5XKYSLAC;

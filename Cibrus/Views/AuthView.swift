@@ -28,17 +28,6 @@ struct AuthView: View {
 
                 // MARK: - Center Content
                 VStack(spacing: 24) {
-                    Image("Logo1")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 18,
-                                style: .continuous
-                            )
-                        )
-
                     VStack(spacing: 12) {
                         Text("Sign in to Cibrus and\nsecure your data")
                             .font(.system(size: 28, weight: .bold))
