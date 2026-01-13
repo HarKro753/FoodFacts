@@ -9,7 +9,7 @@ import Foundation
 
 public enum SharedUserDefaults: Sendable {
     nonisolated(unsafe) static let suite = UserDefaults(
-        suiteName: "group.com.cibrus.foodfacts"
+        suiteName: "group.cibrusapp"
     )!
 
     // MARK: - Access Token

@@ -139,6 +139,7 @@ extension GraphQLClient {
                 productName
                 productBrand
                 s3ImageUrl
+                imageUrl
                 normalizedNutriScore
                 positiveNutrientRatings {
                     nutrientType
@@ -207,6 +208,7 @@ extension GraphQLClient {
                     productName
                     productBrand
                     s3ImageUrl
+                    imageUrl
                     normalizedNutriScore
                     positiveNutrientRatings {
                         nutrientType

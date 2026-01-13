@@ -35,14 +35,14 @@ public final class GraphQLClient: @unchecked Sendable {
     let apiURL: URL
 
     private static let accessTokenKey = "accessToken"
-    private nonisolated(unsafe) static let sharedDefaults = UserDefaults(suiteName: "group.elevenstoicapp")
+    private nonisolated(unsafe) static let sharedDefaults = UserDefaults(suiteName: "group.cibrusapp")
 
     private var currentToken: String? {
         Self.sharedDefaults?.string(forKey: Self.accessTokenKey)
     }
 
     private init() {
-        self.apiURL = URL(string: "http://192.168.178.152:8080/graphql/")!
+        self.apiURL = URL(string: "https://cibrus.org/graphql/")!
     }
 
     public func execute<T: Decodable>(
