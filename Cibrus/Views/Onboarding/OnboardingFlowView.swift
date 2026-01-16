@@ -170,5 +170,5 @@ public struct OnboardingFlowView: View {
 // MARK: - Preview
 
 #Preview {
-    OnboardingFlowView()
+    OnboardingFlowView().withPreviewEnviroment()
 }

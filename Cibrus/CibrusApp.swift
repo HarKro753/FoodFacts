@@ -33,8 +33,8 @@ struct OnboardingOrMainDecider: View {
                 ProgressView()
                     .tint(.blue)
             } else if !authManager.getHasCompletedOnboarding() {
-                    OnboardingFlowView()
-                        .transition(.opacity)
+                OnboardingFlowView()
+                    .transition(.opacity)
             } else if !authManager.getIsAuthenticated() {
                 AuthView()
                     .transition(.opacity)
@@ -81,8 +81,17 @@ struct ContentView: View {
     }
 }
 
+extension View {
+    func withPreviewEnviroment() -> some View {
+        return
+            self
+            .environment(SearchManager())
+            .environment(ScannerManager())
+            .environment(AuthenticationManager.shared)
+    }
+}
+
 #Preview {
     ContentView()
-        .environment(SearchManager())
-        .environment(ScannerManager())
+        .withPreviewEnviroment()
 }
