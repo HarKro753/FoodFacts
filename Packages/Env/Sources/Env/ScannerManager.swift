@@ -41,20 +41,20 @@ public class ScannerManager: NetworkAwareFetching {
         clearError()
         scannedProduct = nil
 
-        guard let code = Int(productCode) else {
-            setError("Invalid product code")
-            return
-        }
+        _ = productCode
 
-        let product = await fetchWithNetworkCheck {
-            try await GraphQLClient.shared.fetchProductByCode(code: productCode)
+        let product = await fetchWithNetworkCheck { () async throws -> Product in
+            guard let product = try await GraphQLClient.shared.fetchRandomProduct() else {
+                throw GraphQLClientError.noData
+            }
+            return product
         }
 
         if let product = product {
             Task {
                 do {
                     _ = try await GraphQLClient.shared.addProductHistoryItem(
-                        productCode: code
+                        productCode: product.id
                     )
                 } catch {
                     print("Failed to add to history: \(error)")

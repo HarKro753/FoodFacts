@@ -20,37 +20,7 @@ public struct CategoryNode: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
-    private struct CategoriesQueryResponse: Decodable {
-        struct Categories: Decodable {
-            let nodes: [CategoryNode]
-            let pageInfo: PageInfo
-        }
-        let categories: Categories
-    }
-
     public func fetchCategories() async throws -> PaginatedResult<CategoryNode> {
-        let queryString = """
-            query Categories {
-                categories(first: 500) {
-                    nodes {
-                        name
-                        id
-                    }
-                    pageInfo {
-                        hasNextPage
-                        hasPreviousPage
-                        startCursor
-                        endCursor
-                    }
-                }
-            }
-            """
-
-        let response: CategoriesQueryResponse = try await execute(query: queryString)
-
-        return PaginatedResult(
-            items: response.categories.nodes,
-            pageInfo: response.categories.pageInfo
-        )
+        MockGraphQLStore.shared.fetchCategories()
     }
 }

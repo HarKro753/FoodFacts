@@ -32,7 +32,7 @@ public struct ErrorCheckResponse: Decodable {
 @available(iOS 15.0, *)
 public final class GraphQLClient: @unchecked Sendable {
     public static let shared = GraphQLClient()
-    let apiURL: URL
+    public static let usesLocalMockData = true
 
     private static let accessTokenKey = "accessToken"
     private nonisolated(unsafe) static let sharedDefaults = UserDefaults(suiteName: "group.cibrusapp")
@@ -41,103 +41,18 @@ public final class GraphQLClient: @unchecked Sendable {
         Self.sharedDefaults?.string(forKey: Self.accessTokenKey)
     }
 
-    private init() {
-        self.apiURL = URL(string: "https://cibrus.org/graphql/")!
-    }
+    private init() {}
 
     public func execute<T: Decodable>(
         query: String,
         variables: [String: String]? = nil,
         headers: [String: String]? = nil
     ) async throws -> T {
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // Add authorization header if token exists
-        if let token = currentToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        // Add custom headers if provided
-        if let headers = headers {
-            for (key, value) in headers {
-                request.setValue(value, forHTTPHeaderField: key)
-            }
-        }
-
-        let body = GraphQLRequest(query: query, variables: variables)
-        request.httpBody = try JSONEncoder().encode(body)
-
-        // Debug: Print raw request
-        if let requestBody = request.httpBody,
-            let jsonString = String(data: requestBody, encoding: .utf8)
-        {
-            print("📤 GraphQL Request: \(jsonString)")
-        }
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-            (200...299).contains(httpResponse.statusCode)
-        else {
-            throw GraphQLClientError.invalidResponse
-        }
-
-        // Debug: Print raw response
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("📡 GraphQL Response: \(jsonString)")
-        }
-
-        let decoder = JSONDecoder()
-
-        // First, check for GraphQL errors before attempting to decode the data
-        // This prevents decoding errors when the server returns errors with null data
-        let errorCheck = try decoder.decode(ErrorCheckResponse.self, from: data)
-        if let errors = errorCheck.errors {
-            print(
-                "❌ GraphQL Errors: \(errors.map { $0.message }.joined(separator: ", "))"
-            )
-            throw GraphQLClientError.graphQLErrors(errors.map { $0.message })
-        }
-
-        // Now decode the full response (we know there are no errors)
-        let graphQLResponse: GraphQLResponse<T>
-        do {
-            graphQLResponse = try decoder.decode(
-                GraphQLResponse<T>.self,
-                from: data
-            )
-        } catch {
-            print("❌ Decoding error: \(error)")
-            if let decodingError = error as? DecodingError {
-                switch decodingError {
-                case .keyNotFound(let key, let context):
-                    print(
-                        "   Missing key '\(key.stringValue)' - \(context.debugDescription)"
-                    )
-                case .typeMismatch(let type, let context):
-                    print(
-                        "   Type mismatch for type '\(type)' - \(context.debugDescription)"
-                    )
-                case .valueNotFound(let type, let context):
-                    print(
-                        "   Value not found for type '\(type)' - \(context.debugDescription)"
-                    )
-                case .dataCorrupted(let context):
-                    print("   Data corrupted - \(context.debugDescription)")
-                @unknown default:
-                    print("   Unknown decoding error")
-                }
-            }
-            throw error
-        }
-
-        guard let data = graphQLResponse.data else {
-            throw GraphQLClientError.noData
-        }
-
-        return data
+        _ = currentToken
+        _ = query
+        _ = variables
+        _ = headers
+        throw GraphQLClientError.mockExecuteUnsupported
     }
 }
 
@@ -148,6 +63,7 @@ public enum GraphQLClientError: LocalizedError {
     case invalidResponse
     case noData
     case graphQLErrors([String])
+    case mockExecuteUnsupported
 
     public var errorDescription: String? {
         switch self {
@@ -159,6 +75,8 @@ public enum GraphQLClientError: LocalizedError {
             return "No data received from server"
         case .graphQLErrors(let errors):
             return "GraphQL errors: \(errors.joined(separator: ", "))"
+        case .mockExecuteUnsupported:
+            return "Raw GraphQL execution is unavailable in local mock mode"
         }
     }
 }

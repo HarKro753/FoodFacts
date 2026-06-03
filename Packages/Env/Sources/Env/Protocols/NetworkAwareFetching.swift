@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import GraphQl
 
 @MainActor
 public protocol NetworkAwareFetching: ProductFetchingState {}
@@ -14,7 +15,7 @@ extension NetworkAwareFetching {
     public func fetchWithNetworkCheck<T>(
         _ operation: () async throws -> T
     ) async -> T? {
-        guard NetworkMonitor.shared.getIsConnected() else {
+        guard GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() else {
             setError("No internet connection. Please check your network and try again.")
             return nil
         }
@@ -27,7 +28,7 @@ extension NetworkAwareFetching {
             clearError()
             return result
         } catch {
-            if !NetworkMonitor.shared.getIsConnected() {
+            if !GraphQLClient.usesLocalMockData && !NetworkMonitor.shared.getIsConnected() {
                 setError("Lost internet connection. Please check your network and try again.")
             } else {
                 setError(error.localizedDescription)
@@ -39,7 +40,7 @@ extension NetworkAwareFetching {
     public func fetchWithNetworkCheckVoid(
         _ operation: () async throws -> Void
     ) async -> Bool {
-        guard NetworkMonitor.shared.getIsConnected() else {
+        guard GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() else {
             setError("No internet connection. Please check your network and try again.")
             return false
         }
@@ -52,7 +53,7 @@ extension NetworkAwareFetching {
             clearError()
             return true
         } catch {
-            if !NetworkMonitor.shared.getIsConnected() {
+            if !GraphQLClient.usesLocalMockData && !NetworkMonitor.shared.getIsConnected() {
                 setError("Lost internet connection. Please check your network and try again.")
             } else {
                 setError(error.localizedDescription)

@@ -320,7 +320,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
             return
         }
 
-        guard NetworkMonitor.shared.getIsConnected() else {
+        guard GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() else {
             print("No network connection - skipping category \(category.name)")
             return
         }
@@ -356,7 +356,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
                     "Successfully fetched \(sortedProducts.count) valid products for category \(category.name)"
                 )
             }
-        } else if NetworkMonitor.shared.getIsConnected() {
+        } else if GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() {
             categoryProducts[category.id] = []
             fetchedCategories.insert(category.id)
         }
@@ -394,7 +394,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
         detailIsLoading = true
         detailErrorMessage = nil
 
-        guard NetworkMonitor.shared.getIsConnected() else {
+        guard GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() else {
             detailErrorMessage = "No internet connection. Please check your network."
             detailIsLoading = false
             return
@@ -430,7 +430,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
 
         detailIsLoadingMore = true
 
-        guard NetworkMonitor.shared.getIsConnected() else {
+        guard GraphQLClient.usesLocalMockData || NetworkMonitor.shared.getIsConnected() else {
             detailErrorMessage = "No internet connection. Please check your network."
             detailIsLoadingMore = false
             return

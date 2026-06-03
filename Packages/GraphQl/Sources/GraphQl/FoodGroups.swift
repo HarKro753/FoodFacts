@@ -19,39 +19,7 @@ public struct FoodGroupNode: Decodable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
-    private struct FoodGroupsQueryResponse: Decodable {
-        struct FoodGroups: Decodable {
-            let nodes: [FoodGroupNode]
-            let pageInfo: PageInfo
-        }
-        let foodGroups: FoodGroups
-    }
-
     public func fetchFoodGroups() async throws -> PaginatedResult<FoodGroupNode> {
-        let queryString = """
-            query FoodGroups {
-                foodGroups {
-                    nodes {
-                        id
-                        name
-                    }
-                    pageInfo {
-                        hasNextPage
-                        hasPreviousPage
-                        startCursor
-                        endCursor
-                    }
-                }
-            }
-            """
-
-        let response: FoodGroupsQueryResponse = try await execute(
-            query: queryString
-        )
-
-        return PaginatedResult(
-            items: response.foodGroups.nodes,
-            pageInfo: response.foodGroups.pageInfo
-        )
+        MockGraphQLStore.shared.fetchFoodGroups()
     }
 }

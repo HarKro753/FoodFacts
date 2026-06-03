@@ -18,52 +18,16 @@ public struct CompletionsData: Decodable, Equatable {
 
 @available(iOS 15.0, *)
 extension GraphQLClient {
-    private struct CompletionsWrapper: Decodable {
-        let completionsForPrefix: CompletionsData
-    }
-
     public func fetchCompletions(
         prefix: String,
         completeness: Double? = 0.7,
         lastImageDatetime: String? = "2025-01-01",
         removeNoNutriScore: Bool? = true
     ) async throws -> CompletionsData {
-        var filterParams: [String] = []
-
-        if let completeness = completeness {
-            filterParams.append("completeness: \(completeness)")
-        }
-        if let lastImageDatetime = lastImageDatetime {
-            filterParams.append("lastImageDatetime: \"\(lastImageDatetime)\"")
-        }
-        if let removeNoNutriScore = removeNoNutriScore {
-            filterParams.append("removeNoNutriScore: \(removeNoNutriScore)")
-        }
-
-        let filterString = filterParams.isEmpty ? "" : ", filter: { \(filterParams.joined(separator: ", ")) }"
-
-        let queryString = """
-            query CompletionsForPrefix {
-                completionsForPrefix(prefix: "\(prefix)"\(filterString)) {
-                    productNames {
-                        id
-                        name
-                    }
-                    categoryNames {
-                        id
-                        name
-                    }
-                    foodGroups {
-                        id
-                        name
-                    }
-                }
-            }
-            """
-
-        let response: CompletionsWrapper = try await execute(query: queryString)
-
-        return response.completionsForPrefix
+        _ = completeness
+        _ = lastImageDatetime
+        _ = removeNoNutriScore
+        return MockGraphQLStore.shared.fetchCompletions(prefix: prefix)
     }
 }
 
