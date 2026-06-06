@@ -94,13 +94,15 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     }
 
     private var filterSync: FilterSyncService?
+    private var activeFilters: Set<ProductFilter> = []
+    private var filterStateId = ""
 
     public func getFilterStateId() -> String {
-        return filterSync?.filterStateId ?? ""
+        filterStateId
     }
 
     public func getActiveFilters() -> Set<ProductFilter> {
-        return filterSync?.activeFilters ?? []
+        activeFilters
     }
 
     private var categoryProducts: [Int: [Product]] = [:]
@@ -199,9 +201,7 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
 
         filterSync = FilterSyncService { [weak self] in
             guard let self = self else { return }
-            self.categoryProducts.removeAll()
-            self.fetchedCategories.removeAll()
-            self.loadingCategories.removeAll()
+            self.syncFilterStateFromManager()
         }
     }
 
@@ -300,10 +300,23 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
 
     public func toggleFilter(_ filter: ProductFilter) {
         FilterManager.shared.toggleFilter(filter)
+        syncFilterStateFromManager()
     }
 
     public func clearFilters() {
         FilterManager.shared.clearFilters()
+        syncFilterStateFromManager()
+    }
+
+    private func syncFilterStateFromManager() {
+        activeFilters = FilterManager.shared.activeFilters
+        filterStateId = FilterManager.shared.filterStateId
+        categoryProducts.removeAll()
+        fetchedCategories.removeAll()
+        loadingCategories.removeAll()
+        detailProducts.removeAll()
+        detailHasNextPage = false
+        detailEndCursor = nil
     }
 
     // MARK: - Category Products
@@ -459,15 +472,17 @@ public class SearchManager: NetworkAwareFetching, PaginatedFetching {
     }
 
     public func getActiveFiltersForDetail() -> Set<ProductFilter> {
-        return filterSync?.activeFilters ?? []
+        activeFilters
     }
 
     public func toggleFilterForDetail(_ filter: ProductFilter) {
         FilterManager.shared.toggleFilter(filter)
+        syncFilterStateFromManager()
     }
 
     public func clearFiltersForDetail() {
         FilterManager.shared.clearFilters()
+        syncFilterStateFromManager()
     }
 
 }

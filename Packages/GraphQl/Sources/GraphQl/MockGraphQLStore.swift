@@ -320,9 +320,9 @@ final class MockGraphQLStore: @unchecked Sendable {
         let labels = record.labelTags.map(normalizedToken)
         switch labelId {
         case 3:
-            return labels.contains { $0.contains("vegetarian") }
+            return labels.contains("vegetarian")
         case 4:
-            return labels.contains { $0.contains("vegan") }
+            return labels.contains("vegan")
         default:
             return true
         }
@@ -401,14 +401,16 @@ final class MockGraphQLStore: @unchecked Sendable {
                 name: "Protein",
                 value: record.proteins100g,
                 unit: "g",
-                rating: positiveRating(record.proteins100g, good: 10, veryGood: 20)
+                rating: positiveRating(record.proteins100g, good: 10, veryGood: 20),
+                ratingSections: positiveSections(good: 10, veryGood: 20)
             ),
             nutrientRating(
                 nutrientType: "FIBER",
                 name: "Fiber",
                 value: record.fiber100g,
                 unit: "g",
-                rating: positiveRating(record.fiber100g, good: 3, veryGood: 6)
+                rating: positiveRating(record.fiber100g, good: 3, veryGood: 6),
+                ratingSections: positiveSections(good: 3, veryGood: 6)
             ),
         ].compactMap { $0 }
     }
@@ -420,35 +422,40 @@ final class MockGraphQLStore: @unchecked Sendable {
                 name: "Calories",
                 value: record.energyKcal100g,
                 unit: "kcal",
-                rating: negativeRating(record.energyKcal100g, good: 200, bad: 450)
+                rating: negativeRating(record.energyKcal100g, good: 200, bad: 450),
+                ratingSections: negativeSections(good: 200, bad: 450)
             ),
             nutrientRating(
                 nutrientType: "FAT",
                 name: "Fat",
                 value: record.fat100g,
                 unit: "g",
-                rating: negativeRating(record.fat100g, good: 3, bad: 20)
+                rating: negativeRating(record.fat100g, good: 3, bad: 20),
+                ratingSections: negativeSections(good: 3, bad: 20)
             ),
             nutrientRating(
                 nutrientType: "SATURATED_FAT",
                 name: "Saturated fat",
                 value: record.saturatedFat100g,
                 unit: "g",
-                rating: negativeRating(record.saturatedFat100g, good: 1.5, bad: 5)
+                rating: negativeRating(record.saturatedFat100g, good: 1.5, bad: 5),
+                ratingSections: negativeSections(good: 1.5, bad: 5)
             ),
             nutrientRating(
                 nutrientType: "SUGARS",
                 name: "Sugars",
                 value: record.sugars100g,
                 unit: "g",
-                rating: negativeRating(record.sugars100g, good: 5, bad: 22.5)
+                rating: negativeRating(record.sugars100g, good: 5, bad: 22.5),
+                ratingSections: negativeSections(good: 5, bad: 22.5)
             ),
             nutrientRating(
                 nutrientType: "SALT",
                 name: "Salt",
                 value: record.salt100g,
                 unit: "g",
-                rating: negativeRating(record.salt100g, good: 0.3, bad: 1.5)
+                rating: negativeRating(record.salt100g, good: 0.3, bad: 1.5),
+                ratingSections: negativeSections(good: 0.3, bad: 1.5)
             ),
         ].compactMap { $0 }
     }
@@ -458,7 +465,8 @@ final class MockGraphQLStore: @unchecked Sendable {
         name: String,
         value: Double?,
         unit: String,
-        rating: String?
+        rating: String?,
+        ratingSections: [RatingSection]
     ) -> NutrientRating? {
         guard let value, let rating else { return nil }
 
@@ -469,8 +477,27 @@ final class MockGraphQLStore: @unchecked Sendable {
             unit: unit,
             rating: rating,
             text: ratingText(for: rating),
-            ratingSections: nil
+            ratingSections: ratingSections
         )
+    }
+
+    private static func positiveSections(good: Double, veryGood: Double) -> [RatingSection] {
+        [
+            RatingSection(rating: "BAD", minValue: 0, maxValue: good / 2, description: "Low"),
+            RatingSection(rating: "MEDIUM", minValue: good / 2, maxValue: good, description: "Moderate"),
+            RatingSection(rating: "GOOD", minValue: good, maxValue: veryGood, description: "Good"),
+            RatingSection(rating: "VERY_GOOD", minValue: veryGood, maxValue: veryGood * 2, description: "Very good"),
+        ]
+    }
+
+    private static func negativeSections(good: Double, bad: Double) -> [RatingSection] {
+        let medium = (good + bad) / 2
+        return [
+            RatingSection(rating: "VERY_GOOD", minValue: 0, maxValue: good, description: "Very low"),
+            RatingSection(rating: "GOOD", minValue: good, maxValue: medium, description: "Low"),
+            RatingSection(rating: "MEDIUM", minValue: medium, maxValue: bad, description: "Moderate"),
+            RatingSection(rating: "BAD", minValue: bad, maxValue: bad * 2, description: "High"),
+        ]
     }
 
     private static func positiveRating(_ value: Double?, good: Double, veryGood: Double) -> String? {
